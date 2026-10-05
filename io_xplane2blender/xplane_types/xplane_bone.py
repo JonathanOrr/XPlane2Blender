@@ -34,7 +34,12 @@ import mathutils
 
 from io_xplane2blender import xplane_constants, xplane_props
 from io_xplane2blender.xplane_config import getDebug
-from io_xplane2blender.xplane_helpers import floatToStr, logger, vec_b_to_x
+from io_xplane2blender.xplane_helpers import (
+    floatToStr,
+    get_action_fcurves,
+    logger,
+    vec_b_to_x,
+)
 from io_xplane2blender.xplane_types.xplane_keyframe import XPlaneKeyframe
 from io_xplane2blender.xplane_types.xplane_keyframe_collection import (
     XPlaneKeyframeCollection,
@@ -178,65 +183,62 @@ class XPlaneBone:
         # else:
         # print("\t\t checking animations of %s" % blenderObject.name)
 
-        try:
-            if bone:
-                # bone animation data resides in the armature objects .data block
-                fcurves = [
-                    f
-                    for f in blenderObject.data.animation_data.action.fcurves
-                    if f.data_path.startswith(f'bones["{bone.name}"].xplane.datarefs')
-                ]
-            else:
-                fcurves = [
-                    f
-                    for f in blenderObject.animation_data.action.fcurves
-                    if f.data_path.startswith(f"xplane.datarefs")
-                ]
-        except AttributeError:
-            pass
+        if bone:
+            # bone animation data resides in the armature objects .data block
+            fcurves = [
+                f
+                for f in get_action_fcurves(blenderObject.data)
+                if f.data_path.startswith(f'bones["{bone.name}"].xplane.datarefs')
+            ]
         else:
-            for fcurve in fcurves:
+            fcurves = [
+                f
+                for f in get_action_fcurves(blenderObject)
+                if f.data_path.startswith(f"xplane.datarefs")
+            ]
+
+        for fcurve in fcurves:
+            if bone:
+                index = int(
+                    fcurve.data_path[
+                        len(f'bones["{bone.name}"].xplane.datarefs[') : -len(
+                            "].value"
+                        )
+                    ]
+                )
+            else:
+                index = int(
+                    fcurve.data_path[len("xplane.datarefs[") : -len("].value")]
+                )
+
+            try:
                 if bone:
-                    index = int(
-                        fcurve.data_path[
-                            len(f'bones["{bone.name}"].xplane.datarefs[') : -len(
-                                "].value"
-                            )
+                    dataref = bone.xplane.datarefs[index].path
+                else:
+                    dataref = blenderObject.xplane.datarefs[index].path
+            except IndexError:
+                # Due to a long standing bug in (I think in BONE_OT_remove_xplane_dataref.execute)
+                # sometimes a Bone's fcurve is not properly removed. Any further indexes will also
+                # be wrong.
+                #
+                # TODO: Fix whatever is causing this, but, we'll still need this for old .blend files
+                # - Ted, 6/24/2020
+                return
+            else:
+                if len(fcurve.keyframe_points) > 1:
+                    if bone:
+                        self.datarefs[dataref] = bone.xplane.datarefs[index]
+                    else:
+                        self.datarefs[dataref] = blenderObject.xplane.datarefs[
+                            index
+                        ]
+
+                    self.animations[dataref] = XPlaneKeyframeCollection(
+                        [
+                            XPlaneKeyframe(kf, i, dataref, self)
+                            for i, kf in enumerate(fcurve.keyframe_points)
                         ]
                     )
-                else:
-                    index = int(
-                        fcurve.data_path[len("xplane.datarefs[") : -len("].value")]
-                    )
-
-                try:
-                    if bone:
-                        dataref = bone.xplane.datarefs[index].path
-                    else:
-                        dataref = blenderObject.xplane.datarefs[index].path
-                except IndexError:
-                    # Due to a long standing bug in (I think in BONE_OT_remove_xplane_dataref.execute)
-                    # sometimes a Bone's fcurve is not properly removed. Any further indexes will also
-                    # be wrong.
-                    #
-                    # TODO: Fix whatever is causing this, but, we'll still need this for old .blend files
-                    # - Ted, 6/24/2020
-                    return
-                else:
-                    if len(fcurve.keyframe_points) > 1:
-                        if bone:
-                            self.datarefs[dataref] = bone.xplane.datarefs[index]
-                        else:
-                            self.datarefs[dataref] = blenderObject.xplane.datarefs[
-                                index
-                            ]
-
-                        self.animations[dataref] = XPlaneKeyframeCollection(
-                            [
-                                XPlaneKeyframe(kf, i, dataref, self)
-                                for i, kf in enumerate(fcurve.keyframe_points)
-                            ]
-                        )
 
     def getName(self, ignore_indent_level: bool = False) -> str:
         """

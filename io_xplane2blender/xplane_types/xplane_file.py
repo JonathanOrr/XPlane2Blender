@@ -180,8 +180,7 @@ def _pre_scan_all_keyframes():
     frames_to_visit = sorted(
         {
             int(kf.co[0])
-            for action in bpy.data.actions
-            for fcurve in action.fcurves
+            for fcurve in xplane_helpers.get_all_actions_fcurves()
             for kf in fcurve.keyframe_points
             if kf.co[0].is_integer()
         }

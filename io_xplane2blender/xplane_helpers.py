@@ -209,6 +209,62 @@ def vec_x_to_b(v) -> mathutils.Vector:
     return mathutils.Vector((v[0], -v[2], v[1]))
 
 
+def get_action_fcurves(id_data: bpy.types.ID) -> List[bpy.types.FCurve]:
+    """
+    Returns the FCurves animating id_data through its assigned Action,
+    or an empty list if there are none.
+
+    Blender 4.4 introduced slotted Actions and 5.0 removed Action.fcurves,
+    so on those versions the FCurves live in the assigned slot's channelbag.
+    """
+    channelbag = get_action_channelbag(id_data)
+    if channelbag is not None:
+        return list(channelbag.fcurves)
+
+    anim_data = getattr(id_data, "animation_data", None)
+    if anim_data is None or anim_data.action is None:
+        return []
+    return list(getattr(anim_data.action, "fcurves", []))
+
+
+def get_action_channelbag(id_data: bpy.types.ID) -> Optional["bpy.types.ActionChannelbag"]:
+    """
+    Returns the channelbag of id_data's assigned Action slot (Blender 4.4+),
+    or None if there isn't one or this Blender doesn't have slotted Actions
+    """
+    anim_data = getattr(id_data, "animation_data", None)
+    if anim_data is None or anim_data.action is None:
+        return None
+    try:
+        from bpy_extras.anim_utils import action_get_channelbag_for_slot
+    except ImportError:
+        return None
+    return action_get_channelbag_for_slot(anim_data.action, anim_data.action_slot)
+
+
+def remove_action_fcurve(id_data: bpy.types.ID, fcurve: bpy.types.FCurve) -> None:
+    """Removes an FCurve returned by get_action_fcurves(id_data)"""
+    channelbag = get_action_channelbag(id_data)
+    if channelbag is not None:
+        channelbag.fcurves.remove(fcurve)
+    else:
+        id_data.animation_data.action.fcurves.remove(fcurve)
+
+
+def get_all_actions_fcurves() -> List[bpy.types.FCurve]:
+    """Returns every FCurve of every Action in the file, for any slot"""
+    fcurves = []
+    for action in bpy.data.actions:
+        if getattr(action, "layers", None):
+            for layer in action.layers:
+                for strip in layer.strips:
+                    for channelbag in strip.channelbags:
+                        fcurves.extend(channelbag.fcurves)
+        else:
+            fcurves.extend(getattr(action, "fcurves", []))
+    return fcurves
+
+
 # This is a convenience struct to help prevent people from having to repeatedly copy and paste
 # a tuple of all the members of XPlane2BlenderVersion. It is only a data transport struct!
 class VerStruct:
