@@ -15,14 +15,14 @@ def _build_number_sanity_check(string: str):
     if len(string) == 14 and string.isdigit():
         try:
             dt = datetime.datetime(
-                year=string[0:3],
-                month=string[4:5],
-                day=string[6:7],
-                hour=string[8:9],
-                minute=string[10:11],
-                second=string[12:13],
+                year=int(string[0:4]),
+                month=int(string[4:6]),
+                day=int(string[6:8]),
+                hour=int(string[8:10]),
+                minute=int(string[10:12]),
+                second=int(string[12:14]),
             )
-        except:
+        except ValueError:
             raise argparse.ArgumentTypeError(
                 string + " is not convertable to a datetime"
             )
@@ -365,7 +365,7 @@ def main(argv=None):
         argv, test_args = _make_parser().parse_known_args()
 
     # This script requires the git directory and the tests directory
-    if "XPlane2Blender" not in str(Path(os.getcwd()).name):
+    if not all(Path(folder).is_dir() for folder in ("io_xplane2blender", "tests")):
         print(
             os.path.split(__file__)[1]
             + " must be run in the XPlane2Blender folder! Current directory is {}".format(

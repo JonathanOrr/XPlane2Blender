@@ -1305,7 +1305,7 @@ def material_layout(layout: UILayout, active_material: bpy.types.Material) -> No
         else:
             # CYCLES will always hide our 'specular_intensity'
             if render_engine == "CYCLES" or (
-                render_engine == "EEVEE" and active_material.use_nodes
+                render_engine == "EEVEE" and getattr(active_material, "use_nodes", True)
             ):
                 is_spec_hidden = True
 

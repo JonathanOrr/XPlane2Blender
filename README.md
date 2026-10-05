@@ -10,7 +10,7 @@ An experimental importer has been added in 4.2.0-Alpha 1 and can be found here: 
 The best way to contact us is through [a bug report](https://github.com/X-Plane/XPlane2Blender/issues). Otherwise, e-mail **ted at x-plane dot com**, especially if you're worried about the security of your models while we debug them.
 
 ## General Requirements
-- Blender 2.80-83. 2.90 seems to work but is not officially supported
+- Blender 5.2 LTS is recommended. The test suite passes on Blender 3.6 LTS, 4.1, 4.2 LTS, 4.5 LTS and 5.2 LTS. Older versions back to 2.80 may work but are not tested
 - For the greatest stability, use the latest non-beta version of [XPlane2Blender](https://github.com/X-Plane/XPlane2Blender/releases/latest)
 
 XPlane2Blender for Blender 2.79 can still be downloaded from the releases page, but it isn't supported anymore. An experimental converter for Blender 2.49 projects is also available and is supported.
@@ -19,8 +19,8 @@ XPlane2Blender for Blender 2.79 can still be downloaded from the releases page, 
 **Note: This process will override an existing copy of the plugin!** To backup your current version of the plugin, see the manual instructions in the [manual](https://xp2b-docs.gitbook.io/xplane2blender-docs/index-3/34_installation). **Always make backups of your work, especially when beta testing, as newer versions may not be backwards compatibility.** Read the release notes for more details.
 
 1. Download the [addon](https://github.com/X-Plane/XPlane2Blender/releases/latest) with a name like ``io_xplane2blender_4_0_0-rc_1-89_20200910152046.zip``. **Do not download the .zip file called "Source Code", do not unzip the io_xplane2blender .zip file**
-2. In Blender, open up the Preferences, go to the Addons tab, and click at the bottom "Install From File..."
-3. Using the file picker, find the .zip file and click "Install From File...". This will automatically unzip to the addons folder
+2. In Blender, open up the Preferences and go to the Add-ons tab. In Blender 4.2 and later, open the drop-down menu in the top right and click "Install from Disk...". In older versions, click "Install..." at the top
+3. Using the file picker, find the .zip file and click "Install from Disk..." (or "Install Add-on"). This will automatically unzip to the addons folder
 4. Ensure the checkbox next to the words "Import-Export: Export: X-Plane (.obj)" is checked
 5. **Restart Blender even if you see the UI change**
 6. Begin using XPlane2Blender!
@@ -48,3 +48,5 @@ If you have Python installed (hopefully matching Blender's internal interpreter 
 ``python tests.py --print-fails``
 
 This will run all tests until the end or a failure occurs. Only detailed logs will be printed for the failed test. See ``--help`` to show all flags and what they do.
+
+If Blender isn't in your path, point the test runner at it with ``--blender /path/to/blender``.
