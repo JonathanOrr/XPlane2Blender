@@ -324,7 +324,7 @@ class XPlaneHeader:
                                 self.xplaneFile.options.rgb_decal2_red_key, self.xplaneFile.options.rgb_decal2_green_key, self.xplaneFile.options.rgb_decal2_blue_key, self.xplaneFile.options.rgb_decal2_alpha_key,
                                 self.xplaneFile.options.rgb_decal2_modulator, self.xplaneFile.options.rgb_decal2_constant,
                                 self.xplaneFile.options.alpha_decal2_red_key, self.xplaneFile.options.alpha_decal2_green_key, self.xplaneFile.options.alpha_decal2_blue_key, self.xplaneFile.options.alpha_decal2_alpha_key,
-                                self.xplaneFile.options.alpha_decal2_modulator, self.xplaneFile.options.alpha_decal2_modulator,
+                                self.xplaneFile.options.alpha_decal2_modulator, self.xplaneFile.options.alpha_decal2_constant,
                                 self.get_path_relative_to_dir(
                                     self.xplaneFile.options.file_decal2, exportdir
                                 )
@@ -341,7 +341,7 @@ class XPlaneHeader:
                                 self.xplaneFile.options.rgb_decal2_red_key, self.xplaneFile.options.rgb_decal2_green_key, self.xplaneFile.options.rgb_decal2_blue_key, self.xplaneFile.options.rgb_decal2_alpha_key,
                                 self.xplaneFile.options.rgb_decal2_modulator, self.xplaneFile.options.rgb_decal2_constant,
                                 self.xplaneFile.options.alpha_decal2_red_key, self.xplaneFile.options.alpha_decal2_green_key, self.xplaneFile.options.alpha_decal2_blue_key, self.xplaneFile.options.alpha_decal2_alpha_key,
-                                self.xplaneFile.options.alpha_decal2_modulator, self.xplaneFile.options.alpha_decal2_modulator,
+                                self.xplaneFile.options.alpha_decal2_modulator, self.xplaneFile.options.alpha_decal2_constant,
                                 self.get_path_relative_to_dir(
                                     self.xplaneFile.options.file_decal2, exportdir
                                 )
