@@ -1285,7 +1285,11 @@ def material_layout(layout: UILayout, active_material: bpy.types.Material) -> No
         in depth explanation is show.
         """
 
-        render_engine = bpy.context.scene.render.engine.replace("BLENDER_", "")
+        # Blender 4.2-4.5 call EEVEE "BLENDER_EEVEE_NEXT"
+        render_engine = (
+            bpy.context.scene.render.engine.replace("BLENDER_", "")
+            .replace("EEVEE_NEXT", "EEVEE")
+        )
 
         def rnd_cmp_eq(a, b, ndigits=3):
             return round(a, ndigits) == round(b, ndigits)
@@ -1295,8 +1299,8 @@ def material_layout(layout: UILayout, active_material: bpy.types.Material) -> No
             surface_shader_node = output_node.inputs["Surface"].links[0].from_node
             if surface_shader_node.type != "BSDF_PRINCIPLED":
                 raise TypeError
-        # No link back to BSDF, wrong output mode, or wrong surface shader type
-        except (IndexError, TypeError) as e:
+        # No node tree, no link back to BSDF, wrong output mode, or wrong surface shader type
+        except (AttributeError, IndexError, TypeError) as e:
             is_spec_hidden = True
         else:
             # CYCLES will always hide our 'specular_intensity'
