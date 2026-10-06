@@ -12,9 +12,9 @@ from bpy.types import Object, UILayout
 from io_xplane2blender import xplane_constants, xplane_props, xplane_types, xplane_utils
 
 from .xplane_constants import *
+from .xplane_helpers import get_active_export_root, is_path_decal_lib
 from .xplane_ops import *
 from .xplane_props import *
-from .xplane_helpers import is_path_decal_lib
 
 
 class DATA_PT_xplane(bpy.types.Panel):
@@ -62,20 +62,6 @@ class MATERIAL_PT_xplane(bpy.types.Panel):
 
             if version >= 1000:
                 conditions_layout(self.layout, obj.active_material)
-
-
-def get_active_export_root(
-    active_object: Optional[Object], collection: Optional[bpy.types.Collection]
-) -> Optional[Union[Object, bpy.types.Collection]]:
-    """
-    Returns the exportable root the Render panel's bake op should use,
-    or None when neither the active object nor the collection is exportable
-    """
-    if active_object is not None and active_object.xplane.isExportableRoot:
-        return active_object
-    if collection is not None and collection.xplane.is_exportable_collection:
-        return collection
-    return None
 
 
 class RENDER_PT_xplane(bpy.types.Panel):

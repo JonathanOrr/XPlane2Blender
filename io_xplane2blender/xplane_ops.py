@@ -1,18 +1,23 @@
-from pathlib import Path
 import shutil
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import bpy
 
 from io_xplane2blender import xplane_props
-from io_xplane2blender.xplane_helpers import get_action_fcurves, remove_action_fcurve
 from io_xplane2blender.xplane_config import *
 from io_xplane2blender.xplane_constants import (
-    MAX_COCKPIT_REGIONS,
-    MAX_LODS,
     EXPORT_TYPE_AIRCRAFT,
     EXPORT_TYPE_COCKPIT,
+    MAX_COCKPIT_REGIONS,
+    MAX_LODS,
+)
+from io_xplane2blender.xplane_helpers import (
+    get_action_fcurves,
+    get_active_export_root,
+    logger,
+    remove_action_fcurve,
 )
 from io_xplane2blender.xplane_ops_dev import *
 from io_xplane2blender.xplane_utils import (
@@ -759,10 +764,13 @@ class XPLANE_OT_bake_wiper_gradient_texture(bpy.types.Operator):
             )
             return {"CANCELLED"}
 
-        if context.active_object.xplane.isExportableRoot:
-            rain = context.active_object.xplane.layer.rain
-        elif context.collection.xplane.is_exportable_collection:
-            rain = context.collection.xplane.layer.rain
+        active_root = get_active_export_root(context.active_object, context.collection)
+        if active_root is None:
+            msg = "Select an exportable root to bake the wiper gradient texture"
+            logger.error(msg)
+            bpy.ops.xplane.msg("INVOKE_DEFAULT", msg_text=msg)
+            return {"CANCELLED"}
+        rain = active_root.xplane.layer.rain
 
         try:
             windshield = bpy.data.objects[rain.wiper_ext_glass_object]
@@ -990,13 +998,7 @@ class XPLANE_OT_bake_wiper_gradient_texture(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        if context.active_object.xplane.isExportableRoot:
-            active_root = context.active_object
-        elif context.collection.xplane.is_exportable_collection:
-            active_root = context.collection
-        else:
-            active_root = None
-
+        active_root = get_active_export_root(context.active_object, context.collection)
         return active_root and active_root.xplane.layer.export_type in {
             EXPORT_TYPE_AIRCRAFT,
             EXPORT_TYPE_COCKPIT,

@@ -200,6 +200,21 @@ def is_exportable_root(
     ) and is_visible_in_viewport(potential_root, view_layer)
 
 
+def get_active_export_root(
+    active_object: Optional[bpy.types.Object],
+    collection: Optional[bpy.types.Collection],
+) -> Optional[Union[bpy.types.Object, bpy.types.Collection]]:
+    """
+    Returns the exportable root the active context should use, or None when
+    neither the active object nor the collection is exportable
+    """
+    if active_object is not None and active_object.xplane.isExportableRoot:
+        return active_object
+    if collection is not None and collection.xplane.is_exportable_collection:
+        return collection
+    return None
+
+
 def round_vec(v: mathutils.Vector, ndigits: int) -> mathutils.Vector:
     return mathutils.Vector(round(comp, ndigits) for comp in v)
 
