@@ -336,6 +336,20 @@ class TestImportObj(XPlaneTestCase):
         hidden_children = [o for o in self.meshes(built) if o.parent == show_out]
         self.assertTrue(all(o.hide_viewport and o.hide_render for o in hidden_children))
 
+    def test_show_and_hide_before_the_first_block_cover_the_whole_file(self) -> None:
+        body = "ANIM_hide 0.5 1.5 sim/whole\nTRIS 0 3\nANIM_begin\nANIM_trans 1 0 0 1 0 0\nTRIS 0 3\nANIM_end\n"
+        built = self.do_import(obj_text(body, tris=None))
+        (holder,) = [e for e in self.empties(built) if e.xplane.datarefs]
+        self.assertEqual(holder.xplane.datarefs[0].anim_type, xplane_constants.ANIM_TYPE_HIDE)
+        self.assertEqual({m.parent for m in self.meshes(built)}, {holder})
+
+    def test_a_decimal_comma_does_not_stop_the_import(self) -> None:
+        body = "ATTR_manip_drag_axis hand 0 1 0 0,05 1 sim/d Slide\nATTR_manip_wheel 0,5\nTRIS 0 3\n"
+        built = self.do_import(obj_text(body, tris=None))
+        manip = self.meshes(built)[0].xplane.manip
+        self.assertAlmostEqual(manip.v1, 0.05, places=4)
+        self.assertAlmostEqual(manip.wheel_delta, 0.5, places=4)
+
     def test_hiding_can_be_turned_off(self) -> None:
         built = self.do_import(obj_text("ANIM_begin\nANIM_show 1 2 sim/b\nTRIS 0 3\nANIM_end\n", tris=None), hide_default_hidden=False)
         self.assertFalse(any(o.hide_viewport for o in built.objects))
@@ -394,6 +408,15 @@ class TestImportObj(XPlaneTestCase):
         self.assertEqual(len(self.meshes(self.do_import(obj_text(body, tris=None)))), 1)
         create_initial_test_setup()
         self.assertEqual(len(self.meshes(self.do_import(obj_text(body, tris=None), "other.obj", all_lods=True))), 2)
+
+    def test_all_lods_set_up_the_buckets(self) -> None:
+        body = "ATTR_LOD 0 500\nTRIS 0 3\nATTR_LOD 500 2000\nTRIS 0 3\n"
+        built = self.do_import(obj_text(body, tris=None), all_lods=True)
+        layer = built.collection.xplane.layer
+        self.assertEqual(layer.lods, "2")
+        self.assertEqual([(l.near, l.far) for l in list(layer.lod)[:2]], [(0, 500), (500, 2000)])
+        flags = sorted(tuple(o.xplane.lod) for o in self.meshes(built))
+        self.assertEqual(flags, [(False, True, False, False), (True, False, False, False)])
 
     def test_a_bad_file_is_reported_not_raised(self) -> None:
         path = write_file(self.folder.join("bad.obj"), "not an obj")

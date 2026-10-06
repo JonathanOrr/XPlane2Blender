@@ -153,6 +153,18 @@ class TestImportRoundTrip(XPlaneTestCase):
             "ANIM_begin\nANIM_show 0.5 1.5 sim/vis\nTRIS 0 6\nANIM_end\nANIM_begin\nANIM_hide 0.5 1.5 sim/vis\nTRIS 6 6\nANIM_end\n"
         )
 
+    def test_lods_survive(self) -> None:
+        body = "ATTR_LOD 0 500\nTRIS 0 6\nATTR_LOD 500 2000\nTRIS 6 6\n"
+        text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
+        path = write_file(self.folder.join("part.obj"), text)
+        built = import_obj_file(path, ImportOptions(all_lods=True), ImportReport())
+        exported = self.exportExportableRoot(built.collection)
+        self.assertLoggerErrors(0)
+        lods = [line.split() for line in exported.splitlines() if line.startswith("ATTR_LOD")]
+        self.assertEqual(lods, [["ATTR_LOD", "0", "500"], ["ATTR_LOD", "500", "2000"]])
+        again = parse_obj(exported)
+        self.assertEqual([r.lod for r in again.iter_tris()], [(0.0, 500.0), (500.0, 2000.0)])
+
     def test_attributes_and_textures_survive(self) -> None:
         body = "ATTR_no_blend 0.4\nATTR_poly_os 2\nTRIS 0 6\nATTR_blend\nATTR_shiny_rat 0.3\nTRIS 6 6\n"
         text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)

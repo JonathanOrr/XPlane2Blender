@@ -57,6 +57,11 @@ def _option_properties():
             min=0.0,
             soft_max=10.0,
         ),
+        "show_result": bpy.props.BoolProperty(
+            name="Show In Viewport",
+            description="Switch the 3D viewport to the textured Material Preview and frame everything",
+            default=True,
+        ),
         "scale": bpy.props.FloatProperty(
             name="Scale",
             description="Multiplies all sizes. X-Plane uses meters, like Blender's default",
@@ -83,6 +88,60 @@ def _options_from(op) -> ImportOptions:
     return options
 
 
+_last_report_lines = []
+
+
+def _frame_everything(context) -> None:
+    """Switch every 3D viewport to the textured preview and frame what was imported"""
+    for area in context.screen.areas if context.screen else []:
+        if area.type != "VIEW_3D":
+            continue
+        for space in area.spaces:
+            if space.type == "VIEW_3D":
+                space.shading.type = "MATERIAL"
+                space.clip_end = max(space.clip_end, 5000.0)
+        region = next((r for r in area.regions if r.type == "WINDOW"), None)
+        if region is not None:
+            try:
+                with context.temp_override(area=area, region=region):
+                    bpy.ops.view3d.view_all(center=False)
+            except (RuntimeError, AttributeError):
+                pass
+
+
+class IMPORT_OT_xplane_report(bpy.types.Operator):
+    """What an import did, and what it could not do"""
+
+    bl_idname = "import_scene.xplane_report"
+    bl_label = "X-Plane Import Finished"
+    bl_options = {"INTERNAL"}
+
+    def execute(self, context):
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_popup(self, width=520)
+
+    def draw(self, context):
+        layout = self.layout
+        for index, (icon, text) in enumerate(_last_report_lines):
+            row = layout.row()
+            row.label(text=text, icon=icon if index == 0 or icon != "INFO" else "NONE")
+
+
+def _show_popup(report: ImportReport) -> None:
+    if bpy.app.background:
+        return
+    lines = [("CHECKMARK" if not report.errors else "ERROR", report.summary())]
+    lines += [("ERROR", e[:110]) for e in report.errors[:6]]
+    lines += [("ERROR", w[:110]) for w in report.warnings[:8]]
+    extra = len(report.warnings) - 8
+    if extra > 0:
+        lines.append(("INFO", f"...and {extra} more, see the System Console"))
+    _last_report_lines[:] = lines
+    bpy.ops.import_scene.xplane_report("INVOKE_DEFAULT")
+
+
 def _show_report(operator, report: ImportReport) -> None:
     operator.report({"INFO"}, report.summary())
     for warning in report.warnings[:8]:
@@ -96,6 +155,7 @@ def _show_report(operator, report: ImportReport) -> None:
         )
     for line in report.warnings + report.errors:
         print("XPlane2Blender import:", line)
+    _show_popup(report)
 
 
 class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
@@ -120,9 +180,16 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
         paths = [os.path.join(self.directory, f.name) for f in self.files] or [
             self.filepath
         ]
-        for path in paths:
-            import_obj_file(path, options, report)
+        wm = context.window_manager
+        wm.progress_begin(0, max(1, len(paths)))
+        for number, path in enumerate(paths):
+            wm.progress_update(number)
+            import_obj_file(path, options, report, update_view_layer=False)
+        wm.progress_end()
+        context.view_layer.update()
         _show_report(self, report)
+        if report.files_imported and self.show_result:
+            _frame_everything(context)
         return {"FINISHED"} if report.files_imported else {"CANCELLED"}
 
     def draw(self, context):
@@ -145,6 +212,7 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
         box.prop(self, "setup_for_export")
         box.prop(self, "lit_strength")
         box.prop(self, "scale")
+        box.prop(self, "show_result")
 
 
 _livery_items_cache = {}
@@ -244,9 +312,36 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
         box.prop(self, "setup_for_export")
         box.prop(self, "lit_strength")
         box.prop(self, "scale")
+        box.prop(self, "show_result")
 
 
-_classes = (IMPORT_OT_xplane_obj, IMPORT_OT_xplane_aircraft)
+_classes = (IMPORT_OT_xplane_obj, IMPORT_OT_xplane_aircraft, IMPORT_OT_xplane_report)
+# Drag and drop handlers only exist in Blender 4.1 and later
+if hasattr(bpy.types, "FileHandler"):
+
+    class IO_FH_xplane_aircraft(bpy.types.FileHandler):
+        """Drop an .acf onto the 3D viewport to import the aircraft (Blender 4.1 and later)"""
+
+        bl_idname = "IO_FH_xplane_aircraft"
+        bl_label = "X-Plane Aircraft"
+        bl_import_operator = "import_scene.xplane_aircraft"
+        bl_file_extensions = ".acf"
+
+        @classmethod
+        def poll_drop(cls, context):
+            return context.area is not None and context.area.type == "VIEW_3D"
+
+    class IO_FH_xplane_object(bpy.types.FileHandler):
+        bl_idname = "IO_FH_xplane_object"
+        bl_label = "X-Plane Object"
+        bl_import_operator = "import_scene.xplane_obj"
+        bl_file_extensions = ".obj"
+
+        @classmethod
+        def poll_drop(cls, context):
+            return context.area is not None and context.area.type == "VIEW_3D"
+
+    _classes += (IO_FH_xplane_aircraft, IO_FH_xplane_object)
 
 
 def menu_func_import(self, context):

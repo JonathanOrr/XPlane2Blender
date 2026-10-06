@@ -118,6 +118,11 @@ _MANIP_ARGS: Dict[str, Tuple[str, ...]] = {
 }
 
 
+def _number(text: str) -> float:
+    """float() that also reads a decimal comma, which some hand edited OBJ files have"""
+    return float(text.replace(",", "."))
+
+
 def required_xplane_version(obj: ObjFile) -> int:
     """The oldest X-Plane version setting that lets the add-on write everything this OBJ uses"""
     version = 1100
@@ -237,6 +242,20 @@ class ObjBuilder:
         return BuiltObj(self.collection, self.objects, self.has_manipulators, self.obj)
 
     # ---- tree walk -------------------------------------------------------------------
+    def _lod_index(self, lod: Optional[tuple]) -> int:
+        """Which of the four LOD buckets of the add-on an ATTR_LOD range is, or -1 for all of them"""
+        if lod is None or not self.options.all_lods or lod not in self.obj.lods:
+            return -1
+        index = self.obj.lods.index(lod)
+        return index if index < 4 else -1
+
+    def _flag_lod(self, blender_obj: bpy.types.Object, lod: Optional[tuple]) -> None:
+        index = self._lod_index(lod)
+        if index >= 0:
+            # Without "override" the add-on takes the buckets of the parent, which has none
+            blender_obj.xplane.override_lods = True
+            blender_obj.xplane.lod[index] = True
+
     def _wanted_lod(self, lod: Optional[tuple]) -> bool:
         if lod is None or self.options.all_lods:
             return True
@@ -249,7 +268,8 @@ class ObjBuilder:
         static: mathutils.Matrix,
         name: str,
     ) -> None:
-        if node is not self.obj.root:
+        if node is not self.obj.root or node.visibility:
+            # Show and hide lines before the first ANIM_begin cover the whole file
             parent, static = self._apply_node_transforms(node, parent, static, name)
         node_name = node.comment or name
         for child in node.children:
@@ -480,7 +500,13 @@ class ObjBuilder:
             blender_obj.matrix_basis = T.matrix_to_blender(group.matrix_xp)
             if group.parent is not None and group.parent.name in self._hidden:
                 self._hide(blender_obj)
-            self._apply_object_state(blender_obj, group)
+            self._flag_lod(blender_obj, group.lod)
+            try:
+                self._apply_object_state(blender_obj, group)
+            except (ValueError, IndexError, TypeError) as e:
+                self.report.warn(
+                    f"{self.stem}: could not apply some settings of '{blender_obj.name}' ({e})"
+                )
             if all(m.xplane.draw is False for m in group.materials):
                 blender_obj.display_type = "WIRE"
                 blender_obj.hide_render = True
@@ -514,8 +540,8 @@ class ObjBuilder:
             x = blender_obj.xplane
             x.lightLevel = True
             try:
-                x.lightLevel_v1 = float(light_level[0])
-                x.lightLevel_v2 = float(light_level[1])
+                x.lightLevel_v1 = _number(light_level[0])
+                x.lightLevel_v2 = _number(light_level[1])
                 x.lightLevel_dataref = light_level[2] if len(light_level) > 2 else ""
             except (ValueError, IndexError):
                 self.report.warn(
@@ -585,16 +611,23 @@ class ObjBuilder:
                 )
                 continue
             try:
-                setattr(m, field_name, float(text))
+                setattr(m, field_name, _number(text))
             except ValueError:
-                pass
-        for name, args in extras:
-            if name == "ATTR_manip_wheel" and args:
-                m.wheel_delta = float(args[0])
-        for detent in detents:
-            if len(detent) >= 3:
-                item = m.axis_detent_ranges.add()
-                item.start, item.end, item.height = (float(v) for v in detent[:3])
+                self.report.warn(
+                    f"{self.stem}: manipulator value '{text}' is not a number, it was left at its default"
+                )
+        try:
+            for name, args in extras:
+                if name == "ATTR_manip_wheel" and args:
+                    m.wheel_delta = _number(args[0])
+            for detent in detents:
+                if len(detent) >= 3:
+                    item = m.axis_detent_ranges.add()
+                    item.start, item.end, item.height = (_number(v) for v in detent[:3])
+        except ValueError:
+            self.report.warn(
+                f"{self.stem}: a wheel or detent setting could not be read as a number"
+            )
         self.has_manipulators = True
         self.report.manipulators_imported += 1
 
@@ -613,6 +646,7 @@ class ObjBuilder:
         obj.matrix_basis = T.matrix_to_blender(matrix)
         if parent is not None and parent.name in self._hidden:
             self._hide(obj)
+        self._flag_lod(obj, light.lod)
         x = blender_light.xplane
         try:
             if light.kind == "named":
@@ -716,6 +750,10 @@ class ObjBuilder:
             if self.has_manipulators
             else xplane_constants.EXPORT_TYPE_AIRCRAFT
         )
+        if self.options.all_lods and len(obj.lods) >= 2:
+            layer.lods = str(min(len(obj.lods), 4))
+            for bucket, (near, far) in zip(layer.lod, obj.lods[:4]):
+                bucket.near, bucket.far = int(near), int(far)
         manager = self.materials
         for attribute, path in (
             ("texture", manager.diffuse_path),

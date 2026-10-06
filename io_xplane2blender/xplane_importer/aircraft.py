@@ -2,7 +2,7 @@
 
 import math
 import os
-from typing import Optional
+from typing import Callable, Optional
 
 import bpy
 import mathutils
@@ -55,6 +55,7 @@ def import_aircraft(
     livery: str = "",
     include_damage: bool = False,
     include_attached: bool = False,
+    progress: Optional[Callable[[int, int], None]] = None,
 ) -> Optional[bpy.types.Collection]:
     options = options or ImportOptions()
     report = report or ImportReport()
@@ -83,7 +84,9 @@ def import_aircraft(
 
     skipped_damage = skipped_attached = 0
     not_drawn = []
-    for item in acf.objects:
+    for number, item in enumerate(acf.objects):
+        if progress is not None:
+            progress(number, len(acf.objects))
         if item.is_damage and not include_damage:
             skipped_damage += 1
             continue
