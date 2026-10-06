@@ -77,6 +77,22 @@ class XPlaneMesh:
                 xplaneObject.bakeMatrix = (
                     xplaneObject.xplaneBone.getBakeMatrixForAttached()
                 )
+                is_mirrored = xplaneObject.bakeMatrix.determinant() < 0
+                mirrored_normals = {}
+                if is_mirrored and mesh.has_custom_normals:
+                    # Custom normals are encoded relative to the face winding.
+                    # Keep their directions before the reflection changes that basis.
+                    if hasattr(mesh, "calc_normals_split"):
+                        mesh.calc_normals_split()
+                    mesh.calc_loop_triangles()
+                    normal_matrix = (
+                        xplaneObject.bakeMatrix.to_3x3().inverted_safe().transposed()
+                    )
+                    for tri in mesh.loop_triangles:
+                        for loop, normal in zip(tri.loops, tri.split_normals):
+                            mirrored_normals[loop] = (
+                                normal_matrix @ mathutils.Vector(normal)
+                            ).normalized()
                 mesh.transform(xplaneObject.bakeMatrix)
 
                 if hasattr(mesh, "calc_normals_split"):
@@ -108,20 +124,26 @@ class XPlaneMesh:
                         # tri.vertices is indices in that vertex table
                         indices=tri.vertices,
                         normal=tri.normal,
-                        split_normals=tri.split_normals,
-                        uvs=tuple(
-                            uv_layer.data[loop_index].uv for loop_index in tri.loops
-                        )
-                        if uv_layer
-                        else (mathutils.Vector((0.0, 0.0)),) * 3,
+                        split_normals=(
+                            tuple(mirrored_normals[loop] for loop in tri.loops)
+                            if mirrored_normals
+                            else tri.split_normals
+                        ),
+                        uvs=(
+                            tuple(
+                                uv_layer.data[loop_index].uv for loop_index in tri.loops
+                            )
+                            if uv_layer
+                            else (mathutils.Vector((0.0, 0.0)),) * 3
+                        ),
                     )
                     tmp_faces.append(tmp_face)
 
                 vertices_dct = {}
                 for tmp_face in tmp_faces:
-                    # To reverse the winding order for X-Plane from CCW to CW,
-                    # we iterate backwards through the mesh data structures
-                    for i in reversed(range(0, 3)):
+                    # A reflection already changes Blender's CCW winding to CW.
+                    # Otherwise reverse the winding for X-Plane as usual.
+                    for i in range(3) if is_mirrored else reversed(range(3)):
                         index = tmp_face.indices[i]
                         vertex = xplane_helpers.vec_b_to_x(mesh.vertices[index].co)
                         normal = xplane_helpers.vec_b_to_x(
@@ -129,6 +151,11 @@ class XPlaneMesh:
                             if tmp_face.original_face.use_smooth
                             else tmp_face.normal
                         )
+                        if is_mirrored and not (
+                            mirrored_normals and tmp_face.original_face.use_smooth
+                        ):
+                            # Recalculated mesh normals follow the reflected faces inward.
+                            normal = -normal
                         uv = tmp_face.uvs[i]
                         vt_entry = tuple(vertex[:] + normal[:] + uv[:])
 
