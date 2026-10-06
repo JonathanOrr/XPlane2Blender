@@ -383,6 +383,12 @@ class TestImportObj(XPlaneTestCase):
         self.assertEqual(custom.xplane.dataref, "sim/dr")
         self.assertEqual(self.report.lights_imported, 3)
 
+    def test_lights_take_their_color_from_their_parameters(self) -> None:
+        body = "LIGHT_PARAM airplane_landing_pm 1 2 3 0.2 0.4 0.6 0 200000cd 0 0 -1 0.5\n"
+        built = self.do_import(obj_text(body, tris=None))
+        (light,) = [o for o in built.objects if o.type == "LIGHT"]
+        self.assertEqual(tuple(round(c, 3) for c in light.data.color), (0.2, 0.4, 0.6))
+
     def test_lights_can_be_skipped(self) -> None:
         built = self.do_import(obj_text("LIGHT_NAMED beacon 1 2 3\n"), import_lights=False)
         self.assertFalse([o for o in built.objects if o.type == "LIGHT"])

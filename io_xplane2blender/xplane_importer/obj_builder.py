@@ -632,6 +632,36 @@ class ObjBuilder:
         self.report.manipulators_imported += 1
 
     # ---- lights ---------------------------------------------------------------------------
+    @staticmethod
+    def _light_color(light: Light) -> Optional[Tuple[float, float, float]]:
+        """The color a light has in lights.txt, or the one in its parameters, so lights look right in Blender"""
+        if light.kind not in ("named", "param"):
+            return None
+        try:
+            from io_xplane2blender.xplane_utils import (
+                xplane_lights_txt_parser as lights_txt,
+            )
+
+            lights_txt.parse_lights_file()
+            parsed = lights_txt.get_parsed_light(light.name)
+            overload = parsed.best_overload()
+            formal = list(parsed.light_param_def)
+            color = []
+            for column in (
+                lights_txt.ColumnName.R,
+                lights_txt.ColumnName.G,
+                lights_txt.ColumnName.B,
+            ):
+                value = overload[column]
+                if isinstance(value, str):
+                    value = float(light.args[formal.index(value)])
+                color.append(max(0.0, min(1.0, float(value))))
+            return tuple(color)
+        except (
+            Exception
+        ):  # noqa: BLE001 - the color is only for looks, never fail an import over it
+            return None
+
     def _add_light(
         self, light: Light, parent, static: mathutils.Matrix, name: str
     ) -> None:
@@ -647,6 +677,9 @@ class ObjBuilder:
         if parent is not None and parent.name in self._hidden:
             self._hide(obj)
         self._flag_lod(obj, light.lod)
+        color = self._light_color(light)
+        if color is not None:
+            blender_light.color = color
         x = blender_light.xplane
         try:
             if light.kind == "named":
