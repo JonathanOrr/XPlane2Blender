@@ -1,3 +1,6 @@
-black==19.10b0
-isort==4.3.21
-pre-commit==2.7.1
+# Development tools only; the add-on itself has no dependencies outside Blender.
+black==26.10.0
+darker==3.0.0
+isort==9.0.2
+pre-commit==4.6.2
+ruff==0.16.10

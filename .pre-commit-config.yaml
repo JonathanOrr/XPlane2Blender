@@ -1,9 +1,19 @@
+# Install with: pip install -r requirements.txt && pre-commit install
 repos:
--   repo: https://github.com/pre-commit/mirrors-isort
-    rev: v4.3.21
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.10
     hooks:
-    - id: isort
--   repo: https://github.com/psf/black
-    rev: stable
+      - id: ruff-check
+  # black + isort, applied only to changed lines (see [tool.darker] in pyproject.toml)
+  - repo: https://github.com/akaihola/darker
+    rev: v3.0.0
     hooks:
-    - id: black
+      - id: darker
+        additional_dependencies:
+          - black==26.10.0
+          - isort==9.0.2
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml

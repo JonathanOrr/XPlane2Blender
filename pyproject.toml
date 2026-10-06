@@ -1,18 +1,27 @@
+# Development tooling only. The add-on is installed into Blender, not with pip.
+
 [tool.black]
 line-length = 88
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.git
-    | \.mypy_cache
-    | \.vs
-    | \.venv
-    | _build
-    | build
-    | dist
-    | tests
-  )/
-  | tests/template.py
-)
-'''
+target-version = ["py310"]  # Blender 3.6 ships Python 3.10
+# addons/modules is a symlink back to the repo root (see tests.py); don't follow it
+extend-exclude = '^/(tests|addons)/'
+
+[tool.isort]
+profile = "black"
+known_third_party = ["bmesh", "bpy", "idprop", "mathutils"]
+extend_skip = ["tests", "tools", "addons"]
+
+[tool.darker]
+# black and isort are applied only to the lines a commit changes, so editing
+# a file doesn't reformat the parts of it that predate these tools.
+isort = true
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+extend-exclude = ["tests/template.py", "addons"]
+
+[tool.ruff.lint]
+# Only rules that point at real bugs: syntax errors, undefined names,
+# broken comparisons. Style is left to black and isort.
+select = ["E9", "F63", "F7", "F82"]
