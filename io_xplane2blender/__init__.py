@@ -40,6 +40,7 @@ if "" not in locals():
     from . import xplane_ops_dev
     from . import xplane_config
     from . import xplane_updater
+    from .xplane_importer import ops as xplane_import_ops
     from .xplane_utils import xplane_lights_txt_parser
     from .xplane_utils import xplane_wiper_gradient
 else:
@@ -51,6 +52,7 @@ else:
     xplane_ops_dev = importlib.reload(xplane_ops_dev)
     xplane_config  = importlib.reload(xplane_config)
     xplane_updater = importlib.reload(xplane_updater)
+    xplane_import_ops = importlib.reload(xplane_import_ops)
     xplane_lights_txt_parser = importlib.reload(xplane_lights_txt_parser)
     xplane_wiper_gradient = importlib.reload(xplane_wiper_gradient)
 
@@ -75,6 +77,7 @@ def register():
     xplane_ops.register()
     xplane_ops_dev.register()
     xplane_ui.register()
+    xplane_import_ops.register()
     bpy.types.TOPBAR_MT_file_export.append(menu_func)
 
 
@@ -82,6 +85,7 @@ def register():
 # Unregisters the addon and all its classes and removes the entry from the menu.
 def unregister():
     xplane_export.unregister()
+    xplane_import_ops.unregister()
     xplane_ui.unregister()
     xplane_ops.unregister()
     xplane_ops_dev.unregister()
