@@ -11,7 +11,6 @@ class ImportOptions:
     import_animations: bool = True  # Dataref animations and show/hide
     import_manipulators: bool = True
     import_lights: bool = True
-    import_attached_objects: bool = True  # Aircraft: the objects listed in the ACF
     # Aircraft: what to skip
     include_not_drawn: bool = (
         False  # Objects the .acf flags as drawn nowhere (flags = 0)
@@ -21,15 +20,12 @@ class ImportOptions:
     )
     # How to build it
     all_lods: bool = False  # False imports only the first LOD
-    merge_materials: bool = True  # One material per unique look instead of per OBJ
     # Tick each OBJ's collection as an XPlane2Blender export root. Their export settings are always filled in,
     # but "Export OBJs" writes every root, which you don't want for a whole imported aircraft
     make_exportable: bool = False
     lit_strength: float = (
         0.0  # Emission strength of the _LIT texture, 0 shows the daytime look
     )
-    # Where textures come from
-    livery: str = ""  # A folder name inside the aircraft's liveries folder
     # Misc
     scale: float = 1.0
     collection_name: str = ""  # Use this instead of the file name
