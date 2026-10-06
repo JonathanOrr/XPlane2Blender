@@ -365,9 +365,9 @@ class MaterialFactory:
         rough = None
         if normal_image:
             tex = self._image_node(tree, normal_image, (-600, -150))
-            normal_color = tex.outputs["Color"]
-            if metalness_mode or pbr_maps:
-                normal_color = self._reconstruct_normal(tree, tex)
+            # X-Plane only reads the red and green channels as the normal and rebuilds the rest, the blue channel
+            # of many normal maps holds something else. It is the reflectance when NORMAL_METALNESS is used
+            normal_color = self._reconstruct_normal(tree, tex)
             nm = tree.nodes.new("ShaderNodeNormalMap")
             nm.location = (200, -300)
             links.new(normal_color, nm.inputs["Color"])
