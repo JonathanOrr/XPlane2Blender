@@ -89,6 +89,11 @@ class TestImportObj(XPlaneTestCase):
         (obj,) = self.meshes(built)
         self.assertAlmostEqual(max(v.co.x for v in obj.data.vertices), 2.0, places=5)
 
+    def test_broken_indices_do_not_stop_the_import(self) -> None:
+        built = self.do_import(obj_text("", indices="IDX10 0 1 2 0 1 99 5 6\n", tris="TRIS 0 8\n"))
+        (obj,) = self.meshes(built)
+        self.assertEqual(len(obj.data.polygons), 1)
+
     def test_degenerate_triangles_are_dropped(self) -> None:
         built = self.do_import(obj_text("", indices="IDX10 0 0 1 0 1 2\n", tris="TRIS 0 6\n"))
         (obj,) = self.meshes(built)

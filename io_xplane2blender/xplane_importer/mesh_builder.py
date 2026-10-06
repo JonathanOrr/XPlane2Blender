@@ -29,6 +29,13 @@ def build_mesh(
     triangles = np.concatenate(triangle_blocks)
     material_slots = np.concatenate(slots)
 
+    # Indices that point outside the vertex table can't be drawn, X-Plane would not either
+    valid = ((triangles >= 0) & (triangles < len(vertices))).all(axis=1)
+    if not valid.all():
+        triangles, material_slots = triangles[valid], material_slots[valid]
+    if len(triangles) == 0:
+        return None, 0
+
     # Drop triangles that reference the same vertex twice
     keep = (
         (triangles[:, 0] != triangles[:, 1])
