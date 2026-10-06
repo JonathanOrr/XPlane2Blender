@@ -1,5 +1,5 @@
 import argparse
-import glob
+import concurrent.futures
 import os
 import re
 import shutil
@@ -7,15 +7,19 @@ import subprocess
 import sys
 import time
 
+REPO_DIR = os.path.dirname(os.path.realpath(__file__))
+TESTS_DIR = os.path.join(REPO_DIR, "tests")
+TMP_DIR = os.path.join(TESTS_DIR, "tmp")
+
 
 def clean_tmp_folder():
     # create temp dir if not exists
-    os.makedirs("./tests/tmp", exist_ok=True)
+    os.makedirs(TMP_DIR, exist_ok=True)
 
     # Thanks jgoeders for something short,
     # https://stackoverflow.com/a/6615332
-    for file_object in os.listdir("./tests/tmp"):
-        file_object_path = os.path.join("./tests/tmp", file_object)
+    for file_object in os.listdir(TMP_DIR):
+        file_object_path = os.path.join(TMP_DIR, file_object)
         if os.path.isfile(file_object_path) or os.path.islink(file_object_path):
             os.unlink(file_object_path)
         else:
@@ -44,6 +48,13 @@ def _make_argparse():
         default=False,
         action="store_true",
         dest="keep_going",
+    )
+    test_selection.add_argument(
+        "-j",
+        "--jobs",
+        help="Number of test files to run at once (default: number of CPUs)",
+        type=int,
+        default=os.cpu_count() or 1,
     )
 
     output_control = parser.add_argument_group("Output Control")
@@ -123,6 +134,12 @@ def main(argv=None) -> int:
         if argv.exclude:
             argv.exclude = re.escape(argv.exclude)
 
+    if shutil.which(argv.blender) is None:
+        print(
+            f"Blender executable '{argv.blender}' not found, use --blender /path/to/blender"
+        )
+        return 1
+
     def printTestBeginning(text):
         """
         Print the C-Style and Vim comment block start tokens
@@ -167,71 +184,92 @@ def main(argv=None) -> int:
 
         return passes
 
-    exit_code = 0
-    for root, dirs, files in os.walk("./tests"):
-        filtered_files = list(
-            filter(
-                lambda file: file.endswith(".test.py")
-                and inFilter(os.path.join(root, file)),
-                files,
-            )
+    test_files = []
+    for root, dirs, files in os.walk(TESTS_DIR):
+        dirs.sort()
+        for file in sorted(files):
+            pyFile = os.path.join(root, file)
+            if file.endswith(".test.py") and inFilter(
+                os.path.relpath(pyFile, REPO_DIR).replace(os.sep, "/")
+            ):
+                test_files.append(pyFile)
+
+    # Environment variables - in order for --addons to work, we need to have OUR folder
+    # exist, and we need to have "addons/modules" simlink BACK to us to create the illusion
+    # of the directory structure Blender expects. Config goes to a scratch folder so
+    # tests never read or write the user's real Blender preferences.
+    enviro = {
+        **os.environ,
+        "BLENDER_USER_SCRIPTS": REPO_DIR,
+        "BLENDER_USER_CONFIG": os.path.join(TMP_DIR, "blender_config"),
+    }
+
+    def run_test_file(pyFile: str) -> str:
+        blendFile = pyFile.replace(".py", ".blend")
+        blender_args = [
+            argv.blender,
+            "--addons",
+            "io_xplane2blender",
+            "--factory-startup",
+            "-noaudio",
+            "-b",
+        ]
+
+        if argv.no_factory_startup:
+            blender_args.remove("--factory-startup")
+
+        out = ""
+        if os.path.exists(blendFile):
+            blender_args.append(blendFile)
+        elif not (argv.quiet or argv.print_fails):
+            out += "WARNING: Blender file " + blendFile + " does not exist\n"
+
+        blender_args.extend(["--python", pyFile])
+
+        if argv.force_blender_debug:
+            blender_args.append("--debug")
+
+        # Small Hack!
+        # Blender stops parsing after '--', so we can append the test runner
+        # args and bridge the gap without anything fancy!
+        blender_args.extend(["--"] + sys.argv[1:])
+
+        if not argv.quiet and (argv.force_blender_debug or argv.force_xplane_debug):
+            # print the command used to execute the script
+            # to be able to easily re-run it manually to get better error output
+            out += " ".join(blender_args) + "\n"
+
+        # Run Blender, normalize output line endings because Windows is dumb.
+        # A crash or non-zero exit is reported below as a missing results line.
+        proc = subprocess.run(
+            blender_args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            errors="replace",
+            env=enviro,
+            cwd=REPO_DIR,
         )
-        if exit_code != 0:
-            break
+        blender_out = proc.stdout
+        if proc.returncode != 0:
+            blender_out += f"\nBlender exited with code {proc.returncode}"
+        return out + blender_out
 
-        for pyFile in filtered_files:
+    exit_code = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, argv.jobs)) as pool:
+        # Results are reported in file order, whatever order they finish in
+        futures = [(pyFile, pool.submit(run_test_file, pyFile)) for pyFile in test_files]
+        for pyFile, future in futures:
             if exit_code != 0:
-                break
+                future.cancel()
+                continue
 
-            pyFile = os.path.join(root, pyFile)
-            blendFile = pyFile.replace(".py", ".blend")
+            pyFile = os.path.relpath(pyFile, REPO_DIR)
+            out = future.result()
 
             if not (argv.quiet or argv.print_fails):
                 printTestBeginning("Running file " + pyFile)
 
-            blender_args = [
-                argv.blender,
-                "--addons",
-                "io_xplane2blender",
-                "--factory-startup",
-                "-noaudio",
-                "-b",
-            ]
-
-            if argv.no_factory_startup:
-                blender_args.remove("--factory-startup")
-
-            if os.path.exists(blendFile):
-                blender_args.append(blendFile)
-            else:
-                if not (argv.quiet or argv.print_fails):
-                    print("WARNING: Blender file " + blendFile + " does not exist")
-                    printTestEnd()
-
-            blender_args.extend(["--python", pyFile])
-
-            if argv.force_blender_debug:
-                blender_args.append("--debug")
-
-            # Small Hack!
-            # Blender stops parsing after '--', so we can append the test runner
-            # args and bridge the gap without anything fancy!
-            blender_args.extend(["--"] + sys.argv[1:])
-
-            if not argv.quiet and (argv.force_blender_debug or argv.force_xplane_debug):
-                # print the command used to execute the script
-                # to be able to easily re-run it manually to get better error output
-                print(" ".join(blender_args))
-
-            # Environment variables - in order for --addons to work, we need to have OUR folder
-            # exist, and we need to have "addons/modules" simlink BACK to us to create the illusion
-            # of the directory structure Blender expects.
-            enviro={"BLENDER_USER_SCRIPTS": os.path.dirname(os.path.realpath(__file__))}
-
-            # Run Blender, normalize output line endings because Windows is dumb
-            out = subprocess.check_output(
-                blender_args, stderr=subprocess.STDOUT, universal_newlines=True, env=enviro
-            )  # type: str
             if not argv.force_blender_debug:
                 # Ignore the junk!
                 pattern = "^(%s)" % "|".join(
@@ -254,19 +292,13 @@ def main(argv=None) -> int:
 
             # TestResults from the current test
             testsRun, errors, failures, skipped = (0,) * 4
-            try:
-                results = re.search(TEST_RESULTS_REGEX, out)
-                if not results:
-                    raise Exception
-            except:
-                # Oh goodie, more string matching!
-                # I'm sure this won't ever come back to bite us!
-                # If we're ever using assertRaises,
-                # hopefully we'll figure out something better! -Ted, 8/14/18
-                if results is not None or "Traceback" in out:
-                    print(
-                        "Test runner must print correct results string at end or have suffered an unrecoverable error"
-                    )
+            results = re.search(TEST_RESULTS_REGEX, out)
+            if not results:
+                # The test file never got to print its results:
+                # Blender crashed, or the test script raised before finishing
+                print(
+                    "Test runner must print correct results string at end or have suffered an unrecoverable error"
+                )
                 total_errors += 1
                 errors = 1
             else:
@@ -281,28 +313,26 @@ def main(argv=None) -> int:
                 total_errors += errors
                 total_failures += failures
                 total_skipped += skipped
-            finally:
-                if errors or failures:
-                    if argv.print_fails:
-                        printTestBeginning("Running file %s - FAILED" % (pyFile))
-                        print(out)
-                        printTestEnd()
-                    else:
-                        print("%s FAILED" % pyFile)
 
-                    if not argv.keep_going:
-                        exit_code = 1
-                    else:
-                        exit_code = 0
-                elif argv.quiet or argv.print_fails:
-                    print("%s passed" % pyFile)
-
-                # THIS IS THE LAST THING TO PRINT BEFORE A TEST ENDS
-                # Its a little easier to see the boundaries between test suites,
-                # given that there is a mess of print statements from Python, unittest, the XPlane2Blender logger,
-                # Blender, and more in there sometimes
-                if not (argv.quiet or argv.print_fails):
+            if errors or failures:
+                if argv.print_fails:
+                    printTestBeginning("Running file %s - FAILED" % (pyFile))
+                    print(out)
                     printTestEnd()
+                else:
+                    print("%s FAILED" % pyFile)
+
+                if not argv.keep_going:
+                    exit_code = 1
+            elif argv.quiet or argv.print_fails:
+                print("%s passed" % pyFile)
+
+            # THIS IS THE LAST THING TO PRINT BEFORE A TEST ENDS
+            # Its a little easier to see the boundaries between test suites,
+            # given that there is a mess of print statements from Python, unittest, the XPlane2Blender logger,
+            # Blender, and more in there sometimes
+            if not (argv.quiet or argv.print_fails):
+                printTestEnd()
 
     # Final Result String Benifits
     # - --continue concisely tells how many tests failed
@@ -324,7 +354,8 @@ def main(argv=None) -> int:
             total_seconds=time.perf_counter() - timer_start,
         )
     )
-    return exit_code
+    # --continue only decides whether to keep going; any failure still fails the run
+    return 1 if exit_code or total_errors or total_failures else 0
 
 
 if __name__ == "__main__":
