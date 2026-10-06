@@ -928,7 +928,10 @@ class XPlaneFile:
             # -----------------------------------------------------------------
             # LOD spec #1, this is written before the first ever
             # or subsequent calls to commands.write
+            initial_written = self.commands.written.copy()
             for lod_bucket_index, lod_bucket in enumerate(defined_buckets):
+                # LOD state is independent, including defaults set by GLOBAL_*.
+                self.commands.written = initial_written.copy()
                 o += f"ATTR_LOD\t{lod_bucket.near}\t{lod_bucket.far}\n"
                 o += self.commands.write(lod_bucket_index=lod_bucket_index)
         else:
