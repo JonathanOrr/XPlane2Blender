@@ -1,4 +1,5 @@
 """Finds an OBJ's texture files and builds Blender materials that look like X-Plane renders them"""
+
 import os
 from typing import Dict, List, Optional, Tuple
 
@@ -12,10 +13,25 @@ from .obj_parser import ObjFile
 _EXTENSIONS = (".dds", ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".tif", ".tiff")
 
 
+def _unsupported_dds(path: str) -> bool:
+    """True for DDS files in a format Blender cannot decode. Only DXT1, DXT3 and DXT5 and plain RGBA are safe"""
+    if not path.lower().endswith(".dds"):
+        return False
+    try:
+        with open(path, "rb") as f:
+            header = f.read(148)
+    except OSError:
+        return False
+    # "DX10" in the pixel format's FourCC means the real format is in an extra header, BC7 and friends
+    return header[:4] == b"DDS " and header[84:88] == b"DX10"
+
+
 class TextureResolver:
     """Resolves an OBJ's texture paths on disk. A livery's replacement textures are checked first"""
 
-    def __init__(self, obj_dir: str, livery_objects_dir: str = "", objects_root: str = "") -> None:
+    def __init__(
+        self, obj_dir: str, livery_objects_dir: str = "", objects_root: str = ""
+    ) -> None:
         self.obj_dir = obj_dir
         # liveries/<name>/objects replaces files of the aircraft's objects folder with the same relative path
         self.livery_objects_dir = livery_objects_dir
@@ -25,7 +41,11 @@ class TextureResolver:
     def _find_in_dir(self, directory: str, name: str) -> Optional[str]:
         """Case insensitive lookup of `name`, which may have subfolders, inside directory"""
         current = directory
-        parts = [p for p in name.replace("\\", "/").replace(":", "/").split("/") if p and p != "."]
+        parts = [
+            p
+            for p in name.replace("\\", "/").replace(":", "/").split("/")
+            if p and p != "."
+        ]
         for part in parts:
             if part == "..":
                 current = os.path.dirname(current)
@@ -66,7 +86,9 @@ class TextureResolver:
         if relative.startswith(".."):
             return None
         stem, extension = os.path.splitext(relative)
-        for candidate in [relative] + [stem + e for e in _EXTENSIONS if e != extension.lower()]:
+        for candidate in [relative] + [
+            stem + e for e in _EXTENSIONS if e != extension.lower()
+        ]:
             found = self._find_in_dir(self.livery_objects_dir, candidate)
             if found:
                 return found
@@ -76,7 +98,13 @@ class TextureResolver:
 class MaterialFactory:
     """Creates and caches the Blender materials for one OBJ"""
 
-    def __init__(self, obj: ObjFile, resolver: TextureResolver, options: ImportOptions, report: ImportReport) -> None:
+    def __init__(
+        self,
+        obj: ObjFile,
+        resolver: TextureResolver,
+        options: ImportOptions,
+        report: ImportReport,
+    ) -> None:
         self.obj = obj
         self.resolver = resolver
         self.options = options
@@ -86,8 +114,12 @@ class MaterialFactory:
         self.base_name = os.path.splitext(os.path.basename(obj.path))[0] or "Material"
         self.diffuse_path = resolver.resolve(obj.texture)
         self.lit_path = resolver.resolve(obj.texture_lit)
-        self.normal_path = resolver.resolve(obj.texture_normal or obj.texture_maps.get("normal", ""))
-        self.material_gloss_path = resolver.resolve(obj.texture_maps.get("material_gloss", ""))
+        self.normal_path = resolver.resolve(
+            obj.texture_normal or obj.texture_maps.get("normal", "")
+        )
+        self.material_gloss_path = resolver.resolve(
+            obj.texture_maps.get("material_gloss", "")
+        )
         self.gloss_path = resolver.resolve(obj.texture_maps.get("gloss", ""))
         for label, wanted, found in (
             ("TEXTURE", obj.texture, self.diffuse_path),
@@ -95,7 +127,9 @@ class MaterialFactory:
             ("TEXTURE_NORMAL", obj.texture_normal, self.normal_path),
         ):
             if wanted and not found:
-                report.warn(f"{self.base_name}: {label} '{wanted}' was not found, the material has no texture")
+                report.warn(
+                    f"{self.base_name}: {label} '{wanted}' was not found, the material has no texture"
+                )
 
     # ---- images --------------------------------------------------------------------------
     def image(self, path: Optional[str], colorspace: str) -> Optional[bpy.types.Image]:
@@ -106,13 +140,12 @@ class MaterialFactory:
             return self._images[key]
         image = None
         try:
-            image = bpy.data.images.load(path, check_existing=True)
-            if image.size[0] == 0 or image.size[1] == 0:
-                # Blender loaded the file but could not decode it, DDS formats it doesn't know are like this
-                self.report.warn(f"{os.path.basename(path)} could not be decoded by Blender, it has no texture")
-                bpy.data.images.remove(image)
-                image = None
+            if _unsupported_dds(path):
+                self.report.warn(
+                    f"{os.path.basename(path)} uses a DDS format Blender cannot read (BC6/BC7), it has no texture"
+                )
             else:
+                image = bpy.data.images.load(path, check_existing=True)
                 image.colorspace_settings.name = colorspace
                 # Keep unmultiplied color, X-Plane does not premultiply
                 image.alpha_mode = "CHANNEL_PACKED"
@@ -143,7 +176,13 @@ class MaterialFactory:
         suffix = []
         blend = state.get("blend")
         if blend:
-            suffix.append({"blend": "blend", "no_blend": "cutout", "shadow_blend": "shadowblend"}.get(blend[0], blend[0]))
+            suffix.append(
+                {
+                    "blend": "blend",
+                    "no_blend": "cutout",
+                    "shadow_blend": "shadowblend",
+                }.get(blend[0], blend[0])
+            )
         if state.get("draw") == ("disable",):
             suffix.append("hidden")
         if "cockpit" in state:
@@ -171,6 +210,9 @@ class MaterialFactory:
         shiny = state.get("shiny")
         if shiny:
             mat.specular_intensity = max(0.0, min(1.0, float(shiny[0])))
+        elif self._global_specular() > 0:
+            # GLOBAL_specular is what ATTR_shiny_rat defaults to for every mesh
+            mat.specular_intensity = max(0.0, min(1.0, self._global_specular()))
         poly_os = state.get("poly_os")
         if poly_os:
             x.poly_os = int(float(poly_os[0]))
@@ -178,28 +220,84 @@ class MaterialFactory:
         x.shadow_local = state.get("shadow") != ("off",)
         hard = state.get("hard")
         if hard:
-            surface = hard[0] if hard[0] != "deck" else (hard[1] if len(hard) > 1 else "")
-            valid = {i.identifier for i in x.bl_rna.properties["surfaceType"].enum_items}
+            surface = (
+                hard[0] if hard[0] != "deck" else (hard[1] if len(hard) > 1 else "")
+            )
+            valid = {
+                i.identifier for i in x.bl_rna.properties["surfaceType"].enum_items
+            }
             if surface in valid:
                 x.surfaceType = surface
                 x.deck = hard[0] == "deck"
         cockpit = state.get("cockpit")
-        if cockpit:
-            if cockpit[0] in ("panel", "region"):
-                x.cockpit_feature = xplane_constants.COCKPIT_FEATURE_PANEL
-                if cockpit[0] == "region" and len(cockpit) > 1:
-                    region = str(int(float(cockpit[1])) + 1)
-                    if region in {i.identifier for i in x.bl_rna.properties["cockpit_region"].enum_items}:
-                        x.cockpit_region = region
-            elif cockpit[0] == "device" and len(cockpit) > 1:
-                x.cockpit_feature = xplane_constants.COCKPIT_FEATURE_DEVICE
-                device = cockpit[1]
-                if device in {i.identifier for i in x.bl_rna.properties["device_name"].enum_items}:
-                    x.device_name = device
+        lit_only = state.get("cockpit_lit_only")
+        if cockpit or lit_only is not None:
+            x.cockpit_feature = xplane_constants.COCKPIT_FEATURE_PANEL
+            luminance = None
+            if cockpit and cockpit[0] == "region" and len(cockpit) > 1:
+                region = str(int(float(cockpit[1])) + 1)
+                if region in {
+                    i.identifier
+                    for i in x.bl_rna.properties["cockpit_region"].enum_items
+                }:
+                    x.cockpit_region = region
+                luminance = cockpit[2] if len(cockpit) > 2 else None
+            elif lit_only:
+                luminance = lit_only[0]
+            elif cockpit and cockpit[0] == "panel" and len(cockpit) > 1:
+                luminance = cockpit[1]
+            if luminance is not None:
+                try:
+                    x.cockpit_feature_use_luminance = True
+                    x.cockpit_feature_luminance = max(
+                        1, min(60000, int(float(luminance)))
+                    )
+                except ValueError:
+                    pass
+            if cockpit and cockpit[0] == "device" and len(cockpit) > 1:
+                self._set_device(x, cockpit[1:])
         # Sticky attributes the add-on has no setting for are kept as custom attributes
-        for key in ("depth", "layer_group", "diffuse", "diffuse_rgb", "emission_rgb", "specular_rgb", "landing_gear", "hud_glass", "cull", "shade", "rain", "wiper", "cockpit_lit_only"):
+        for key in (
+            "depth",
+            "layer_group",
+            "diffuse",
+            "diffuse_rgb",
+            "emission_rgb",
+            "specular_rgb",
+            "landing_gear",
+            "hud_glass",
+            "cull",
+            "shade",
+            "rain",
+            "wiper",
+        ):
             if key in state:
                 self._custom_attribute(mat, key, state[key])
+
+    @staticmethod
+    def _set_device(x, args) -> None:
+        """ATTR_cockpit_device <name> <bus mask> <lighting channel> <auto adjust> [luminance]"""
+        x.cockpit_feature = xplane_constants.COCKPIT_FEATURE_DEVICE
+        name = args[0]
+        known = {i.identifier for i in x.bl_rna.properties["device_name"].enum_items}
+        if name in known:
+            x.device_name = name
+        else:
+            x.device_name = xplane_constants.DEVICE_PLUGIN
+            x.plugin_device = name
+        try:
+            bus = int(float(args[1])) if len(args) > 1 else 0
+            for i in range(6):
+                setattr(x, f"device_bus_{i}", bool(bus & (1 << i)))
+            if len(args) > 2:
+                x.device_lighting_channel = int(float(args[2]))
+            if len(args) > 3:
+                x.device_auto_adjust = bool(int(float(args[3])))
+            if len(args) > 4:
+                x.cockpit_feature_use_luminance = True
+                x.cockpit_feature_luminance = max(1, min(60000, int(float(args[4]))))
+        except ValueError:
+            pass
 
     @staticmethod
     def _custom_attribute(mat: bpy.types.Material, key: str, value: tuple) -> None:
@@ -216,7 +314,6 @@ class MaterialFactory:
             "shade": "ATTR_shade_smooth",
             "rain": "ATTR_rain_scale",
             "wiper": "ATTR_wiper",
-            "cockpit_lit_only": "ATTR_cockpit_lit_only",
         }
         attribute = mat.xplane.customAttributes.add()
         attribute.name = names[key]
@@ -259,7 +356,9 @@ class MaterialFactory:
         # Specular / gloss / metalness / normals
         shiny = state.get("shiny")
         specular_level = float(shiny[0]) if shiny else self._global_specular()
-        spec_input = bsdf.inputs.get("Specular IOR Level") or bsdf.inputs.get("Specular")
+        spec_input = bsdf.inputs.get("Specular IOR Level") or bsdf.inputs.get(
+            "Specular"
+        )
         normal_image = self.image(self.normal_path, "Non-Color")
         metalness_mode = self.obj.has_normal_metalness
         pbr_maps = bool(self.obj.texture_maps)
@@ -290,7 +389,11 @@ class MaterialFactory:
                 if spec_input is not None:
                     links.new(mult.outputs["Value"], spec_input)
                 if metalness_mode:
-                    sep = tree.nodes.new("ShaderNodeSeparateColor") if hasattr(bpy.types, "ShaderNodeSeparateColor") else tree.nodes.new("ShaderNodeSeparateRGB")
+                    sep = (
+                        tree.nodes.new("ShaderNodeSeparateColor")
+                        if hasattr(bpy.types, "ShaderNodeSeparateColor")
+                        else tree.nodes.new("ShaderNodeSeparateRGB")
+                    )
                     sep.location = (-300, -450)
                     links.new(tex.outputs["Color"], sep.inputs[0])
                     blue = sep.outputs.get("Blue") or sep.outputs["B"]
@@ -300,10 +403,16 @@ class MaterialFactory:
             gloss = self.image(self.gloss_path, "Non-Color")
             if mg:
                 tex = self._image_node(tree, mg, (-600, -500))
-                sep = tree.nodes.new("ShaderNodeSeparateColor") if hasattr(bpy.types, "ShaderNodeSeparateColor") else tree.nodes.new("ShaderNodeSeparateRGB")
+                sep = (
+                    tree.nodes.new("ShaderNodeSeparateColor")
+                    if hasattr(bpy.types, "ShaderNodeSeparateColor")
+                    else tree.nodes.new("ShaderNodeSeparateRGB")
+                )
                 sep.location = (-300, -550)
                 links.new(tex.outputs["Color"], sep.inputs[0])
-                links.new(sep.outputs.get("Red") or sep.outputs["R"], bsdf.inputs["Metallic"])
+                links.new(
+                    sep.outputs.get("Red") or sep.outputs["R"], bsdf.inputs["Metallic"]
+                )
                 inv = tree.nodes.new("ShaderNodeMath")
                 inv.operation = "SUBTRACT"
                 inv.inputs[0].default_value = 1.0
@@ -313,7 +422,11 @@ class MaterialFactory:
                 rough = True
             elif gloss:
                 tex = self._image_node(tree, gloss, (-600, -500))
-                sep = tree.nodes.new("ShaderNodeSeparateColor") if hasattr(bpy.types, "ShaderNodeSeparateColor") else tree.nodes.new("ShaderNodeSeparateRGB")
+                sep = (
+                    tree.nodes.new("ShaderNodeSeparateColor")
+                    if hasattr(bpy.types, "ShaderNodeSeparateColor")
+                    else tree.nodes.new("ShaderNodeSeparateRGB")
+                )
                 sep.location = (-300, -550)
                 links.new(tex.outputs["Color"], sep.inputs[0])
                 inv = tree.nodes.new("ShaderNodeMath")
@@ -324,13 +437,19 @@ class MaterialFactory:
                 links.new(inv.outputs["Value"], bsdf.inputs["Roughness"])
                 rough = True
         if rough is None:
-            bsdf.inputs["Roughness"].default_value = max(0.0, 1.0 - specular_level * 0.8) if (shiny or self._global_specular() > 0) else 0.9
+            bsdf.inputs["Roughness"].default_value = (
+                max(0.0, 1.0 - specular_level * 0.8)
+                if (shiny or self._global_specular() > 0)
+                else 0.9
+            )
             if spec_input is not None:
                 spec_input.default_value = min(0.5, specular_level * 0.5)
 
         # The _LIT texture is the night lighting, its strength is an import option
         lit = self.image(self.lit_path, "sRGB")
-        emission_color = bsdf.inputs.get("Emission Color") or bsdf.inputs.get("Emission")
+        emission_color = bsdf.inputs.get("Emission Color") or bsdf.inputs.get(
+            "Emission"
+        )
         if lit and emission_color is not None:
             tex = self._image_node(tree, lit, (-300, -800))
             links.new(tex.outputs["Color"], emission_color)
@@ -361,7 +480,11 @@ class MaterialFactory:
 
     def _reconstruct_normal(self, tree, tex):
         """Normal maps that store only X and Y in red and green: rebuild Z and return a color socket"""
-        sep = tree.nodes.new("ShaderNodeSeparateColor") if hasattr(bpy.types, "ShaderNodeSeparateColor") else tree.nodes.new("ShaderNodeSeparateRGB")
+        sep = (
+            tree.nodes.new("ShaderNodeSeparateColor")
+            if hasattr(bpy.types, "ShaderNodeSeparateColor")
+            else tree.nodes.new("ShaderNodeSeparateRGB")
+        )
         sep.location = (-400, -150)
         tree.links.new(tex.outputs["Color"], sep.inputs[0])
         red = sep.outputs.get("Red") or sep.outputs["R"]
@@ -412,10 +535,14 @@ class MaterialFactory:
         return scale.outputs["Vector"]
 
     @staticmethod
-    def _set_blend_mode(mat: bpy.types.Material, cutout: bool, ratio: float, has_texture: bool) -> None:
+    def _set_blend_mode(
+        mat: bpy.types.Material, cutout: bool, ratio: float, has_texture: bool
+    ) -> None:
         """The viewport blend mode, which differs between Blender versions"""
         if hasattr(mat, "surface_render_method"):  # Blender 4.2 and later
-            mat.surface_render_method = "DITHERED" if (cutout or not has_texture) else "BLENDED"
+            mat.surface_render_method = (
+                "DITHERED" if (cutout or not has_texture) else "BLENDED"
+            )
         elif hasattr(mat, "blend_method"):
             mat.blend_method = "CLIP" if cutout else "BLEND"
             if cutout and hasattr(mat, "alpha_threshold"):

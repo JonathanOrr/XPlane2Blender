@@ -1,4 +1,5 @@
 """Coordinate and transform helpers: X-Plane (x right, y up, z back) to Blender (x right, y forward, z up)"""
+
 import math
 from typing import Sequence, Tuple
 
@@ -48,7 +49,11 @@ def principal_axis(axis_xp: Sequence[float]) -> Tuple[int, float]:
 
 
 def is_identity(m: mathutils.Matrix, eps: float = 1e-7) -> bool:
-    return all(abs(m[i][j] - (1.0 if i == j else 0.0)) < eps for i in range(4) for j in range(4))
+    return all(
+        abs(m[i][j] - (1.0 if i == j else 0.0)) < eps
+        for i in range(4)
+        for j in range(4)
+    )
 
 
 def has_rotation(m: mathutils.Matrix, eps: float = 1e-7) -> bool:

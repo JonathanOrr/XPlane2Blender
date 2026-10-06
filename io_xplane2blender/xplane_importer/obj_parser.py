@@ -6,9 +6,12 @@ and a tree of animation nodes holding every drawable thing (triangle runs, light
 magnets...) together with the attribute state that was active when it was drawn.
 Anything it does not understand is kept in ObjFile.unknown, never silently dropped.
 """
+
 import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 Vec3 = Tuple[float, float, float]
 # The attribute state is a mapping of a state key ("draw", "blend", "manip"...) to a tuple of values.
@@ -42,7 +45,11 @@ class AnimOp:
     @property
     def static_value(self) -> Tuple[float, ...]:
         """The vector or angle used when the op is static"""
-        return self.keys[0][1] if self.keys else ((0.0, 0.0, 0.0) if self.kind == "trans" else (0.0,))
+        return (
+            self.keys[0][1]
+            if self.keys
+            else ((0.0, 0.0, 0.0) if self.kind == "trans" else (0.0,))
+        )
 
 
 @dataclass
@@ -86,8 +93,12 @@ class Extra:
 class AnimNode:
     ops: List[AnimOp] = field(default_factory=list)
     visibility: List[Visibility] = field(default_factory=list)
-    children: List[Union["AnimNode", TrisRun, Light, Extra]] = field(default_factory=list)
-    comment: str = ""  # The last comment line seen before the block, often a useful name
+    children: List[Union["AnimNode", TrisRun, Light, Extra]] = field(
+        default_factory=list
+    )
+    comment: str = (
+        ""  # The last comment line seen before the block, often a useful name
+    )
     lod: Optional[Tuple[float, float]] = None
 
 
@@ -104,8 +115,9 @@ class ObjFile:
     texture_modulator: List[str] = field(default_factory=list)
     # GLOBAL_*, BLEND_GLASS, NORMAL_METALNESS and similar: directive -> list of argument lists
     globals: Dict[str, List[List[str]]] = field(default_factory=dict)
-    vertices: List[Tuple[float, ...]] = field(default_factory=list)  # x y z nx ny nz s t
-    indices: List[int] = field(default_factory=list)
+    # The VT table as an (N, 8) array of x y z nx ny nz s t, and the IDX table as one flat array
+    vertices: np.ndarray = field(default_factory=lambda: np.zeros((0, 8)))
+    indices: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int64))
     root: AnimNode = field(default_factory=AnimNode)
     lods: List[Tuple[float, float]] = field(default_factory=list)
     unknown: Dict[str, int] = field(default_factory=dict)
@@ -202,6 +214,7 @@ _GLOBAL_DIRECTIVES = {
     "SLOPE_LIMIT",
     "SLOPE_FLATTEN",
     "SLUNG_LOAD_WEIGHT",
+    "PARTICLE_SYSTEM",
     "COCKPIT_REGION",
     "DEBUG",
     "EXPORT",
@@ -231,7 +244,7 @@ _GLOBAL_DIRECTIVES = {
     "ATTR_bump_level",
     "GLOBAL_cockpit_lit_only",
 }
-_EXTRAS = {"MAGNET", "EMITTER", "PARTICLE_SYSTEM", "SMOKE_BLACK", "SMOKE_WHITE"}
+_EXTRAS = {"MAGNET", "EMITTER", "SMOKE_BLACK", "SMOKE_WHITE"}
 _LIGHT_NAMED = ("LIGHT_NAMED", "LIGHT_CUSTOM", "LIGHT_PARAM", "LIGHT_SPILL_CUSTOM")
 _IGNORED = {"TRIS_break", "POINT_COUNTS", "OBJ"}
 
@@ -266,9 +279,13 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
         if token.isdigit():
             obj.version = int(token)
     if not header_seen:
-        raise ObjParseError(f"{os.path.basename(path) or 'text'} is not an OBJ8 file (no OBJ header)")
+        raise ObjParseError(
+            f"{os.path.basename(path) or 'text'} is not an OBJ8 file (no OBJ header)"
+        )
     if obj.version < 800:
-        raise ObjParseError(f"OBJ version {obj.version} is not supported, only OBJ8 (800 and later)")
+        raise ObjParseError(
+            f"OBJ version {obj.version} is not supported, only OBJ8 (800 and later)"
+        )
 
     state: Dict[str, Any] = {}
     manip_extras: List[Tuple[str, Tuple[str, ...]]] = []
@@ -283,7 +300,8 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
     def frozen() -> FrozenState:
         current = dict(state)
         if "manip" in current:
-            current["manip_extras"] = tuple(manip_extras)
+            if manip_extras:
+                current["manip_extras"] = tuple(manip_extras)
             if detents:
                 current["manip_detents"] = tuple(detents)
         return _freeze(current)
@@ -291,12 +309,26 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
     def unknown(name: str) -> None:
         obj.unknown[name] = obj.unknown.get(name, 0) + 1
 
-    vertices = obj.vertices
-    indices = obj.indices
+    # The vertex and index tables are most of a big file, they are collected as text and converted in bulk
+    vertex_lines: List[str] = []
+    index_lines: List[str] = []
 
     for line_number, line in enumerate(lines[index:], start=index + 1):
         stripped = line.strip()
         if not stripped:
+            continue
+        lead = stripped[:3]
+        if lead == "VT\t" or lead == "VT ":
+            if "#" in stripped:
+                stripped = stripped.partition("#")[0]
+            vertex_lines.append(stripped[3:])
+            continue
+        if lead == "IDX":
+            if "#" in stripped:
+                stripped = stripped.partition("#")[0]
+            index_lines.append(
+                stripped[5:] if stripped.startswith("IDX10") else stripped[3:]
+            )
             continue
         if stripped[0] == "#":
             comment = stripped.lstrip("# ").strip()
@@ -314,16 +346,12 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
         args = parts[1:]
 
         try:
-            if name == "VT":
-                vertices.append(tuple(map(float, args[:8])))
-            elif name == "IDX":
-                indices.append(int(args[0]))
-            elif name == "IDX10":
-                indices.extend(map(int, args))
-            elif name == "VLIGHT":
+            if name == "VLIGHT":
                 obj.vlights.append(_floats(args[:6]))
             elif name == "TRIS":
-                stack[-1].children.append(TrisRun(int(args[0]), int(args[1]), frozen(), lod))
+                stack[-1].children.append(
+                    TrisRun(int(args[0]), int(args[1]), frozen(), lod)
+                )
             elif name == "ANIM_begin":
                 node = AnimNode(comment=last_comment, lod=lod)
                 stack[-1].children.append(node)
@@ -333,7 +361,9 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 if len(stack) > 1:
                     stack.pop()
                 else:
-                    obj.warnings.append(f"line {line_number}: ANIM_end without ANIM_begin")
+                    obj.warnings.append(
+                        f"line {line_number}: ANIM_end without ANIM_begin"
+                    )
             elif name == "ANIM_trans":
                 values = _floats(args[:6])
                 dataref = ""
@@ -362,7 +392,9 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 op = AnimOp("trans", args[0] if args else "")
                 stack[-1].ops.append(op)
             elif name == "ANIM_rotate_begin":
-                op = AnimOp("rotate", args[3] if len(args) > 3 else "", _floats(args[:3]))
+                op = AnimOp(
+                    "rotate", args[3] if len(args) > 3 else "", _floats(args[:3])
+                )
                 stack[-1].ops.append(op)
             elif name == "ANIM_trans_key":
                 if op is not None:
@@ -379,7 +411,12 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                     ops[-1].loop = float(args[0])
             elif name in ("ANIM_show", "ANIM_hide"):
                 stack[-1].visibility.append(
-                    Visibility(name[5:], float(args[0]), float(args[1]), args[2] if len(args) > 2 else "")
+                    Visibility(
+                        name[5:],
+                        float(args[0]),
+                        float(args[1]),
+                        args[2] if len(args) > 2 else "",
+                    )
                 )
             elif name == "ATTR_LOD":
                 lod = (float(args[0]), float(args[1]))
@@ -395,7 +432,11 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 detents.clear()
             elif name in _TOGGLES:
                 key, value = _TOGGLES[name]
-                if key == "cockpit" and value is not None and name == "ATTR_cockpit_hud":
+                if (
+                    key == "cockpit"
+                    and value is not None
+                    and name == "ATTR_cockpit_hud"
+                ):
                     state[key] = value
                 elif value is None:
                     state.pop(key, None)
@@ -434,8 +475,12 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 obj.texture_lit = " ".join(args)
             elif name == "TEXTURE_NORMAL":
                 # TEXTURE_NORMAL [ratio] path
-                obj.texture_normal = " ".join(args[1:] if len(args) > 1 and _is_number(args[0]) else args)
-                obj.globals.setdefault("TEXTURE_NORMAL_RATIO", []).append(args[:1] if len(args) > 1 and _is_number(args[0]) else [])
+                obj.texture_normal = " ".join(
+                    args[1:] if len(args) > 1 and _is_number(args[0]) else args
+                )
+                obj.globals.setdefault("TEXTURE_NORMAL_RATIO", []).append(
+                    args[:1] if len(args) > 1 and _is_number(args[0]) else []
+                )
             elif name == "TEXTURE_MAP":
                 if len(args) >= 2:
                     obj.texture_maps[args[0]] = " ".join(args[1:])
@@ -457,23 +502,77 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                     if i < len(obj.vlights):
                         v = obj.vlights[i]
                         stack[-1].children.append(
-                            Light("vlight", v[0:3], "", [str(c) for c in v[3:6]], frozen(), lod)
+                            Light(
+                                "vlight",
+                                v[0:3],
+                                "",
+                                [str(c) for c in v[3:6]],
+                                frozen(),
+                                lod,
+                            )
                         )
             elif name in _EXTRAS:
                 stack[-1].children.append(Extra(name, args, frozen(), lod))
-            elif name in _GLOBAL_DIRECTIVES or name.startswith(("GLOBAL_", "WIPER_", "THERMAL_", "RAIN_")):
+            elif name in _GLOBAL_DIRECTIVES or name.startswith(
+                ("GLOBAL_", "WIPER_", "THERMAL_", "RAIN_")
+            ):
                 obj.globals.setdefault(name, []).append(args)
             elif name in _IGNORED:
                 pass
             else:
                 unknown(name)
         except (ValueError, IndexError) as e:
-            obj.warnings.append(f"line {line_number}: could not read '{stripped[:60]}' ({e.__class__.__name__})")
+            obj.warnings.append(
+                f"line {line_number}: could not read '{stripped[:60]}' ({e.__class__.__name__})"
+            )
 
     if len(stack) > 1:
         obj.warnings.append(f"{len(stack) - 1} ANIM_begin blocks were never closed")
 
+    obj.vertices = _to_vertex_array(vertex_lines, obj)
+    obj.indices = _to_index_array(index_lines, obj)
     return obj
+
+
+def _to_vertex_array(vertex_lines: List[str], obj: ObjFile) -> np.ndarray:
+    if not vertex_lines:
+        return np.zeros((0, 8))
+    try:
+        return np.array(" ".join(vertex_lines).split(), dtype=np.float64).reshape(-1, 8)
+    except ValueError:
+        # Something is wrong with at least one line, read them one by one and fix them up
+        rows = []
+        for number, text in enumerate(vertex_lines):
+            try:
+                values = [float(t) for t in text.split()[:8]]
+            except ValueError:
+                values = []
+            if len(values) < 8:
+                obj.warnings.append(
+                    f"vertex {number} is incomplete, it was replaced with zeros"
+                )
+                values = (values + [0.0] * 8)[:8]
+            rows.append(values)
+        return np.array(rows, dtype=np.float64)
+
+
+def _to_index_array(index_lines: List[str], obj: ObjFile) -> np.ndarray:
+    if not index_lines:
+        return np.zeros(0, dtype=np.int64)
+    try:
+        return np.array(" ".join(index_lines).split(), dtype=np.int64)
+    except ValueError:
+        values = []
+        for text in index_lines:
+            for token in text.split():
+                try:
+                    values.append(int(token))
+                except ValueError:
+                    obj.warnings.append(
+                        f"index '{token}' is not a number, it was replaced with 0"
+                    )
+                    values.append(0)
+        return np.array(values, dtype=np.int64)
 
 
 def _is_number(token: str) -> bool:

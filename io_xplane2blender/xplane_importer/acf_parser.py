@@ -1,4 +1,5 @@
 """A parser for X-Plane aircraft files (.acf, the text format of X-Plane 10, 11 and 12). No Blender needed"""
+
 import os
 import re
 from dataclasses import dataclass, field
@@ -31,7 +32,11 @@ class AcfObject:
     @property
     def is_attached(self) -> bool:
         """Attached to a wing, body or gear part. Those objects move with that part (or only show on damage)"""
-        return self.attached_body >= 0 or self.attached_wing >= 0 or self.attached_gear >= 0
+        return (
+            self.attached_body >= 0
+            or self.attached_wing >= 0
+            or self.attached_gear >= 0
+        )
 
     @property
     def is_damage(self) -> bool:
@@ -80,7 +85,9 @@ def _child_folder(folder: str, name: str) -> str:
     """The path of a subfolder, found without regard to case (aircraft made on Windows say "Objects")"""
     try:
         for entry in os.listdir(folder):
-            if entry.lower() == name.lower() and os.path.isdir(os.path.join(folder, entry)):
+            if entry.lower() == name.lower() and os.path.isdir(
+                os.path.join(folder, entry)
+            ):
                 return os.path.join(folder, entry)
     except OSError:
         pass
@@ -143,7 +150,8 @@ def parse_acf_file(path: str) -> AcfFile:
                 file=file,
                 flags=_int(raw.get("_obj_flags", "0")),
                 position=tuple(
-                    _float(raw.get(f"_v10_att_{axis}_acf_prt_ref")) * FEET_TO_METERS for axis in ("x", "y", "z")
+                    _float(raw.get(f"_v10_att_{axis}_acf_prt_ref")) * FEET_TO_METERS
+                    for axis in ("x", "y", "z")
                 ),
                 rotation=(
                     _float(raw.get("_v10_att_phi_ref")),

@@ -1,4 +1,5 @@
 """Turns slices of an OBJ's vertex and index tables into a Blender mesh"""
+
 from typing import List, Optional, Tuple
 
 import bpy
@@ -58,7 +59,9 @@ def build_mesh(
     reversed_triangles = triangles[:, ::-1]
     faces = remap[reversed_triangles]
     welded_ok = (
-        (faces[:, 0] != faces[:, 1]) & (faces[:, 1] != faces[:, 2]) & (faces[:, 0] != faces[:, 2])
+        (faces[:, 0] != faces[:, 1])
+        & (faces[:, 1] != faces[:, 2])
+        & (faces[:, 0] != faces[:, 2])
     )
     if not welded_ok.all():
         faces = faces[welded_ok]
@@ -87,7 +90,9 @@ def build_mesh(
     uv_layer = mesh.uv_layers.new(name="UVMap")
     uv_layer.data.foreach_set("uv", uvs.astype(np.float32).ravel())
 
-    if hasattr(mesh, "use_auto_smooth"):  # Blender before 4.1 needs this for custom normals
+    if hasattr(
+        mesh, "use_auto_smooth"
+    ):  # Blender before 4.1 needs this for custom normals
         mesh.use_auto_smooth = True
     mesh.normals_split_custom_set(normals.tolist())
     mesh.update()

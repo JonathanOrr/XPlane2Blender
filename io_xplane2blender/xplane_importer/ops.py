@@ -1,4 +1,5 @@
 """Operators and menu entries for importing X-Plane objects and aircraft"""
+
 import os
 
 import bpy
@@ -29,7 +30,9 @@ def _option_properties():
             default=True,
         ),
         "import_lights": bpy.props.BoolProperty(
-            name="Lights", description="Create X-Plane lights as Blender lights", default=True
+            name="Lights",
+            description="Create X-Plane lights as Blender lights",
+            default=True,
         ),
         "hide_default_hidden": bpy.props.BoolProperty(
             name="Hide What X-Plane Hides",
@@ -38,7 +41,9 @@ def _option_properties():
             default=True,
         ),
         "all_lods": bpy.props.BoolProperty(
-            name="All LODs", description="Import every level of detail instead of only the first", default=False
+            name="All LODs",
+            description="Import every level of detail instead of only the first",
+            default=False,
         ),
         "setup_for_export": bpy.props.BoolProperty(
             name="Set Up For Export",
@@ -53,7 +58,10 @@ def _option_properties():
             soft_max=10.0,
         ),
         "scale": bpy.props.FloatProperty(
-            name="Scale", description="Multiplies all sizes. X-Plane uses meters, like Blender's default", default=1.0, min=0.0001
+            name="Scale",
+            description="Multiplies all sizes. X-Plane uses meters, like Blender's default",
+            default=1.0,
+            min=0.0001,
         ),
     }
 
@@ -70,7 +78,9 @@ def _options_from(op) -> ImportOptions:
         "lit_strength",
         "scale",
     )
-    return ImportOptions(**{k: getattr(op, k) for k in keys if hasattr(op, k)})
+    options = ImportOptions(**{k: getattr(op, k) for k in keys if hasattr(op, k)})
+    options.include_not_drawn = getattr(op, "include_not_drawn", False)
+    return options
 
 
 def _show_report(operator, report: ImportReport) -> None:
@@ -80,7 +90,10 @@ def _show_report(operator, report: ImportReport) -> None:
     for error in report.errors[:8]:
         operator.report({"ERROR"}, error)
     if len(report.warnings) > 8:
-        operator.report({"WARNING"}, f"...and {len(report.warnings) - 8} more warnings, see the System Console")
+        operator.report(
+            {"WARNING"},
+            f"...and {len(report.warnings) - 8} more warnings, see the System Console",
+        )
     for line in report.warnings + report.errors:
         print("XPlane2Blender import:", line)
 
@@ -88,13 +101,15 @@ def _show_report(operator, report: ImportReport) -> None:
 class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
     """Import X-Plane objects (.obj), with their textures, animations and manipulators"""
 
-    bl_idname = "import.xplane_obj"
+    bl_idname = "import_scene.xplane_obj"
     bl_label = "Import X-Plane Object"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
 
     filename_ext = ".obj"
     filter_glob: bpy.props.StringProperty(default="*.obj", options={"HIDDEN"})
-    files: bpy.props.CollectionProperty(type=bpy.types.OperatorFileListElement, options={"HIDDEN", "SKIP_SAVE"})
+    files: bpy.props.CollectionProperty(
+        type=bpy.types.OperatorFileListElement, options={"HIDDEN", "SKIP_SAVE"}
+    )
     directory: bpy.props.StringProperty(subtype="DIR_PATH")
 
     __annotations__.update(_option_properties())
@@ -102,7 +117,9 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         report = ImportReport()
         options = _options_from(self)
-        paths = [os.path.join(self.directory, f.name) for f in self.files] or [self.filepath]
+        paths = [os.path.join(self.directory, f.name) for f in self.files] or [
+            self.filepath
+        ]
         for path in paths:
             import_obj_file(path, options, report)
         _show_report(self, report)
@@ -114,7 +131,14 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
         layout.use_property_decorate = False
         box = layout.box()
         box.label(text="Bring in", icon="IMPORT")
-        for name in ("import_materials", "import_animations", "import_manipulators", "import_lights", "all_lods", "hide_default_hidden"):
+        for name in (
+            "import_materials",
+            "import_animations",
+            "import_manipulators",
+            "import_lights",
+            "all_lods",
+            "hide_default_hidden",
+        ):
             box.prop(self, name)
         box = layout.box()
         box.label(text="Setup", icon="PREFERENCES")
@@ -133,7 +157,9 @@ def _livery_items(self, context):
     if path.lower().endswith(".acf") and os.path.isfile(path):
         folder = os.path.join(os.path.dirname(path), "liveries")
         try:
-            names = sorted(e for e in os.listdir(folder) if os.path.isdir(os.path.join(folder, e)))
+            names = sorted(
+                e for e in os.listdir(folder) if os.path.isdir(os.path.join(folder, e))
+            )
         except OSError:
             names = []
         items += [(n, n, f"Textures from the {n} livery") for n in names]
@@ -145,16 +171,25 @@ def _livery_items(self, context):
 class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
     """Import a whole X-Plane aircraft from its .acf file: every object, with textures, animations and manipulators"""
 
-    bl_idname = "import.xplane_aircraft"
+    bl_idname = "import_scene.xplane_aircraft"
     bl_label = "Import X-Plane Aircraft"
     bl_options = {"REGISTER", "UNDO", "PRESET"}
 
     filename_ext = ".acf"
     filter_glob: bpy.props.StringProperty(default="*.acf", options={"HIDDEN"})
 
-    livery: bpy.props.EnumProperty(name="Livery", description="Which set of textures to use", items=_livery_items)
+    livery: bpy.props.EnumProperty(
+        name="Livery", description="Which set of textures to use", items=_livery_items
+    )
     include_damage: bpy.props.BoolProperty(
-        name="Damage Objects", description="Also import the objects that only show when a part breaks", default=False
+        name="Damage Objects",
+        description="Also import the objects that only show when a part breaks",
+        default=False,
+    )
+    include_not_drawn: bpy.props.BoolProperty(
+        name="Not Drawn Objects",
+        description="Also show the objects the aircraft file flags as drawn nowhere, for example placeholders and easter eggs",
+        default=False,
     )
     include_attached: bpy.props.BoolProperty(
         name="Part Attached Objects",
@@ -177,7 +212,11 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
             include_attached=self.include_attached,
         )
         _show_report(self, report)
-        return {"FINISHED"} if root is not None and report.files_imported else {"CANCELLED"}
+        return (
+            {"FINISHED"}
+            if root is not None and report.files_imported
+            else {"CANCELLED"}
+        )
 
     def draw(self, context):
         layout = self.layout
@@ -188,9 +227,17 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
         box.prop(self, "livery")
         box.prop(self, "include_damage")
         box.prop(self, "include_attached")
+        box.prop(self, "include_not_drawn")
         box = layout.box()
         box.label(text="Bring in", icon="IMPORT")
-        for name in ("import_materials", "import_animations", "import_manipulators", "import_lights", "all_lods", "hide_default_hidden"):
+        for name in (
+            "import_materials",
+            "import_animations",
+            "import_manipulators",
+            "import_lights",
+            "all_lods",
+            "hide_default_hidden",
+        ):
             box.prop(self, name)
         box = layout.box()
         box.label(text="Setup", icon="PREFERENCES")
@@ -203,7 +250,9 @@ _classes = (IMPORT_OT_xplane_obj, IMPORT_OT_xplane_aircraft)
 
 
 def menu_func_import(self, context):
-    self.layout.operator(IMPORT_OT_xplane_aircraft.bl_idname, text="X-Plane Aircraft (.acf)")
+    self.layout.operator(
+        IMPORT_OT_xplane_aircraft.bl_idname, text="X-Plane Aircraft (.acf)"
+    )
     self.layout.operator(IMPORT_OT_xplane_obj.bl_idname, text="X-Plane Object (.obj)")
 
 

@@ -1,4 +1,5 @@
 """Builds the Blender data for one parsed OBJ"""
+
 import math
 import os
 from dataclasses import dataclass, field
@@ -22,15 +23,62 @@ _OBJECT_STATE_KEYS = {"manip", "manip_extras", "manip_detents", "light_level"}
 
 # Arguments of each ATTR_manip_* in file order. "cursor" is first for all of them
 _MANIP_ARGS: Dict[str, Tuple[str, ...]] = {
-    "drag_xy": ("cursor", "dx", "dy", "v1_min", "v1_max", "v2_min", "v2_max", "dataref1", "dataref2", "tooltip"),
+    "drag_xy": (
+        "cursor",
+        "dx",
+        "dy",
+        "v1_min",
+        "v1_max",
+        "v2_min",
+        "v2_max",
+        "dataref1",
+        "dataref2",
+        "tooltip",
+    ),
     "drag_axis": ("cursor", "dx", "dy", "dz", "v1", "v2", "dataref1", "tooltip"),
     "drag_axis_pix": ("cursor", "dx", "step", "exp", "v1", "v2", "dataref1", "tooltip"),
-    "drag_rotate": ("cursor", None, None, None, None, None, None, None, None, None, "v1_min", "v1_max", "v2_min", "v2_max", "dataref1", "dataref2", "tooltip"),
+    "drag_rotate": (
+        "cursor",
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        "v1_min",
+        "v1_max",
+        "v2_min",
+        "v2_max",
+        "dataref1",
+        "dataref2",
+        "tooltip",
+    ),
     "command": ("cursor", "command", "tooltip"),
-    "command_axis": ("cursor", "dx", "dy", "dz", "positive_command", "negative_command", "tooltip"),
+    "command_axis": (
+        "cursor",
+        "dx",
+        "dy",
+        "dz",
+        "positive_command",
+        "negative_command",
+        "tooltip",
+    ),
     "command_knob": ("cursor", "positive_command", "negative_command", "tooltip"),
-    "command_switch_up_down": ("cursor", "positive_command", "negative_command", "tooltip"),
-    "command_switch_left_right": ("cursor", "positive_command", "negative_command", "tooltip"),
+    "command_switch_up_down": (
+        "cursor",
+        "positive_command",
+        "negative_command",
+        "tooltip",
+    ),
+    "command_switch_left_right": (
+        "cursor",
+        "positive_command",
+        "negative_command",
+        "tooltip",
+    ),
     "command_knob2": ("cursor", "command", "tooltip"),
     "command_switch_up_down2": ("cursor", "command", "tooltip"),
     "command_switch_left_right2": ("cursor", "command", "tooltip"),
@@ -39,11 +87,71 @@ _MANIP_ARGS: Dict[str, Tuple[str, ...]] = {
     "toggle": ("cursor", "v_on", "v_off", "dataref1", "tooltip"),
     "delta": ("cursor", "v_down", "v_hold", "v1_min", "v1_max", "dataref1", "tooltip"),
     "wrap": ("cursor", "v_down", "v_hold", "v1_min", "v1_max", "dataref1", "tooltip"),
-    "axis_knob": ("cursor", "v1", "v2", "click_step", "hold_step", "dataref1", "tooltip"),
-    "axis_switch_up_down": ("cursor", "v1", "v2", "click_step", "hold_step", "dataref1", "tooltip"),
-    "axis_switch_left_right": ("cursor", "v1", "v2", "click_step", "hold_step", "dataref1", "tooltip"),
+    "axis_knob": (
+        "cursor",
+        "v1",
+        "v2",
+        "click_step",
+        "hold_step",
+        "dataref1",
+        "tooltip",
+    ),
+    "axis_switch_up_down": (
+        "cursor",
+        "v1",
+        "v2",
+        "click_step",
+        "hold_step",
+        "dataref1",
+        "tooltip",
+    ),
+    "axis_switch_left_right": (
+        "cursor",
+        "v1",
+        "v2",
+        "click_step",
+        "hold_step",
+        "dataref1",
+        "tooltip",
+    ),
     "noop": (),
 }
+
+
+def required_xplane_version(obj: ObjFile) -> int:
+    """The oldest X-Plane version setting that lets the add-on write everything this OBJ uses"""
+    version = 1100
+    if (
+        obj.texture_maps
+        or "GLOBAL_luminance" in obj.globals
+        or "TEXTURE_MAP" in obj.globals
+    ):
+        version = max(version, 1200)
+    for run in obj.iter_tris():
+        state = dict(run.state)
+        manip = state.get("manip")
+        if manip and manip[0] in (
+            "drag_rotate",
+            "drag_axis_detent",
+            "command_knob2",
+            "command_switch_up_down2",
+            "command_switch_left_right2",
+            "drag_rotate_detent",
+        ):
+            version = max(version, 1110)
+        if "cockpit" in state or "cockpit_lit_only" in state:
+            version = max(version, 1110)
+    stack = [obj.root]
+    while stack:
+        node = stack.pop()
+        for child in node.children:
+            if isinstance(child, AnimNode):
+                stack.append(child)
+            elif isinstance(child, Extra) and child.kind in ("EMITTER", "MAGNET"):
+                version = max(version, 1130)
+            elif isinstance(child, Light) and any(a.endswith("cd") for a in child.args):
+                version = max(version, 1200)
+    return version
 
 
 @dataclass
@@ -53,7 +161,9 @@ class _Group:
     lod: Optional[tuple]
     object_state: dict
     name_hint: str
-    runs: List[Tuple[TrisRun, int]] = field(default_factory=list)  # (run, material slot)
+    runs: List[Tuple[TrisRun, int]] = field(
+        default_factory=list
+    )  # (run, material slot)
     materials: List[bpy.types.Material] = field(default_factory=list)
     material_index: Dict[tuple, int] = field(default_factory=dict)
 
@@ -82,14 +192,23 @@ class ObjBuilder:
         self.options = options
         self.report = report
         self.parent_collection = parent_collection
-        self.stem = name or options.collection_name or os.path.splitext(os.path.basename(obj.path))[0] or "object"
+        self.stem = (
+            name
+            or options.collection_name
+            or os.path.splitext(os.path.basename(obj.path))[0]
+            or "object"
+        )
         self.collection: bpy.types.Collection = None
-        self.resolver = TextureResolver(os.path.dirname(obj.path), livery_objects_dir, objects_root)
+        self.resolver = TextureResolver(
+            os.path.dirname(obj.path), livery_objects_dir, objects_root
+        )
         # X-Plane space placement of the whole object, used by aircraft where the .acf moves objects
-        self.base_matrix = base_matrix if base_matrix is not None else mathutils.Matrix.Identity(4)
+        self.base_matrix = (
+            base_matrix if base_matrix is not None else mathutils.Matrix.Identity(4)
+        )
         self.materials = MaterialFactory(obj, self.resolver, options, report)
-        self.vertices = np.array(obj.vertices, dtype=np.float64).reshape(-1, 8) if obj.vertices else np.zeros((0, 8))
-        self.indices = np.array(obj.indices, dtype=np.int64)
+        self.vertices = obj.vertices
+        self.indices = obj.indices
         self.objects: List[bpy.types.Object] = []
         self.has_manipulators = False
         self._groups: Dict[tuple, _Group] = {}
@@ -100,7 +219,9 @@ class ObjBuilder:
     # ------------------------------------------------------------------------------------
     def build(self) -> BuiltObj:
         self.collection = bpy.data.collections.new(self.stem)
-        (self.parent_collection or bpy.context.scene.collection).children.link(self.collection)
+        (self.parent_collection or bpy.context.scene.collection).children.link(
+            self.collection
+        )
 
         self._walk(self.obj.root, None, self.base_matrix, self.stem)
         self._flush_groups()
@@ -110,7 +231,9 @@ class ObjBuilder:
         for message in self.obj.warnings[:20]:
             self.report.warn(f"{self.stem}: {message}")
         for directive, count in sorted(self.obj.unknown.items()):
-            self.report.warn(f"{self.stem}: unsupported directive {directive} ({count}x) was skipped")
+            self.report.warn(
+                f"{self.stem}: unsupported directive {directive} ({count}x) was skipped"
+            )
         return BuiltObj(self.collection, self.objects, self.has_manipulators, self.obj)
 
     # ---- tree walk -------------------------------------------------------------------
@@ -119,7 +242,13 @@ class ObjBuilder:
             return True
         return lod == self._first_lod
 
-    def _walk(self, node: AnimNode, parent: Optional[bpy.types.Object], static: mathutils.Matrix, name: str) -> None:
+    def _walk(
+        self,
+        node: AnimNode,
+        parent: Optional[bpy.types.Object],
+        static: mathutils.Matrix,
+        name: str,
+    ) -> None:
         if node is not self.obj.root:
             parent, static = self._apply_node_transforms(node, parent, static, name)
         node_name = node.comment or name
@@ -149,8 +278,17 @@ class ObjBuilder:
             # Visibility covers everything in the block, so it goes on the outermost Empty
             holder = self._make_empty(label + " visibility", parent, pending)
             for vis in shows:
-                self._add_dataref(holder, vis.dataref, "show" if vis.kind == "show" else "hide", v1=vis.v1, v2=vis.v2, loop=vis.loop)
-                if self.options.hide_default_hidden and not show_hide_visible(vis.kind, vis.v1, vis.v2, vis.dataref):
+                self._add_dataref(
+                    holder,
+                    vis.dataref,
+                    "show" if vis.kind == "show" else "hide",
+                    v1=vis.v1,
+                    v2=vis.v2,
+                    loop=vis.loop,
+                )
+                if self.options.hide_default_hidden and not show_hide_visible(
+                    vis.kind, vis.v1, vis.v2, vis.dataref
+                ):
                     self._hide(holder)
             self.report.animations_imported += 1
             parent, pending = holder, mathutils.Matrix.Identity(4)
@@ -170,7 +308,9 @@ class ObjBuilder:
             return T.translation_xp(value)
         return T.rotation_xp(op.axis, value[0])
 
-    def _make_empty(self, name: str, parent, matrix_xp: mathutils.Matrix) -> bpy.types.Object:
+    def _make_empty(
+        self, name: str, parent, matrix_xp: mathutils.Matrix
+    ) -> bpy.types.Object:
         empty = bpy.data.objects.new(self._clean(name), None)
         empty.empty_display_type = "PLAIN_AXES"
         empty.empty_display_size = 0.02 * max(self.options.scale, 1e-6) * 10
@@ -183,7 +323,9 @@ class ObjBuilder:
         self.report.objects_imported += 1
         return empty
 
-    def _make_dynamic_empty(self, op: AnimOp, parent, pending: mathutils.Matrix, label: str) -> bpy.types.Object:
+    def _make_dynamic_empty(
+        self, op: AnimOp, parent, pending: mathutils.Matrix, label: str
+    ) -> bpy.types.Object:
         name = f"{label} {op.dataref.split('/')[-1]}"
         pending_bl = T.matrix_to_blender(pending)
         keys = sorted(op.keys, key=lambda k: k[0])
@@ -208,14 +350,25 @@ class ObjBuilder:
                 location_xp = pending
             empty = self._make_empty(name, parent, location_xp)
             index, sign = T.principal_axis(op.axis)
-            axis_bl = T.vec_to_blender(op.axis).normalized() if mathutils.Vector(op.axis).length else mathutils.Vector((0, 0, 1))
+            axis_bl = (
+                T.vec_to_blender(op.axis).normalized()
+                if mathutils.Vector(op.axis).length
+                else mathutils.Vector((0, 0, 1))
+            )
             if index < 0:
                 empty.rotation_mode = "AXIS_ANGLE"
             for i, (value, (angle,)) in enumerate(keys):
                 if index >= 0:
                     empty.rotation_euler = (0, 0, 0)
                     empty.rotation_euler[index] = sign * math.radians(angle)
-                    self._key(empty, "rotation_euler", first_frame + i, op, value, array_index=index)
+                    self._key(
+                        empty,
+                        "rotation_euler",
+                        first_frame + i,
+                        op,
+                        value,
+                        array_index=index,
+                    )
                 else:
                     empty.rotation_axis_angle = (math.radians(angle), *axis_bl)
                     self._key(empty, "rotation_axis_angle", first_frame + i, op, value)
@@ -223,7 +376,15 @@ class ObjBuilder:
         self.report.animations_imported += 1
         return empty
 
-    def _key(self, empty, data_path: str, frame: int, op: AnimOp, value: float, array_index: int = -1) -> None:
+    def _key(
+        self,
+        empty,
+        data_path: str,
+        frame: int,
+        op: AnimOp,
+        value: float,
+        array_index: int = -1,
+    ) -> None:
         if not empty.xplane.datarefs:
             self._add_dataref(empty, op.dataref, "transform", loop=op.loop)
         dataref = empty.xplane.datarefs[0]
@@ -252,7 +413,15 @@ class ObjBuilder:
         obj.hide_viewport = True
         obj.hide_render = True
 
-    def _add_dataref(self, obj, path: str, anim_type: str, v1: float = 0.0, v2: float = 0.0, loop: float = 0.0) -> None:
+    def _add_dataref(
+        self,
+        obj,
+        path: str,
+        anim_type: str,
+        v1: float = 0.0,
+        v2: float = 0.0,
+        loop: float = 0.0,
+    ) -> None:
         dataref = obj.xplane.datarefs.add()
         dataref.path = path
         dataref.anim_type = {
@@ -266,7 +435,9 @@ class ObjBuilder:
         dataref.loop = max(0.0, loop)
 
     # ---- triangles -----------------------------------------------------------------------
-    def _add_run(self, run: TrisRun, parent, static: mathutils.Matrix, name: str) -> None:
+    def _add_run(
+        self, run: TrisRun, parent, static: mathutils.Matrix, name: str
+    ) -> None:
         state = dict(run.state)
         object_state = {k: v for k, v in state.items() if k in _OBJECT_STATE_KEYS}
         material_state = {k: v for k, v in state.items() if k not in _OBJECT_STATE_KEYS}
@@ -347,10 +518,17 @@ class ObjBuilder:
                 x.lightLevel_v2 = float(light_level[1])
                 x.lightLevel_dataref = light_level[2] if len(light_level) > 2 else ""
             except (ValueError, IndexError):
-                self.report.warn(f"{self.stem}: could not read ATTR_light_level {light_level}")
+                self.report.warn(
+                    f"{self.stem}: could not read ATTR_light_level {light_level}"
+                )
         manip = state.get("manip")
         if manip and self.options.import_manipulators:
-            self._apply_manipulator(blender_obj, manip, state.get("manip_extras", ()), state.get("manip_detents", ()))
+            self._apply_manipulator(
+                blender_obj,
+                manip,
+                state.get("manip_extras", ()),
+                state.get("manip_detents", ()),
+            )
 
     @staticmethod
     def _manip_values(manip: tuple) -> Dict[str, str]:
@@ -378,7 +556,9 @@ class ObjBuilder:
             return
         if kind not in valid_types:
             # The scene's X-Plane version might be too old for it
-            self.report.warn(f"{self.stem}: manipulator '{kind}' needs a newer X-Plane version setting")
+            self.report.warn(
+                f"{self.stem}: manipulator '{kind}' needs a newer X-Plane version setting"
+            )
             return
         m.enabled = True
         m.type = kind
@@ -390,8 +570,19 @@ class ObjBuilder:
                 if text in cursors:
                     m.cursor = text
                 continue
-            if field_name in ("tooltip", "command", "positive_command", "negative_command", "dataref1", "dataref2"):
-                setattr(m, field_name, "" if text == "none" and field_name.startswith("dataref") else text)
+            if field_name in (
+                "tooltip",
+                "command",
+                "positive_command",
+                "negative_command",
+                "dataref1",
+                "dataref2",
+            ):
+                setattr(
+                    m,
+                    field_name,
+                    "" if text == "none" and field_name.startswith("dataref") else text,
+                )
                 continue
             try:
                 setattr(m, field_name, float(text))
@@ -408,7 +599,9 @@ class ObjBuilder:
         self.report.manipulators_imported += 1
 
     # ---- lights ---------------------------------------------------------------------------
-    def _add_light(self, light: Light, parent, static: mathutils.Matrix, name: str) -> None:
+    def _add_light(
+        self, light: Light, parent, static: mathutils.Matrix, name: str
+    ) -> None:
         matrix = static @ T.translation_xp(light.position)
         data_name = light.name or light.kind
         blender_light = bpy.data.lights.new(self._clean(data_name), "POINT")
@@ -445,7 +638,9 @@ class ObjBuilder:
             elif light.kind == "vlight":
                 blender_light.color = [float(a) for a in light.args[:3]]
         except (ValueError, IndexError):
-            self.report.warn(f"{self.stem}: could not read a {light.kind} light, it was imported without its settings")
+            self.report.warn(
+                f"{self.stem}: could not read a {light.kind} light, it was imported without its settings"
+            )
         self.objects.append(obj)
         self.report.lights_imported += 1
 
@@ -453,23 +648,49 @@ class ObjBuilder:
     def _add_extra(self, extra: Extra, parent, static: mathutils.Matrix) -> None:
         try:
             if extra.kind == "EMITTER":
-                name, x, y, z, phi, theta, psi = extra.args[0], *map(float, extra.args[1:7])
-                self._make_special_empty(name, "emitter", parent, static, (x, y, z), (phi, theta, psi), extra.args[7:])
+                name, x, y, z, phi, theta, psi = extra.args[0], *map(
+                    float, extra.args[1:7]
+                )
+                self._make_special_empty(
+                    name,
+                    "emitter",
+                    parent,
+                    static,
+                    (x, y, z),
+                    (phi, theta, psi),
+                    extra.args[7:],
+                )
             elif extra.kind == "MAGNET":
                 debug_name, magnet_type = extra.args[0], extra.args[1]
                 x, y, z, phi, theta, psi = map(float, extra.args[2:8])
-                self._make_special_empty(debug_name, "magnet", parent, static, (x, y, z), (phi, theta, psi), [magnet_type])
+                self._make_special_empty(
+                    debug_name,
+                    "magnet",
+                    parent,
+                    static,
+                    (x, y, z),
+                    (phi, theta, psi),
+                    [magnet_type],
+                )
             else:
-                self.report.warn(f"{self.stem}: {extra.kind} is not supported and was skipped")
+                self.report.warn(
+                    f"{self.stem}: {extra.kind} is not supported and was skipped"
+                )
         except (ValueError, IndexError):
             self.report.warn(f"{self.stem}: could not read a {extra.kind} line")
 
-    def _make_special_empty(self, name, kind, parent, static, position, angles, rest) -> None:
+    def _make_special_empty(
+        self, name, kind, parent, static, position, angles, rest
+    ) -> None:
         matrix = static @ T.translation_xp(position)
         empty = self._make_empty(name, parent, matrix)
         phi, theta, psi = angles
         # The reverse of what the exporter writes
-        empty.rotation_euler = (math.radians(theta), math.radians(psi), math.radians(-phi))
+        empty.rotation_euler = (
+            math.radians(theta),
+            math.radians(psi),
+            math.radians(-phi),
+        )
         special = empty.xplane.special_empty_props
         if kind == "emitter":
             special.special_type = xplane_constants.EMPTY_USAGE_EMITTER_PARTICLE
@@ -491,7 +712,9 @@ class ObjBuilder:
         layer = collection.xplane.layer
         layer.name = self.stem
         layer.export_type = (
-            xplane_constants.EXPORT_TYPE_COCKPIT if self.has_manipulators else xplane_constants.EXPORT_TYPE_AIRCRAFT
+            xplane_constants.EXPORT_TYPE_COCKPIT
+            if self.has_manipulators
+            else xplane_constants.EXPORT_TYPE_AIRCRAFT
         )
         manager = self.materials
         for attribute, path in (
@@ -502,7 +725,11 @@ class ObjBuilder:
                 setattr(layer, attribute, path)
         if obj.texture_normal and manager.normal_path:
             layer.texture_normal = manager.normal_path
-        for kind, attribute in (("normal", "texture_map_normal"), ("material_gloss", "texture_map_material_gloss"), ("gloss", "texture_map_gloss")):
+        for kind, attribute in (
+            ("normal", "texture_map_normal"),
+            ("material_gloss", "texture_map_material_gloss"),
+            ("gloss", "texture_map_gloss"),
+        ):
             if kind in obj.texture_maps:
                 found = self.resolver.resolve(obj.texture_maps[kind])
                 if found:
@@ -514,14 +741,38 @@ class ObjBuilder:
         if "BLEND_GLASS" in obj.globals:
             layer.blend_glass = True
         for directive, entries in obj.globals.items():
-            if directive in ("GLOBAL_cockpit_lit", "BLEND_GLASS", "NORMAL_METALNESS", "GLOBAL_specular", "TEXTURE_NORMAL_RATIO"):
+            if directive in (
+                "GLOBAL_cockpit_lit",
+                "BLEND_GLASS",
+                "NORMAL_METALNESS",
+                "GLOBAL_specular",
+                "TEXTURE_NORMAL_RATIO",
+                "PARTICLE_SYSTEM",
+            ):
                 continue
             for args in entries:
                 attribute = layer.customAttributes.add()
                 attribute.name = directive
                 attribute.value = " ".join(args)
+        if "PARTICLE_SYSTEM" in obj.globals and obj.globals["PARTICLE_SYSTEM"][0]:
+            found = (
+                self.resolver.resolve(obj.globals["PARTICLE_SYSTEM"][0][0])
+                or obj.globals["PARTICLE_SYSTEM"][0][0]
+            )
+            layer.particle_system_file = found
+        # ATTR_cockpit, _lit_only and _region are one setting for the whole object in the add-on
+        used = {key for run in self.obj.iter_tris() for key, _ in run.state}
+        if "cockpit_lit_only" in used:
+            layer.cockpit_panel_mode = xplane_constants.PANEL_COCKPIT_LIT_ONLY
+        elif any(
+            dict(run.state).get("cockpit", ("",))[0] == "region"
+            for run in self.obj.iter_tris()
+        ):
+            layer.cockpit_panel_mode = xplane_constants.PANEL_COCKPIT_REGION
         scene = bpy.context.scene
-        wanted = str(max(obj.version, 1100))
+        # The OBJs share their vertices, the exporter only does that when it is told to
+        scene.xplane.optimize = True
+        wanted = str(required_xplane_version(self.obj))
         try:
             if int(scene.xplane.version) < int(wanted):
                 scene.xplane.version = wanted
