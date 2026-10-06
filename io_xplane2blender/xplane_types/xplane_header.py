@@ -1049,7 +1049,7 @@ class XPlaneHeader:
             res_path = Path(bpy.path.abspath(res_path))
         elif res_path.startswith("//") and not bpy.data.filepath:
             res_path = Path(".") / Path(res_path[2:])
-        # 7. Invalid paths are a validation error -> Path.resolve throws OSError
+        # 7. Invalid paths are a validation error
         elif "//" in res_path and not res_path.startswith("//"):
             logger.error(f"'//' is used not at the start of the path '{res_path}'")
             raise ValueError
@@ -1074,14 +1074,15 @@ class XPlaneHeader:
             os.chdir(Path(export_dir))
 
         try:
-            # 1. '.' is CWD -> Path.resolve
-            # 3. All paths are given '/' sperators -> Path.resolve
-            # 4. '..'s are resolved, '.' is a no-op -> Path.resolve
+            # 1. '.' is CWD -> os.path.abspath
+            # 3. All paths are given '/' separators -> str.replace
+            # 4. '..'s are resolved, '.' is a no-op -> os.path.abspath
             # 5. All paths must be relative to the OBJ -> Path.relative_to(does order of args matter)?
-            # 7. Invalid paths are a validation error -> Path.resolve throws OSError
-            # 8. Paths are minimal, "./path/tex.png" is "path/tex.png" -> Path.resolve
+            # 7. Invalid paths are a validation error
+            # 8. Paths are minimal, "./path/tex.png" is "path/tex.png" -> os.path.abspath
             # 10. Absolute paths are okay as long as we can make a relative path os.path.relpath
-            rel_path = os.path.relpath(res_path.resolve(), export_dir).replace(
+            # Normalize without following symlinks: the OBJ must reference the user's path.
+            rel_path = os.path.relpath(os.path.abspath(res_path), export_dir).replace(
                 "\\", "/"
             )
         except OSError:
@@ -1093,7 +1094,7 @@ class XPlaneHeader:
                 f"Cannot make relative path across disk drives for path '{res_path}'"
             )
             # 6. If not possible (different drive letter), validation error Path.relative_to ValueError
-            # 7. Invalid paths are a validation error -> Path.resolve throws OSError
+            # 7. Invalid paths are a validation error
             os.chdir(old_cwd)
             raise
         else:
