@@ -1,6 +1,8 @@
 import inspect
 import shutil
 import pathlib
+import tempfile
+from unittest import mock
 #from pathlib import Path
 
 from typing import Tuple
@@ -16,31 +18,32 @@ from io_xplane2blender.tests import test_creation_helpers
 
 __dirname__ = os.path.dirname(os.path.abspath(__file__))
 
-REAL_LIGHTS_TXT_PATH = pathlib.Path(xplane_constants.ADDON_RESOURCES_FOLDER, "lights.txt")
-BACKUP_LIGHTS_TXT_PATH = pathlib.Path(xplane_constants.ADDON_RESOURCES_FOLDER, "lights.txt.bak")
 FAKE_LIGHTS_TXTS_FOLDER = pathlib.Path(__dirname__, "test_lights_txts")
 
 
 class _ReplaceLightsFile:
+    """
+    Points the parser at a temporary resources folder for the duration of the
+    block, so the addon's real lights.txt is never touched. With no arguments,
+    the folder has no lights.txt at all.
+    """
     def __init__(self, *, temporary_lights_txt_path:pathlib.Path=None, temporary_lights_txt_content:str=None)->None:
-        assert temporary_lights_txt_path or isinstance(temporary_lights_txt_content, str), "Must have non empty temporary_lights_txt_path or temporary_lights_txt_content"
         self.temporary_lights_txt_path = temporary_lights_txt_path
         self.temporary_lights_txt_content = temporary_lights_txt_content
 
     def __enter__(self)->None:
-        try:
-            os.replace(REAL_LIGHTS_TXT_PATH, BACKUP_LIGHTS_TXT_PATH)
-        except FileNotFoundError:
-            raise
-        else:
-            if self.temporary_lights_txt_path:
-                shutil.copyfile(self.temporary_lights_txt_path, REAL_LIGHTS_TXT_PATH)
-            elif self.temporary_lights_txt_content:
-                with open(REAL_LIGHTS_TXT_PATH, 'w') as f:
-                    f.write(self.temporary_lights_txt_content)
+        self._tmp_dir = tempfile.TemporaryDirectory()
+        fake_lights_txt_path = pathlib.Path(self._tmp_dir.name, "lights.txt")
+        if self.temporary_lights_txt_path:
+            shutil.copyfile(self.temporary_lights_txt_path, fake_lights_txt_path)
+        elif self.temporary_lights_txt_content:
+            fake_lights_txt_path.write_text(self.temporary_lights_txt_content)
+        self._patch = mock.patch.object(xplane_constants, "ADDON_RESOURCES_FOLDER", self._tmp_dir.name)
+        self._patch.start()
 
     def __exit__(self, type, value, traceback)->None:
-        os.replace(BACKUP_LIGHTS_TXT_PATH, REAL_LIGHTS_TXT_PATH)
+        self._patch.stop()
+        self._tmp_dir.cleanup()
         return False
 
 
@@ -48,14 +51,6 @@ class TestLightsParser(XPlaneTestCase):
     def setUp(self):
         super().setUp(useLogger=True)
         xplane_lights_txt_parser._parsed_lights_txt_content.clear()
-
-        try:
-            #print("Attempting to rename lights.txt.bak to lights.txt")
-            os.replace(BACKUP_LIGHTS_TXT_PATH, REAL_LIGHTS_TXT_PATH)
-            pass
-        except OSError as oe:
-            #print(oe)
-            pass
 
     def _test(self, content:str, expected_errors:int)->None:
         with _ReplaceLightsFile(temporary_lights_txt_content=content):
@@ -114,10 +109,9 @@ BILLBOARD_HW 1 0 0 1   1      1 0 6      1 0 0    .5    0    0    0    0
     #--- GENERAL SPEC PROBLEMS -----------------------------------------------
     #@unittest.skip
     def test_no_lights_file(self)->None:
-        os.replace(REAL_LIGHTS_TXT_PATH, BACKUP_LIGHTS_TXT_PATH)
-        self.assertRaises(FileNotFoundError, xplane_lights_txt_parser.parse_lights_file)
-        self.assertLoggerErrors(1)
-        os.replace(BACKUP_LIGHTS_TXT_PATH, REAL_LIGHTS_TXT_PATH)
+        with _ReplaceLightsFile():
+            self.assertRaises(FileNotFoundError, xplane_lights_txt_parser.parse_lights_file)
+            self.assertLoggerErrors(1)
 
 
     # WHOLE FILE

@@ -71,43 +71,33 @@ class TestBuildNumberUpdater(XPlaneTestCase):
         self.run_update_cycle(filename, to_parse)
 
     def test_update_from_new_file(self):
-        # To make the test stable we need to remove any existing startup file
-        # to force it to use a pure factory default startup file.
-        start_up_filepath = bpy.utils.user_resource("CONFIG") + "startup.blend"
-        try:
-            os.rename(start_up_filepath, start_up_filepath + "_backup")
-        except Exception as e:
-            print(e)
-            return
+        # To make the test stable, ignore any user startup file
+        # and start from the pure factory default one.
+        bpy.ops.wm.read_homefile(use_factory_startup=True)
+        blend_path = os.path.join(
+            __dirname__, "..", "tmp", "build_number_new_save_test.blend"
+        )
+        bpy.ops.wm.save_mainfile(filepath=blend_path, check_existing=False)
+        bpy.ops.wm.open_mainfile(filepath=blend_path)
 
-        try:
-            bpy.ops.wm.read_homefile()
-            blend_path = os.path.join(
-                __dirname__, "..", "tmp", "build_number_new_save_test.blend"
-            )
-            bpy.ops.wm.save_mainfile(filepath=blend_path, check_existing=False)
-            bpy.ops.wm.open_mainfile(filepath=blend_path)
+        self.assertEqual(
+            bpy.context.scene["xplane2blender_version"],
+            xplane_constants.DEPRECATED_XP2B_VER,
+            "scene['xplane2blender_version'] was not deprecated on load",
+        )
 
-            self.assertEqual(
-                bpy.context.scene["xplane2blender_version"],
-                xplane_constants.DEPRECATED_XP2B_VER,
-                "scene['xplane2blender_version'] was not deprecated on load",
-            )
+        history = bpy.context.scene.xplane.xplane2blender_ver_history
+        self.assertEqual(
+            len(history),
+            1,
+            "xplane2blender_ver_history is %d long, not 1" % (len(history)),
+        )
 
-            history = bpy.context.scene.xplane.xplane2blender_ver_history
-            self.assertEqual(
-                len(history),
-                1,
-                "xplane2blender_ver_history is %d long, not 1" % (len(history)),
-            )
-
-            self.assertEqual(
-                history[0].make_struct(),
-                xplane_helpers.VerStruct.current(),
-                "Second entry in history %s is not current" % str(history[0]),
-            )
-        finally:
-            os.rename(start_up_filepath + "_backup", start_up_filepath)
+        self.assertEqual(
+            history[0].make_struct(),
+            xplane_helpers.VerStruct.current(),
+            "Second entry in history %s is not current" % str(history[0]),
+        )
 
 
 runTestCases([TestBuildNumberUpdater])
