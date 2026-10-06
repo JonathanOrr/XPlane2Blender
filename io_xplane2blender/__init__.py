@@ -27,7 +27,7 @@ bl_info = {
     "location": "File > Import/Export > X-Plane",
     "warning": "",
     "doc_url": "https://xp2b-docs.gitbook.io/xplane2blender-docs",
-    "tracker_url": "https://github.com/X-Plane/XPlane2Blender/issues",
+    "tracker_url": "https://github.com/JonathanOrr/XPlane2Blender/issues",
     "category": "Import-Export",
 }
 
