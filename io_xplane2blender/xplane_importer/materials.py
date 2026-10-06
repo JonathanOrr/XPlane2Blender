@@ -10,6 +10,9 @@ from io_xplane2blender import xplane_constants
 from .common import ImportOptions, ImportReport
 from .obj_parser import ObjFile
 
+# Above this base reflectance X-Plane treats the material as metal
+DIELECTRIC_F0_MAX = 0.08
+
 _EXTENSIONS = (".dds", ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".tif", ".tiff")
 
 
@@ -387,7 +390,7 @@ class MaterialFactory:
                 links.new(inv.outputs["Value"], bsdf.inputs["Roughness"])
                 rough = True
                 if metalness_mode:
-                    self._link_reflectance(tree, tex, bsdf, spec_input)
+                    self._link_reflectance(tree, tex, 'B', bsdf, spec_input)
                 elif spec_input is not None:
                     links.new(mult.outputs["Value"], spec_input)
         if pbr_maps:
@@ -402,9 +405,7 @@ class MaterialFactory:
                 )
                 sep.location = (-300, -550)
                 links.new(tex.outputs["Color"], sep.inputs[0])
-                links.new(
-                    sep.outputs.get("Red") or sep.outputs["R"], bsdf.inputs["Metallic"]
-                )
+                self._link_reflectance(tree, tex, "R", bsdf, spec_input)
                 inv = tree.nodes.new("ShaderNodeMath")
                 inv.operation = "SUBTRACT"
                 inv.inputs[0].default_value = 1.0
@@ -455,11 +456,11 @@ class MaterialFactory:
             for link in list(bsdf.inputs["Alpha"].links):
                 tree.links.remove(link)
 
-    def _link_reflectance(self, tree, tex, bsdf, spec_input) -> None:
+    def _link_reflectance(self, tree, tex, channel, bsdf, spec_input) -> None:
         """
-        NORMAL_METALNESS: the blue channel is the base reflectance (F0), as exported by LR's Substance Painter preset.
-        Plastic and paint sit near 0.04 to 0.15 and metals are high, so it drives the specular level directly
-        (Principled 0.5 is F0 0.04) and the metallic input once it is clearly above any dielectric.
+        The F0 (base reflectance) channel: blue of a NORMAL_METALNESS normal map, red of an XP12 material map.
+        X-Plane treats 0 to 0.08 as dielectric (0.04 is plastic or paint, 0.06 glass) and above 0.08 as metalness,
+        with the dielectric reflection held at 0.08. Principled 0.5 is F0 0.04, so the specular level is F0 / 0.08.
         """
         sep = (
             tree.nodes.new("ShaderNodeSeparateColor")
@@ -468,20 +469,25 @@ class MaterialFactory:
         )
         sep.location = (-300, -450)
         tree.links.new(tex.outputs["Color"], sep.inputs[0])
-        blue = sep.outputs.get("Blue") or sep.outputs["B"]
+        names = {"R": "Red", "B": "Blue"}
+        f0 = sep.outputs.get(names[channel]) or sep.outputs[channel]
         if spec_input is not None:
+            capped = tree.nodes.new("ShaderNodeMath")
+            capped.operation = "MINIMUM"
+            capped.location = (-100, -650)
+            capped.inputs[1].default_value = DIELECTRIC_F0_MAX
+            tree.links.new(f0, capped.inputs[0])
             level = tree.nodes.new("ShaderNodeMath")
-            level.operation = "MULTIPLY"
-            level.use_clamp = True
-            level.location = (0, -650)
-            level.inputs[1].default_value = 12.5
-            tree.links.new(blue, level.inputs[0])
+            level.operation = "DIVIDE"
+            level.location = (100, -650)
+            level.inputs[1].default_value = DIELECTRIC_F0_MAX
+            tree.links.new(capped.outputs["Value"], level.inputs[0])
             tree.links.new(level.outputs["Value"], spec_input)
         metal = tree.nodes.new("ShaderNodeMapRange")
         metal.location = (0, -800)
-        metal.inputs["From Min"].default_value = 0.2
-        metal.inputs["From Max"].default_value = 0.45
-        tree.links.new(blue, metal.inputs["Value"])
+        metal.inputs["From Min"].default_value = DIELECTRIC_F0_MAX
+        metal.inputs["From Max"].default_value = 1.0
+        tree.links.new(f0, metal.inputs["Value"])
         tree.links.new(metal.outputs["Result"], bsdf.inputs["Metallic"])
 
     def _global_specular(self) -> float:

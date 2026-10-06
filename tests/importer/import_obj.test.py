@@ -163,18 +163,28 @@ class TestImportObj(XPlaneTestCase):
         self.assertTrue(obj.hide_render)
 
     def test_normal_metalness_blue_is_reflectance(self) -> None:
-        # LR's Substance preset writes F0 to the blue channel: it sets the specular level,
-        # and only high values (metals) make the surface metallic
+        # LR's Substance preset writes F0 to the blue channel. X-Plane treats 0 to 0.08 as dielectric
+        # (the specular level) and anything above as metalness
         write_png(self.folder.join("tex_NRM.png"))
         header = "TEXTURE tex.png\nTEXTURE_NORMAL tex_NRM.png\nNORMAL_METALNESS\nGLOBAL_specular 1\n"
         material = self.meshes(self.do_import(obj_text("", header=header)))[0].data.materials[0]
         bsdf = next(n for n in material.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled")
         metallic = bsdf.inputs["Metallic"].links[0].from_node
         self.assertEqual(metallic.bl_idname, "ShaderNodeMapRange")
-        self.assertGreater(metallic.inputs["From Min"].default_value, 0.04)
+        self.assertAlmostEqual(metallic.inputs["From Min"].default_value, 0.08)
         specular = bsdf.inputs.get("Specular IOR Level") or bsdf.inputs["Specular"]
-        self.assertEqual(specular.links[0].from_node.operation, "MULTIPLY")
-        self.assertTrue(specular.links[0].from_node.use_clamp)
+        divide = specular.links[0].from_node
+        self.assertEqual(divide.operation, "DIVIDE")
+        self.assertEqual(divide.inputs[0].links[0].from_node.operation, "MINIMUM")
+
+    def test_material_map_red_is_reflectance(self) -> None:
+        # XP12 (A330 style): TEXTURE_MAP material_gloss has F0 in red and gloss in green
+        write_png(self.folder.join("tex_MAT.png"))
+        header = "TEXTURE tex.png\nTEXTURE_MAP material_gloss tex_MAT.png\nNORMAL_METALNESS\n"
+        material = self.meshes(self.do_import(obj_text("", header=header)))[0].data.materials[0]
+        bsdf = next(n for n in material.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled")
+        self.assertEqual(bsdf.inputs["Metallic"].links[0].from_node.bl_idname, "ShaderNodeMapRange")
+        self.assertTrue(bsdf.inputs["Roughness"].links)
 
     def test_global_specular_is_the_default_shininess(self) -> None:
         built = self.do_import(obj_text("", header="GLOBAL_specular 0.6\n"))
