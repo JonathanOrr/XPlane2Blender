@@ -120,8 +120,15 @@ class XPlaneObject:
 
     def collectAnimAttributes(self):
         # add custom anim attributes
-        for attr in self.blenderObject.xplane.customAnimAttributes:
-            self.animAttributes.add(XPlaneAttribute(attr.name, attr.value, attr.weight))
+        for custom_index, attr in enumerate(
+            self.blenderObject.xplane.customAnimAttributes
+        ):
+            name = (
+                XPlaneAttributeName(attr.name, -(custom_index + 1))
+                if attr.name in ("ANIM_show", "ANIM_hide")
+                else attr.name
+            )
+            self.animAttributes.add(XPlaneAttribute(name, attr.value, attr.weight))
 
         # add anim attributes from datarefs
         for (dataref_index, dataref) in enumerate(self.blenderObject.xplane.datarefs):
