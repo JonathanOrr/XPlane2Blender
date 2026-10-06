@@ -23,10 +23,10 @@ bl_info = {
     "description": "Export X-Plane objects/planes (.obj format)",
     "author": "Ted Greene, Ben Supnik, Amy Parent, Maya F. Eroğlu",
     "version": (4, 5, 0),
-    "blender": (2, 80, 0),
+    "blender": (3, 6, 0),
     "location": "File > Import/Export > X-Plane",
     "warning": "",
-    "wiki_url": "https://github.com/X-Plane/XPlane2Blender/wiki",
+    "doc_url": "https://xp2b-docs.gitbook.io/xplane2blender-docs",
     "tracker_url": "https://github.com/X-Plane/XPlane2Blender/issues",
     "category": "Import-Export",
 }
