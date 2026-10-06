@@ -11,6 +11,7 @@ import numpy as np
 
 from io_xplane2blender import xplane_constants, xplane_helpers
 
+from . import lights
 from . import transforms as T
 from .common import ImportOptions, ImportReport
 from .defaults import nearest_key_index, show_hide_visible
@@ -632,53 +633,53 @@ class ObjBuilder:
 
     # ---- lights ---------------------------------------------------------------------------
     @staticmethod
-    def _light_color(light: Light) -> Optional[Tuple[float, float, float]]:
-        """The color a light has in lights.txt, or the one in its parameters, so lights look right in Blender"""
-        if light.kind not in ("named", "param"):
-            return None
-        try:
-            from io_xplane2blender.xplane_utils import (
-                xplane_lights_txt_parser as lights_txt,
-            )
-
-            lights_txt.parse_lights_file()
-            parsed = lights_txt.get_parsed_light(light.name)
-            overload = parsed.best_overload()
-            formal = list(parsed.light_param_def)
-            color = []
-            for column in (
-                lights_txt.ColumnName.R,
-                lights_txt.ColumnName.G,
-                lights_txt.ColumnName.B,
-            ):
-                value = overload[column]
-                if isinstance(value, str):
-                    value = float(light.args[formal.index(value)])
-                color.append(max(0.0, min(1.0, float(value))))
-            return tuple(color)
-        except (
-            Exception
-        ):  # noqa: BLE001 - the color is only for looks, never fail an import over it
-            return None
+    def _exact_color(settings, rgb) -> None:
+        """Custom lights may hold placeholder colors outside 0 to 1, such as -1, that the Blender color picker can not"""
+        if any(not 0.0 <= c <= 1.0 for c in rgb):
+            settings.enable_rgb_override = True
+            settings.rgb_override_values = rgb
 
     def _add_light(
         self, light: Light, parent, static: mathutils.Matrix, name: str
     ) -> None:
+        look = lights.look_of(light)
         matrix = static @ T.translation_xp(light.position)
         data_name = light.name or light.kind
-        blender_light = bpy.data.lights.new(self._clean(data_name), "POINT")
-        blender_light.energy = 10.0
+        blender_light = bpy.data.lights.new(self._clean(data_name), look.kind)
+        blender_light.color = look.color
         blender_light.shadow_soft_size = 0.01
+        if look.kind == "SPOT":
+            blender_light.spot_size = look.spot_size
+            blender_light.spot_blend = 0.2
+        if look.illuminates:
+            # Spill lights are dataref driven and off in the parked pose, "Light Strength" switches them on
+            blender_light["xplane_watts_when_on"] = look.watts
+            blender_light.energy = look.watts * self.options.light_strength
+        else:
+            blender_light.energy = 0.0
         obj = bpy.data.objects.new(self._clean(data_name), blender_light)
         self.collection.objects.link(obj)
         obj.parent = parent
-        obj.matrix_basis = T.matrix_to_blender(matrix)
+        base = T.matrix_to_blender(matrix)
+        if look.direction is not None:
+            # A spot points along its -Z, the exporter reads the light direction from there
+            pointing = T.vec_to_blender(look.direction)
+            turn = mathutils.Vector((0.0, 0.0, -1.0)).rotation_difference(pointing)
+            base = base @ turn.to_matrix().to_4x4()
+        obj.matrix_basis = base
+        if not look.illuminates:
+            # Billboards and custom lights are only halos in X-Plane, they must not light the scene in Cycles or EEVEE
+            for ray in (
+                "visible_diffuse",
+                "visible_glossy",
+                "visible_transmission",
+                "visible_volume_scatter",
+            ):
+                if hasattr(obj, ray):
+                    setattr(obj, ray, False)
         if parent is not None and parent.name in self._hidden:
             self._hide(obj)
         self._flag_lod(obj, light.lod)
-        color = self._light_color(light)
-        if color is not None:
-            blender_light.color = color
         x = blender_light.xplane
         try:
             if light.kind == "named":
@@ -689,20 +690,25 @@ class ObjBuilder:
                 x.name = light.name
                 x.params = " ".join(light.args)
             elif light.kind == "custom":
+                # r g b a size s1 t1 s2 t2 dataref, the exporter writes the Blender power as the alpha
                 x.type = xplane_constants.LIGHT_CUSTOM
-                nums = [float(a) for a in light.args[:12]]
-                blender_light.color = nums[0:3]
+                nums = [_number(a) for a in light.args[:9]]
+                blender_light.energy = nums[3]
+                self._exact_color(x, nums[0:3])
                 x.size = nums[4]
-                x.dataref = light.args[12] if len(light.args) > 12 else ""
-                if len(nums) >= 12:
-                    x.uv = nums[8:12]
-            elif light.kind == "spill_custom":
-                x.type = xplane_constants.LIGHT_SPILL_CUSTOM
-                nums = [float(a) for a in light.args[:9]]
-                blender_light.color = nums[0:3]
+                x.uv = nums[5:9]
                 x.dataref = light.args[9] if len(light.args) > 9 else ""
-            elif light.kind == "vlight":
-                blender_light.color = [float(a) for a in light.args[:3]]
+            elif light.kind == "spill_custom":
+                # r g b a size dx dy dz width dataref, the exporter always writes an alpha of 1
+                x.type = xplane_constants.LIGHT_SPILL_CUSTOM
+                nums = [_number(a) for a in light.args[:9]]
+                self._exact_color(x, nums[0:3])
+                x.size = nums[4]
+                x.dataref = light.args[9] if len(light.args) > 9 else ""
+                if abs(nums[3] - 1.0) > 1e-6:
+                    self.report.warn(
+                        f"{self.stem}: a spill light has an alpha of {nums[3]:g}, the exporter always writes 1"
+                    )
         except (ValueError, IndexError):
             self.report.warn(
                 f"{self.stem}: could not read a {light.kind} light, it was imported without its settings"

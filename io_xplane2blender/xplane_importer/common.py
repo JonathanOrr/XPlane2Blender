@@ -26,6 +26,8 @@ class ImportOptions:
     lit_strength: float = (
         0.0  # Emission strength of the _LIT texture, 0 shows the daytime look
     )
+    # Multiplies the power of the spill lights. They are dataref driven and off in the parked pose, so 0 by default
+    light_strength: float = 0.0
     # Misc
     scale: float = 1.0
     collection_name: str = ""  # Use this instead of the file name

@@ -58,6 +58,15 @@ def _option_properties():
             min=0.0,
             soft_max=10.0,
         ),
+        "light_strength": bpy.props.FloatProperty(
+            name="Light Strength",
+            description="Switches the spill lights on, such as the cockpit annunciator and panel lights. "
+            "They are dataref driven in X-Plane and off in the parked pose, so 0 keeps them from lighting the scene. "
+            "1 is the brightness the light's parameters ask for",
+            default=0.0,
+            min=0.0,
+            soft_max=10.0,
+        ),
         "show_result": bpy.props.BoolProperty(
             name="Show In Viewport",
             description="Switch the 3D viewport to the textured Material Preview and frame everything",
@@ -82,6 +91,7 @@ def _options_from(op) -> ImportOptions:
         "hide_default_hidden",
         "make_exportable",
         "lit_strength",
+        "light_strength",
         "scale",
     )
     options = ImportOptions(**{k: getattr(op, k) for k in keys if hasattr(op, k)})
@@ -212,6 +222,7 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
         box.label(text="Setup", icon="PREFERENCES")
         box.prop(self, "make_exportable")
         box.prop(self, "lit_strength")
+        box.prop(self, "light_strength")
         box.prop(self, "scale")
         box.prop(self, "show_result")
 
@@ -319,6 +330,7 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
         box.label(text="Setup", icon="PREFERENCES")
         box.prop(self, "make_exportable")
         box.prop(self, "lit_strength")
+        box.prop(self, "light_strength")
         box.prop(self, "scale")
         box.prop(self, "show_result")
 

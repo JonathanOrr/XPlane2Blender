@@ -2,6 +2,7 @@ import itertools
 import os
 
 import bpy
+from mathutils import Vector
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests.importer_helpers import (
     TempFolder,
@@ -13,7 +14,7 @@ from io_xplane2blender.tests.obj_evaluator import corners, max_distance
 from io_xplane2blender.tests.test_creation_helpers import create_initial_test_setup
 from io_xplane2blender.xplane_importer.common import ImportOptions, ImportReport
 from io_xplane2blender.xplane_importer.importing import import_obj_file
-from io_xplane2blender.xplane_importer.obj_parser import AnimNode, parse_obj
+from io_xplane2blender.xplane_importer.obj_parser import AnimNode, Light, parse_obj
 
 # A little house shape: a floor quad and a wall quad, so that every transform is visible in the corners
 HOUSE_VT = (
@@ -58,6 +59,34 @@ def test_values(obj):
     return sets
 
 
+def light_summaries(text):
+    """Every light as (kind, name, parameters, position), numbers rounded, ignoring where in the blocks it sits"""
+    found = []
+
+    def number(value):
+        try:
+            return round(float(value), 4)
+        except ValueError:
+            return value
+
+    def visit(node):
+        for child in node.children:
+            if isinstance(child, AnimNode):
+                visit(child)
+            elif isinstance(child, Light):
+                found.append(
+                    (
+                        child.kind,
+                        child.name,
+                        tuple(number(a) for a in child.args),
+                        tuple(round(v, 4) for v in child.position),
+                    )
+                )
+
+    visit(parse_obj(text).root)
+    return sorted(found, key=repr)
+
+
 class TestImportRoundTrip(XPlaneTestCase):
     """Imports an OBJ, exports it with XPlane2Blender, and checks both look identical to X-Plane"""
 
@@ -87,6 +116,62 @@ class TestImportRoundTrip(XPlaneTestCase):
                 actual = corners(again, values)
                 self.assertEqual(expected.shape, actual.shape)
                 self.assertLess(max_distance(expected, actual), 2e-3)
+
+    def assert_lights_round_trip(self, body: str) -> None:
+        text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris="TRIS 0 6\n")
+        path = write_file(self.folder.join("lights.obj"), text)
+        built = import_obj_file(path, ImportOptions(make_exportable=True), ImportReport())
+        exported = self.exportExportableRoot(built.collection)
+        self.assertLoggerErrors(0)
+        self.assertEqual(light_summaries(text), light_summaries(exported))
+
+    def test_named_and_param_lights(self) -> None:
+        # The parameters are written back as they were: a spill (_pm) with a cone, and its billboard
+        self.assert_lights_round_trip(
+            "LIGHT_NAMED ship_mast_powered 1 2 3\n"
+            "LIGHT_PARAM airplane_generic_pm 0.5 1 -2 1 0.5 0 18 25cd 0 -1 0 0.5\n"
+            "LIGHT_PARAM airplane_generic_bb 0.5 1 -2 1 0.5 0 18 25cd 0 -1 0 0.5\n"
+        )
+
+    def test_custom_lights_keep_alpha_size_texture_and_odd_colors(self) -> None:
+        # The power is the alpha, and a halo may hold placeholder colors the color picker can not
+        self.assert_lights_round_trip(
+            "LIGHT_CUSTOM 1 2 3 1 0.5 0.25 0.75 2.5 0.1 0.2 0.3 0.4 sim/graphics/animation/lights/airplane_generic_light\n"
+            "LIGHT_CUSTOM -1 0 0.5 -1 0 -0.5 -2 3 0.5 0.5 1 1 sim/graphics/animation/lights/airplane_navigation_light_dir\n"
+        )
+
+    def test_custom_spill_lights(self) -> None:
+        # Omni, and with a cone pointing down and sideways
+        self.assert_lights_round_trip(
+            "LIGHT_SPILL_CUSTOM 1 2 3 1 0.5 0.25 1 0.4 0 0 0 1 my/dataref\n"
+            "LIGHT_SPILL_CUSTOM 0.5 1 -2 0.9 0.8 0.7 1 0.15 0 -1 0 0.6 my/other\n"
+            "LIGHT_SPILL_CUSTOM -1 1 0 0.9 0.8 0.7 1 0.15 0.6 -0.8 0 0.75 none\n"
+        )
+
+    def test_lights_in_moving_parts_keep_their_direction(self) -> None:
+        # A static rotation around a spill light is folded into its position, the cone must still point the same way
+        text = obj_text(
+            "ANIM_begin\nANIM_trans 1 1 0 1 1 0\nANIM_rotate 0 0 1 30 30\n"
+            "LIGHT_PARAM airplane_generic_pm 0.5 1 -2 1 0.5 0 18 25cd 0 -1 0 0.5\nANIM_end\n",
+            header="TEXTURE tex.png\n",
+            vertices=HOUSE_VT,
+            indices=HOUSE_IDX,
+            tris="TRIS 0 6\n",
+        )
+        path = write_file(self.folder.join("lights.obj"), text)
+        built = import_obj_file(path, ImportOptions(make_exportable=True), ImportReport())
+        exported = self.exportExportableRoot(built.collection)
+        self.assertLoggerErrors(0)
+        again = import_obj_file(write_file(self.folder.join("again.obj"), exported), ImportOptions(), ImportReport())
+        bpy.context.view_layer.update()
+
+        def frames(result):
+            (light,) = [o for o in result.objects if o.type == "LIGHT"]
+            return light.matrix_world.translation, light.matrix_world.to_3x3() @ Vector((0, 0, -1))
+
+        (position1, direction1), (position2, direction2) = frames(built), frames(again)
+        self.assertLess((position1 - position2).length, 1e-4)
+        self.assertLess((direction1 - direction2).length, 1e-4)
 
     def test_nothing_animated(self) -> None:
         self.assert_round_trip("TRIS 0 6\nTRIS 6 6\n")

@@ -399,7 +399,7 @@ class TestImportObj(XPlaneTestCase):
 
     # ---- lights, magnets, emitters -----------------------------------------------------
     def test_lights(self) -> None:
-        body = "LIGHT_NAMED beacon 1 2 3\nLIGHT_PARAM airplane_nav_left 4 5 6 0.5 1\nLIGHT_CUSTOM 0 0 0 1 0 0 1 3 0 0 1 0 0 1 1 sim/dr\n"
+        body = "LIGHT_NAMED beacon 1 2 3\nLIGHT_PARAM airplane_nav_left 4 5 6 0.5 1\nLIGHT_CUSTOM 0 0 0 1 0 0 0.5 3 0.1 0.2 0.3 0.4 sim/dr\n"
         built = self.do_import(obj_text(body, tris=None))
         lights = {o.name: o for o in built.objects if o.type == "LIGHT"}
         self.assertEqual(len(lights), 3)
@@ -412,6 +412,10 @@ class TestImportObj(XPlaneTestCase):
         custom = [l for l in lights.values() if l.data.xplane.type == xplane_constants.LIGHT_CUSTOM][0].data
         self.assertEqual(tuple(round(c, 3) for c in custom.color), (1.0, 0.0, 0.0))
         self.assertEqual(custom.xplane.dataref, "sim/dr")
+        # The exporter writes the Blender power as the alpha, and the size and texture coordinates from the settings
+        self.assertAlmostEqual(custom.energy, 0.5)
+        self.assertAlmostEqual(custom.xplane.size, 3.0)
+        self.assertEqual([round(v, 3) for v in custom.xplane.uv], [0.1, 0.2, 0.3, 0.4])
         self.assertEqual(self.report.lights_imported, 3)
 
     def test_lights_take_their_color_from_their_parameters(self) -> None:
@@ -419,6 +423,61 @@ class TestImportObj(XPlaneTestCase):
         built = self.do_import(obj_text(body, tris=None))
         (light,) = [o for o in built.objects if o.type == "LIGHT"]
         self.assertEqual(tuple(round(c, 3) for c in light.data.color), (0.2, 0.4, 0.6))
+
+    def light(self, body: str, **options):
+        built = self.do_import(obj_text(body, tris=None), **options)
+        (light,) = [o for o in built.objects if o.type == "LIGHT"]
+        bpy.context.view_layer.update()
+        return light
+
+    def test_spill_lights_point_where_lights_txt_says(self) -> None:
+        # airplane_generic_pm is a SPILL_SW: it lights its surroundings, with a half angle of 60 degrees here
+        light = self.light("LIGHT_PARAM airplane_generic_pm 1 2 3 1 0.5 0 18 25cd 0 -1 0 0.5\n", light_strength=1.0)
+        self.assertEqual(light.data.type, "SPOT")
+        self.assertAlmostEqual(light.data.spot_size, math.radians(120), places=4)
+        self.assertEqual(tuple(round(c, 3) for c in light.data.color), (1.0, 0.5, 0.0))
+        down = light.matrix_world.to_3x3() @ Vector((0, 0, -1))  # X-Plane -Y is Blender -Z
+        self.assertLess((down - Vector((0, 0, -1))).length, 1e-4)
+        # 25 candela, and the exporter still writes the parameters as they were
+        self.assertAlmostEqual(light.data.energy, 25 * 4 * math.pi**2 / 683, places=3)
+        self.assertEqual(light.data.xplane.params, "1 0.5 0 18 25cd 0 -1 0 0.5")
+
+    def test_spill_lights_are_off_unless_asked(self) -> None:
+        light = self.light("LIGHT_PARAM airplane_generic_pm 1 2 3 1 1 1 18 25cd 0 -1 0 0.5\n")
+        self.assertEqual(light.data.energy, 0.0)
+        self.assertGreater(light.data["xplane_watts_when_on"], 0.5)
+
+    def test_billboards_do_not_light_the_scene(self) -> None:
+        light = self.light("LIGHT_PARAM airplane_generic_bb 1 2 3 1 1 1 18 25cd 0 -1 0 0.5\n", light_strength=1.0)
+        self.assertEqual(light.data.type, "POINT")
+        self.assertEqual(light.data.energy, 0.0)
+        for ray in ("visible_diffuse", "visible_glossy", "visible_transmission", "visible_volume_scatter"):
+            self.assertFalse(getattr(light, ray), ray)
+
+    def test_custom_spill_lights_keep_their_settings(self) -> None:
+        light = self.light("LIGHT_SPILL_CUSTOM 1 2 3 0.9 0.8 0.7 1 0.4 0 0 -1 0.5 my/dataref\n", light_strength=1.0)
+        self.assertEqual(light.data.type, "SPOT")
+        self.assertAlmostEqual(light.data.xplane.size, 0.4)
+        self.assertEqual(light.data.xplane.dataref, "my/dataref")
+        self.assertEqual(tuple(round(c, 3) for c in light.data.color), (0.9, 0.8, 0.7))
+        self.assertGreater(light.data.energy, 0.0)
+        # X-Plane -Z is the way the plane flies, and Blender +Y
+        pointing = light.matrix_world.to_3x3() @ Vector((0, 0, -1))
+        self.assertLess((pointing - Vector((0, 1, 0))).length, 1e-4)
+
+    def test_colors_outside_the_color_picker_are_kept(self) -> None:
+        light = self.light("LIGHT_CUSTOM 0 0 0 -1 0 -0.5 -2 3 0.5 0.5 1 1 sim/dr\n")
+        self.assertTrue(light.data.xplane.enable_rgb_override)
+        self.assertEqual([round(v, 3) for v in light.data.xplane.rgb_override_values], [-1.0, 0.0, -0.5])
+        self.assertAlmostEqual(light.data.energy, -2.0)
+
+    def test_omni_spill_lights_are_point_lights(self) -> None:
+        light = self.light("LIGHT_SPILL_CUSTOM 0 0 0 1 1 1 1 2 0 0 0 1 none\n")
+        self.assertEqual(light.data.type, "POINT")
+
+    def test_a_spill_alpha_other_than_one_is_reported(self) -> None:
+        self.light("LIGHT_SPILL_CUSTOM 0 0 0 1 1 1 0 2 0 0 0 1 none\n")
+        self.assertTrue(any("alpha" in w for w in self.report.warnings), self.report.warnings)
 
     def test_lights_can_be_skipped(self) -> None:
         built = self.do_import(obj_text("LIGHT_NAMED beacon 1 2 3\n"), import_lights=False)
