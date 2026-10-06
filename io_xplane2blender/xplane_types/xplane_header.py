@@ -1098,6 +1098,13 @@ class XPlaneHeader:
             raise
         else:
             os.chdir(old_cwd)
+            if any(c.isspace() for c in rel_path):
+                logger.error(
+                    f"Texture path '{rel_path}' contains a space, which breaks the OBJ "
+                    "file format (tokens are whitespace-separated). Rename the file or "
+                    "folder, or use underscores instead of spaces."
+                )
+                raise ValueError
             return rel_path
 
     # Method: _getCanonicalTexturePath

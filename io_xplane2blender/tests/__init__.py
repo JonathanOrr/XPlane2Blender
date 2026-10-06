@@ -666,6 +666,12 @@ class XPlaneAnimationTestCase(XPlaneTestCase):
     def setUp(self):
         super(XPlaneAnimationTestCase, self).setUp()
 
+    def _clearLayerTexture(self, layer: int) -> None:
+        # Animation fixtures only compare ANIM and TRIS lines, but some of the .blend
+        # files carry an absolute texture path with spaces from the author's machine,
+        # which is now (rightly) a validation error
+        bpy.data.collections[f"Layer {layer + 1}"].xplane.layer.texture = ""
+
     def exportAnimationTestCase(self, name, dest):
         self.assertTrue(animation_file_mappings.mappings[name])
 
@@ -675,6 +681,7 @@ class XPlaneAnimationTestCase(XPlaneTestCase):
             )
             print('Exporting to "%s"' % outFile)
 
+            self._clearLayerTexture(layer)
             io_xplane2blender.tests.test_creation_helpers.make_root_exportable(
                 bpy.data.collections[f"Layer {layer + 1}"]
             )
@@ -701,6 +708,7 @@ class XPlaneAnimationTestCase(XPlaneTestCase):
 
         for layer in animation_file_mappings.mappings[name]:
             # print('Testing animations against fixture "%s"' % mappings[name][layer])
+            self._clearLayerTexture(layer)
             bpy.data.collections[f"Layer {layer + 1}"].hide_viewport = False
             xplaneFile = self.createXPlaneFileFromPotentialRoot(
                 bpy.data.collections[f"Layer {layer + 1}"]
