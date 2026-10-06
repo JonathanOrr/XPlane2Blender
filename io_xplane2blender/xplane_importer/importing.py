@@ -37,5 +37,6 @@ def import_obj_file(
         report.files_failed += 1
         report.error(f"{os.path.basename(path)}: import failed ({e.__class__.__name__}: {e})")
         return None
+    bpy.context.view_layer.update()
     report.info(f"{os.path.basename(path)}: {time.time() - started:.1f}s")
     return built

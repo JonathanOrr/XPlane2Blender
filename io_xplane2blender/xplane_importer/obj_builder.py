@@ -12,6 +12,7 @@ from io_xplane2blender import xplane_constants, xplane_helpers
 
 from . import transforms as T
 from .common import ImportOptions, ImportReport
+from .defaults import nearest_key_index, show_hide_visible
 from .materials import MaterialFactory, TextureResolver
 from .mesh_builder import build_mesh
 from .obj_parser import AnimNode, AnimOp, Extra, Light, ObjFile, TrisRun, Visibility
@@ -93,6 +94,7 @@ class ObjBuilder:
         self.has_manipulators = False
         self._groups: Dict[tuple, _Group] = {}
         self._first_lod = obj.lods[0] if obj.lods else None
+        self._hidden = set()  # names of objects X-Plane would not draw by default
         self._light_count = 0
 
     # ------------------------------------------------------------------------------------
@@ -148,6 +150,8 @@ class ObjBuilder:
             holder = self._make_empty(label + " visibility", parent, pending)
             for vis in shows:
                 self._add_dataref(holder, vis.dataref, "show" if vis.kind == "show" else "hide", v1=vis.v1, v2=vis.v2, loop=vis.loop)
+                if self.options.hide_default_hidden and not show_hide_visible(vis.kind, vis.v1, vis.v2, vis.dataref):
+                    self._hide(holder)
             self.report.animations_imported += 1
             parent, pending = holder, mathutils.Matrix.Identity(4)
 
@@ -173,6 +177,8 @@ class ObjBuilder:
         self.collection.objects.link(empty)
         empty.parent = parent
         empty.matrix_basis = T.matrix_to_blender(matrix_xp)
+        if parent is not None and parent.name in self._hidden:
+            self._hide(empty)
         self.objects.append(empty)
         self.report.objects_imported += 1
         return empty
@@ -181,6 +187,8 @@ class ObjBuilder:
         name = f"{label} {op.dataref.split('/')[-1]}"
         pending_bl = T.matrix_to_blender(pending)
         keys = sorted(op.keys, key=lambda k: k[0])
+        # The key nearest the dataref's default value goes on frame 1, so the scene opens in the parked pose
+        first_frame = 1 - nearest_key_index([k[0] for k in keys], op.dataref)
         if op.kind == "trans":
             # Rotation in the static part goes on a parent, translation is folded into the keys
             if T.has_rotation(pending_bl):
@@ -191,7 +199,7 @@ class ObjBuilder:
             empty = self._make_empty(name, parent, mathutils.Matrix.Identity(4))
             for i, (value, vec) in enumerate(keys):
                 empty.location = offset + T.vec_to_blender(vec) * self.options.scale
-                self._key(empty, "location", i + 1, op, value)
+                self._key(empty, "location", first_frame + i, op, value)
         else:
             if T.has_rotation(pending_bl):
                 parent = self._make_empty(name + " base", parent, pending)
@@ -207,10 +215,10 @@ class ObjBuilder:
                 if index >= 0:
                     empty.rotation_euler = (0, 0, 0)
                     empty.rotation_euler[index] = sign * math.radians(angle)
-                    self._key(empty, "rotation_euler", i + 1, op, value, array_index=index)
+                    self._key(empty, "rotation_euler", first_frame + i, op, value, array_index=index)
                 else:
                     empty.rotation_axis_angle = (math.radians(angle), *axis_bl)
-                    self._key(empty, "rotation_axis_angle", i + 1, op, value)
+                    self._key(empty, "rotation_axis_angle", first_frame + i, op, value)
         self._finish_animation(empty)
         self.report.animations_imported += 1
         return empty
@@ -237,6 +245,12 @@ class ObjBuilder:
             for point in fcurve.keyframe_points:
                 point.interpolation = "LINEAR"
             fcurve.update()
+
+    def _hide(self, obj: bpy.types.Object) -> None:
+        """Hides what X-Plane does not draw with the datarefs at their default values"""
+        self._hidden.add(obj.name)
+        obj.hide_viewport = True
+        obj.hide_render = True
 
     def _add_dataref(self, obj, path: str, anim_type: str, v1: float = 0.0, v2: float = 0.0, loop: float = 0.0) -> None:
         dataref = obj.xplane.datarefs.add()
@@ -293,6 +307,8 @@ class ObjBuilder:
             self.collection.objects.link(blender_obj)
             blender_obj.parent = group.parent
             blender_obj.matrix_basis = T.matrix_to_blender(group.matrix_xp)
+            if group.parent is not None and group.parent.name in self._hidden:
+                self._hide(blender_obj)
             self._apply_object_state(blender_obj, group)
             if all(m.xplane.draw is False for m in group.materials):
                 blender_obj.display_type = "WIRE"
@@ -402,6 +418,8 @@ class ObjBuilder:
         self.collection.objects.link(obj)
         obj.parent = parent
         obj.matrix_basis = T.matrix_to_blender(matrix)
+        if parent is not None and parent.name in self._hidden:
+            self._hide(obj)
         x = blender_light.xplane
         try:
             if light.kind == "named":

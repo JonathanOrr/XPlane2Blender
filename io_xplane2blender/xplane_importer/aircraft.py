@@ -7,7 +7,7 @@ import bpy
 import mathutils
 
 from . import transforms as T
-from .acf_parser import AcfFile, AcfObject, AcfParseError, parse_acf_file, resolve_object_path
+from .acf_parser import AcfFile, AcfObject, AcfParseError, _child_folder, parse_acf_file, resolve_object_path
 from .common import ImportOptions, ImportReport
 from .importing import import_obj_file
 
@@ -49,7 +49,7 @@ def import_aircraft(
 
     livery_objects = ""
     if livery:
-        candidate = os.path.join(acf.folder, "liveries", livery, "objects")
+        candidate = _child_folder(os.path.join(_child_folder(acf.folder, "liveries"), livery), "objects")
         if os.path.isdir(candidate):
             livery_objects = candidate
         else:
@@ -90,4 +90,5 @@ def import_aircraft(
         report.info(f"{skipped_damage} damage object(s) were skipped (they only show when a part breaks)")
     if skipped_attached:
         report.info(f"{skipped_attached} object(s) attached to wings, gear or the body were skipped")
+    bpy.context.view_layer.update()
     return root

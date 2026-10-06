@@ -31,6 +31,12 @@ def _option_properties():
         "import_lights": bpy.props.BoolProperty(
             name="Lights", description="Create X-Plane lights as Blender lights", default=True
         ),
+        "hide_default_hidden": bpy.props.BoolProperty(
+            name="Hide What X-Plane Hides",
+            description="Hide the show/hide objects that X-Plane would not draw with the datarefs at their default values. "
+            "Unhide them before exporting again, hidden objects are not exported",
+            default=True,
+        ),
         "all_lods": bpy.props.BoolProperty(
             name="All LODs", description="Import every level of detail instead of only the first", default=False
         ),
@@ -59,6 +65,7 @@ def _options_from(op) -> ImportOptions:
         "import_manipulators",
         "import_lights",
         "all_lods",
+        "hide_default_hidden",
         "setup_for_export",
         "lit_strength",
         "scale",
@@ -107,7 +114,7 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
         layout.use_property_decorate = False
         box = layout.box()
         box.label(text="Bring in", icon="IMPORT")
-        for name in ("import_materials", "import_animations", "import_manipulators", "import_lights", "all_lods"):
+        for name in ("import_materials", "import_animations", "import_manipulators", "import_lights", "all_lods", "hide_default_hidden"):
             box.prop(self, name)
         box = layout.box()
         box.label(text="Setup", icon="PREFERENCES")
@@ -183,7 +190,7 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
         box.prop(self, "include_attached")
         box = layout.box()
         box.label(text="Bring in", icon="IMPORT")
-        for name in ("import_materials", "import_animations", "import_manipulators", "import_lights", "all_lods"):
+        for name in ("import_materials", "import_animations", "import_manipulators", "import_lights", "all_lods", "hide_default_hidden"):
             box.prop(self, name)
         box = layout.box()
         box.label(text="Setup", icon="PREFERENCES")

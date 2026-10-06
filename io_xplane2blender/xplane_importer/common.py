@@ -12,7 +12,7 @@ class ImportOptions:
     import_lights: bool = True
     import_attached_objects: bool = True  # Aircraft: the objects listed in the ACF
     # Aircraft: what to skip
-    skip_hidden_by_default: bool = False  # Objects hidden by an "obj_hide_dataref"
+    hide_default_hidden: bool = True  # Hide what X-Plane hides at the default dataref values
     # How to build it
     all_lods: bool = False  # False imports only the first LOD
     merge_materials: bool = True  # One material per unique look instead of per OBJ

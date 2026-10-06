@@ -55,7 +55,7 @@ class AcfFile:
 
     @property
     def objects_folder(self) -> str:
-        return os.path.join(self.folder, "objects")
+        return _child_folder(self.folder, "objects")
 
     @property
     def name(self) -> str:
@@ -67,13 +67,24 @@ class AcfFile:
         return os.path.splitext(os.path.basename(self.path))[0]
 
     def liveries(self) -> List[str]:
-        folder = os.path.join(self.folder, "liveries")
+        folder = _child_folder(self.folder, "liveries")
         try:
             return sorted(
                 e for e in os.listdir(folder) if os.path.isdir(os.path.join(folder, e))
             )
         except OSError:
             return []
+
+
+def _child_folder(folder: str, name: str) -> str:
+    """The path of a subfolder, found without regard to case (aircraft made on Windows say "Objects")"""
+    try:
+        for entry in os.listdir(folder):
+            if entry.lower() == name.lower() and os.path.isdir(os.path.join(folder, entry)):
+                return os.path.join(folder, entry)
+    except OSError:
+        pass
+    return os.path.join(folder, name)
 
 
 def _float(value: str, default: float = 0.0) -> float:
