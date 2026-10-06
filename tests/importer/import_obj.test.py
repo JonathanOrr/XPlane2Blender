@@ -162,6 +162,20 @@ class TestImportObj(XPlaneTestCase):
         self.assertEqual(obj.display_type, "WIRE")
         self.assertTrue(obj.hide_render)
 
+    def test_normal_metalness_blue_is_reflectance(self) -> None:
+        # LR's Substance preset writes F0 to the blue channel: it sets the specular level,
+        # and only high values (metals) make the surface metallic
+        write_png(self.folder.join("tex_NRM.png"))
+        header = "TEXTURE tex.png\nTEXTURE_NORMAL tex_NRM.png\nNORMAL_METALNESS\nGLOBAL_specular 1\n"
+        material = self.meshes(self.do_import(obj_text("", header=header)))[0].data.materials[0]
+        bsdf = next(n for n in material.node_tree.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled")
+        metallic = bsdf.inputs["Metallic"].links[0].from_node
+        self.assertEqual(metallic.bl_idname, "ShaderNodeMapRange")
+        self.assertGreater(metallic.inputs["From Min"].default_value, 0.04)
+        specular = bsdf.inputs.get("Specular IOR Level") or bsdf.inputs["Specular"]
+        self.assertEqual(specular.links[0].from_node.operation, "MULTIPLY")
+        self.assertTrue(specular.links[0].from_node.use_clamp)
+
     def test_global_specular_is_the_default_shininess(self) -> None:
         built = self.do_import(obj_text("", header="GLOBAL_specular 0.6\n"))
         self.assertAlmostEqual(self.meshes(built)[0].data.materials[0].specular_intensity, 0.6, places=4)

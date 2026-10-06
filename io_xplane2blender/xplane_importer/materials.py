@@ -386,18 +386,10 @@ class MaterialFactory:
                 links.new(mult.outputs["Value"], inv.inputs[1])
                 links.new(inv.outputs["Value"], bsdf.inputs["Roughness"])
                 rough = True
-                if spec_input is not None:
-                    links.new(mult.outputs["Value"], spec_input)
                 if metalness_mode:
-                    sep = (
-                        tree.nodes.new("ShaderNodeSeparateColor")
-                        if hasattr(bpy.types, "ShaderNodeSeparateColor")
-                        else tree.nodes.new("ShaderNodeSeparateRGB")
-                    )
-                    sep.location = (-300, -450)
-                    links.new(tex.outputs["Color"], sep.inputs[0])
-                    blue = sep.outputs.get("Blue") or sep.outputs["B"]
-                    links.new(blue, bsdf.inputs["Metallic"])
+                    self._link_reflectance(tree, tex, bsdf, spec_input)
+                elif spec_input is not None:
+                    links.new(mult.outputs["Value"], spec_input)
         if pbr_maps:
             mg = self.image(self.material_gloss_path, "Non-Color")
             gloss = self.image(self.gloss_path, "Non-Color")
@@ -462,6 +454,35 @@ class MaterialFactory:
             bsdf.inputs["Alpha"].default_value = 0.0
             for link in list(bsdf.inputs["Alpha"].links):
                 tree.links.remove(link)
+
+    def _link_reflectance(self, tree, tex, bsdf, spec_input) -> None:
+        """
+        NORMAL_METALNESS: the blue channel is the base reflectance (F0), as exported by LR's Substance Painter preset.
+        Plastic and paint sit near 0.04 to 0.15 and metals are high, so it drives the specular level directly
+        (Principled 0.5 is F0 0.04) and the metallic input once it is clearly above any dielectric.
+        """
+        sep = (
+            tree.nodes.new("ShaderNodeSeparateColor")
+            if hasattr(bpy.types, "ShaderNodeSeparateColor")
+            else tree.nodes.new("ShaderNodeSeparateRGB")
+        )
+        sep.location = (-300, -450)
+        tree.links.new(tex.outputs["Color"], sep.inputs[0])
+        blue = sep.outputs.get("Blue") or sep.outputs["B"]
+        if spec_input is not None:
+            level = tree.nodes.new("ShaderNodeMath")
+            level.operation = "MULTIPLY"
+            level.use_clamp = True
+            level.location = (0, -650)
+            level.inputs[1].default_value = 12.5
+            tree.links.new(blue, level.inputs[0])
+            tree.links.new(level.outputs["Value"], spec_input)
+        metal = tree.nodes.new("ShaderNodeMapRange")
+        metal.location = (0, -800)
+        metal.inputs["From Min"].default_value = 0.2
+        metal.inputs["From Max"].default_value = 0.45
+        tree.links.new(blue, metal.inputs["Value"])
+        tree.links.new(metal.outputs["Result"], bsdf.inputs["Metallic"])
 
     def _global_specular(self) -> float:
         values = self.obj.globals.get("GLOBAL_specular")
