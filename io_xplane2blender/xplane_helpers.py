@@ -42,6 +42,18 @@ class UnwriteableXPlaneType(ValueError):
     pass
 
 
+MULTIPLAYER_DATAREF_PREFIX = "sim/multiplayer/"
+
+
+def is_multiplayer_dataref(dataref_path: str) -> bool:
+    """
+    sim/multiplayer datarefs must not be used in objects. Datarefs.txt always
+    lists them, so they are only rejected when actually used as an animation
+    dataref (see XPlaneObject.collectAnimAttributes / XPlaneBone.collectAnimations)
+    """
+    return dataref_path.startswith(MULTIPLAYER_DATAREF_PREFIX)
+
+
 def floatToStr(n: float) -> str:
     """
     Makes a rounded float with as 0's

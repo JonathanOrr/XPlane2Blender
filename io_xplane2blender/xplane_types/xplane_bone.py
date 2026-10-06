@@ -37,6 +37,7 @@ from io_xplane2blender.xplane_config import getDebug
 from io_xplane2blender.xplane_helpers import (
     floatToStr,
     get_action_fcurves,
+    is_multiplayer_dataref,
     logger,
     vec_b_to_x,
 )
@@ -243,6 +244,13 @@ class XPlaneBone:
                             for i, kf in enumerate(fcurve.keyframe_points)
                         ]
                     )
+
+                    if is_multiplayer_dataref(dataref):
+                        logger.error(
+                            "'{}' uses the multiplayer dataref '{}', which must not be used in objects. Choose another dataref.".format(
+                                bone.name if bone else blenderObject.name, dataref
+                            )
+                        )
 
     def getName(self, ignore_indent_level: bool = False) -> str:
         """
