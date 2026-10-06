@@ -2,6 +2,11 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 
+> **This is an unofficial community fork**, not affiliated with or supported by Laminar Research.
+> It keeps XPlane2Blender working on current Blender releases (5.2 LTS). The official add-on is at
+> [X-Plane/XPlane2Blender](https://github.com/X-Plane/XPlane2Blender). Please report problems with this
+> fork [here](https://github.com/JonathanOrr/XPlane2Blender/issues), not to Laminar Research.
+
 # Introduction
 This addon for Blender 2.80 and up makes it possible to export models made in Blender to the X-Plane object format (.obj). 
 An experimental importer has been added in 4.2.0-Alpha 1 and can be found here: https://github.com/X-Plane/XPlane2Blender/releases/tag/v4.2.0-alpha.1 
