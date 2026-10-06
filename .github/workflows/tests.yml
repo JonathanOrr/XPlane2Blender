@@ -1,0 +1,59 @@
+name: Tests
+
+on:
+  push:
+    branches: [develop, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      # Only rules that find real bugs (undefined names, syntax errors); see pyproject.toml
+      - run: pipx run ruff==0.16.10 check .
+
+  test:
+    name: Blender ${{ matrix.blender }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Oldest supported, then each LTS, then the newest LTS
+          - { blender: "3.6.23", series: "3.6" }
+          - { blender: "4.2.23", series: "4.2" }
+          - { blender: "4.5.14", series: "4.5" }
+          - { blender: "5.2.2", series: "5.2" }
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install the system libraries Blender links against
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgl1 libegl1 libx11-6 libxext6 libxi6 libxfixes3 libxrender1 libxxf86vm1 \
+            libxkbcommon0 libsm6 libice6 libvulkan1 libuuid1 zlib1g
+
+      - name: Restore Blender
+        id: cache-blender
+        uses: actions/cache@v6
+        with:
+          path: ~/blender
+          key: blender-${{ matrix.blender }}-linux-x64
+
+      - name: Download Blender ${{ matrix.blender }}
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/blender
+          curl -fsSL "https://download.blender.org/release/Blender${{ matrix.series }}/blender-${{ matrix.blender }}-linux-x64.tar.xz" \
+            | tar -xJ -C ~/blender --strip-components=1
+
+      - name: Run the test suite
+        run: python3 tests.py --blender ~/blender/blender --continue --print-fails
