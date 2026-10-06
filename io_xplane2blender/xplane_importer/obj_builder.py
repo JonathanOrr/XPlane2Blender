@@ -230,8 +230,7 @@ class ObjBuilder:
 
         self._walk(self.obj.root, None, self.base_matrix, self.stem)
         self._flush_groups()
-        if self.options.setup_for_export:
-            self._setup_layer()
+        self._setup_layer()
         self.report.files_imported += 1
         for message in self.obj.warnings[:20]:
             self.report.warn(f"{self.stem}: {message}")
@@ -775,7 +774,7 @@ class ObjBuilder:
     def _setup_layer(self) -> None:
         obj = self.obj
         collection = self.collection
-        collection.xplane.is_exportable_collection = True
+        collection.xplane.is_exportable_collection = self.options.make_exportable
         layer = collection.xplane.layer
         layer.name = self.stem
         layer.export_type = (

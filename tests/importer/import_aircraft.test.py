@@ -84,7 +84,7 @@ class TestImportAircraft(XPlaneTestCase):
         wing = root.children["wing"]
         self.assertEqual(wing["xplane_acf_object"], 1)
         self.assertEqual(wing["xplane_obj_flags"], 1033)
-        self.assertTrue(wing.xplane.is_exportable_collection)
+        self.assertFalse(wing.xplane.is_exportable_collection)
 
     def test_objects_are_placed_where_the_acf_says(self) -> None:
         root = self.do_import({0: entry("fuselage.obj", x=10.0, y=5.0, z=-20.0)})

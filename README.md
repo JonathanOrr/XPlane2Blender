@@ -49,7 +49,7 @@ The options are in the side panel of the file browser:
 | Lights | Creates lights with their XPlane2Blender settings |
 | All LODs | Imports every level of detail instead of only the first |
 | Hide What X-Plane Hides | Hides the objects that X-Plane would not draw with the datarefs at their default values. Unhide them before exporting again, hidden objects are not exported |
-| Set Up For Export | Makes each OBJ an XPlane2Blender root collection with its textures set, so it can be exported again |
+| Make Export Roots | Ticks each OBJ's collection as an XPlane2Blender root collection so Export OBJs writes it again. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in, so you can tick a single collection later |
 | Night Light Strength | How much the `_LIT` texture glows, 0 shows the daytime look |
 | Damage / Part Attached / Not Drawn Objects | Also brings in objects that are normally left out (they only show when a part breaks, move with a wing or gear part, or are drawn nowhere) |
 

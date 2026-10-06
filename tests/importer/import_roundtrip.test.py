@@ -75,7 +75,7 @@ class TestImportRoundTrip(XPlaneTestCase):
         text = obj_text(body, header=header, vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
         path = write_file(self.folder.join("part.obj"), text)
         report = ImportReport()
-        built = import_obj_file(path, ImportOptions(hide_default_hidden=False), report)
+        built = import_obj_file(path, ImportOptions(hide_default_hidden=False, make_exportable=True), report)
         self.assertIsNotNone(built, report.errors)
         exported = self.exportExportableRoot(built.collection)
         self.assertLoggerErrors(0)
@@ -157,7 +157,7 @@ class TestImportRoundTrip(XPlaneTestCase):
         body = "ATTR_LOD 0 500\nTRIS 0 6\nATTR_LOD 500 2000\nTRIS 6 6\n"
         text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
         path = write_file(self.folder.join("part.obj"), text)
-        built = import_obj_file(path, ImportOptions(all_lods=True), ImportReport())
+        built = import_obj_file(path, ImportOptions(all_lods=True, make_exportable=True), ImportReport())
         exported = self.exportExportableRoot(built.collection)
         self.assertLoggerErrors(0)
         lods = [line.split() for line in exported.splitlines() if line.startswith("ATTR_LOD")]
@@ -169,7 +169,7 @@ class TestImportRoundTrip(XPlaneTestCase):
         body = "ATTR_no_blend 0.4\nATTR_poly_os 2\nTRIS 0 6\nATTR_blend\nATTR_shiny_rat 0.3\nTRIS 6 6\n"
         text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
         path = write_file(self.folder.join("part.obj"), text)
-        built = import_obj_file(path, ImportOptions(), ImportReport())
+        built = import_obj_file(path, ImportOptions(make_exportable=True), ImportReport())
         exported = self.exportExportableRoot(built.collection)
         self.assertLoggerErrors(0)
         lines = [line.split() for line in exported.splitlines() if line.strip()]
@@ -188,7 +188,7 @@ class TestImportRoundTrip(XPlaneTestCase):
         )
         text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
         path = write_file(self.folder.join("part.obj"), text)
-        built = import_obj_file(path, ImportOptions(), ImportReport())
+        built = import_obj_file(path, ImportOptions(make_exportable=True), ImportReport())
         exported = self.exportExportableRoot(built.collection)
         self.assertLoggerErrors(0)
         lines = [line.split() for line in exported.splitlines() if line.strip()]

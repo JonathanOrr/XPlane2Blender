@@ -45,10 +45,11 @@ def _option_properties():
             description="Import every level of detail instead of only the first",
             default=False,
         ),
-        "setup_for_export": bpy.props.BoolProperty(
-            name="Set Up For Export",
-            description="Make each imported OBJ an XPlane2Blender root collection with its textures set, ready to export again",
-            default=True,
+        "make_exportable": bpy.props.BoolProperty(
+            name="Make Export Roots",
+            description="Tick each imported OBJ's collection as an XPlane 2Blender root collection, so Export OBJs writes them again. "
+            "Their texture and export settings are filled in either way, you can tick a single collection later",
+            default=False,
         ),
         "lit_strength": bpy.props.FloatProperty(
             name="Night Light Strength",
@@ -79,7 +80,7 @@ def _options_from(op) -> ImportOptions:
         "import_lights",
         "all_lods",
         "hide_default_hidden",
-        "setup_for_export",
+        "make_exportable",
         "lit_strength",
         "scale",
     )
@@ -209,7 +210,7 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
             box.prop(self, name)
         box = layout.box()
         box.label(text="Setup", icon="PREFERENCES")
-        box.prop(self, "setup_for_export")
+        box.prop(self, "make_exportable")
         box.prop(self, "lit_strength")
         box.prop(self, "scale")
         box.prop(self, "show_result")
@@ -220,7 +221,7 @@ _livery_items_cache = {}
 
 def _livery_items(self, context):
     """Dropdown entries for the liveries of the aircraft that is selected in the file browser"""
-    items = [("", "Default textures", "Use the textures the objects ask for")]
+    items = [("DEFAULT", "Default textures", "Use the textures the objects ask for")]
     path = bpy.path.abspath(self.filepath) if self.filepath else ""
     if path.lower().endswith(".acf") and os.path.isfile(path):
         folder = os.path.join(os.path.dirname(path), "liveries")
@@ -270,7 +271,13 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         report = ImportReport()
         options = _options_from(self)
-        livery = self.livery if self.livery else ""
+        livery = "" if self.livery == "DEFAULT" else self.livery
+        wm = context.window_manager
+        wm.progress_begin(0, 100)
+
+        def progress(number: int, total: int) -> None:
+            wm.progress_update(int(100 * number / max(total, 1)))
+
         root = import_aircraft(
             bpy.path.abspath(self.filepath),
             options,
@@ -278,13 +285,14 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
             livery=livery,
             include_damage=self.include_damage,
             include_attached=self.include_attached,
+            progress=progress,
         )
+        wm.progress_end()
         _show_report(self, report)
-        return (
-            {"FINISHED"}
-            if root is not None and report.files_imported
-            else {"CANCELLED"}
-        )
+        done = root is not None and report.files_imported
+        if done and self.show_result:
+            _frame_everything(context)
+        return {"FINISHED"} if done else {"CANCELLED"}
 
     def draw(self, context):
         layout = self.layout
@@ -309,7 +317,7 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
             box.prop(self, name)
         box = layout.box()
         box.label(text="Setup", icon="PREFERENCES")
-        box.prop(self, "setup_for_export")
+        box.prop(self, "make_exportable")
         box.prop(self, "lit_strength")
         box.prop(self, "scale")
         box.prop(self, "show_result")

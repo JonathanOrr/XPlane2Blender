@@ -63,7 +63,7 @@ class TestImportOperators(XPlaneTestCase):
         self.assertTrue({"part", "other"} <= {c.name for c in bpy.data.collections})
 
     def test_import_obj_operator_options(self) -> None:
-        bpy.ops.import_scene.xplane_obj(filepath=self.folder.join("part.obj"), import_manipulators=False, setup_for_export=False, scale=2.0)
+        bpy.ops.import_scene.xplane_obj(filepath=self.folder.join("part.obj"), import_manipulators=False, scale=2.0)
         mesh = [o for o in bpy.data.objects if o.type == "MESH"][0]
         self.assertFalse(mesh.xplane.manip.enabled)
         self.assertFalse(bpy.data.collections["part"].xplane.is_exportable_collection)
@@ -88,6 +88,23 @@ class TestImportOperators(XPlaneTestCase):
             bpy.ops.import_scene.xplane_aircraft(filepath=path)
         self.assertIn("binary", str(raised.exception))
 
+    def test_everything_the_panel_draws_is_a_real_property(self) -> None:
+        import inspect
+        import re
+
+        from io_xplane2blender.xplane_importer import ops
+
+        for operator, cls in (
+            (bpy.ops.import_scene.xplane_obj, ops.IMPORT_OT_xplane_obj),
+            (bpy.ops.import_scene.xplane_aircraft, ops.IMPORT_OT_xplane_aircraft),
+        ):
+            properties = {p.identifier for p in operator.get_rna_type().properties}
+            source = inspect.getsource(cls)
+            drawn = set(re.findall(r'prop\(self, "(\w+)"', source))
+            drawn |= set(re.findall(r'"(\w+)"', " ".join(re.findall(r"for name in \(([^)]*)\)", source))))
+            self.assertTrue(drawn)
+            self.assertFalse(drawn - properties, f"drawn but not properties: {drawn - properties}")
+
     def test_livery_choices_come_from_the_selected_aircraft(self) -> None:
         from io_xplane2blender.xplane_importer.ops import IMPORT_OT_xplane_aircraft, _livery_items
 
@@ -98,7 +115,7 @@ class TestImportOperators(XPlaneTestCase):
             filepath = path
 
         items = _livery_items(Fake, None)
-        self.assertEqual([i[0] for i in items], ["", "Red"])
+        self.assertEqual([i[0] for i in items], ["DEFAULT", "Red"])
 
 
 runTestCases([TestImportOperators])

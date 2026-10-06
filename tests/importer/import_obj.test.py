@@ -167,9 +167,9 @@ class TestImportObj(XPlaneTestCase):
         self.assertFalse(material.use_nodes and self.image_nodes(material))
 
     # ---- export setup ----------------------------------------------------------------------
-    def test_collection_is_an_export_root(self) -> None:
+    def test_collection_can_be_an_export_root(self) -> None:
         built = self.do_import(
-            obj_text("", header="TEXTURE tex.png\nBLEND_GLASS\nGLOBAL_cockpit_lit\nGLOBAL_no_shadow\n"), name="my_part.obj"
+            obj_text("", header="TEXTURE tex.png\nBLEND_GLASS\nGLOBAL_cockpit_lit\nGLOBAL_no_shadow\n"), name="my_part.obj", make_exportable=True
         )
         collection = built.collection
         self.assertEqual(collection.name, "my_part")
@@ -182,9 +182,11 @@ class TestImportObj(XPlaneTestCase):
         self.assertEqual(layer.export_type, xplane_constants.EXPORT_TYPE_AIRCRAFT)
         self.assertTrue(bpy.context.scene.xplane.optimize)
 
-    def test_export_setup_can_be_turned_off(self) -> None:
-        built = self.do_import(obj_text(""), setup_for_export=False)
+    def test_collections_are_not_export_roots_unless_asked(self) -> None:
+        built = self.do_import(obj_text("", header="TEXTURE tex.png\n"))
         self.assertFalse(built.collection.xplane.is_exportable_collection)
+        # The settings are filled in anyway, so ticking "Root Collection" later is all it takes
+        self.assertEqual(os.path.normpath(built.collection.xplane.layer.texture), os.path.normpath(self.png))
 
     def test_manipulators_make_it_a_cockpit_object(self) -> None:
         built = self.do_import(obj_text("ATTR_manip_command button sim/x tip\nTRIS 0 3\n", tris=None))

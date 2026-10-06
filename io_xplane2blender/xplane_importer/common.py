@@ -22,9 +22,9 @@ class ImportOptions:
     # How to build it
     all_lods: bool = False  # False imports only the first LOD
     merge_materials: bool = True  # One material per unique look instead of per OBJ
-    setup_for_export: bool = (
-        True  # Turn each OBJ into an XPlane2Blender root collection
-    )
+    # Tick each OBJ's collection as an XPlane2Blender export root. Their export settings are always filled in,
+    # but "Export OBJs" writes every root, which you don't want for a whole imported aircraft
+    make_exportable: bool = False
     lit_strength: float = (
         0.0  # Emission strength of the _LIT texture, 0 shows the daytime look
     )
