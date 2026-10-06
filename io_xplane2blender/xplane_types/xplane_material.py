@@ -307,6 +307,32 @@ class XPlaneMaterial:
                 ll_values.append(mat.xplane.lightLevel_brightness)
             self.attributes["ATTR_light_level"].setValue(tuple(ll_values))
             self.attributes["ATTR_light_level_reset"].setValue(False)
+        elif not self.xplaneObject.blenderObject.xplane.lightLevel:
+            # A custom light level on a parent mesh covers its descendants.
+            # Default material state must not erase it before their triangles.
+            bone = self.xplaneObject.xplaneBone
+            while bone:
+                obj = bone.xplaneObject
+                if obj and not obj.export_animation_only:
+                    reset = obj.attributes.get("ATTR_light_level_reset")
+                    if reset and any(
+                        value is not None and value is not False
+                        for value in reset.getValues()
+                    ):
+                        break
+                    attr = obj.attributes.get("ATTR_light_level")
+                    if (
+                        not obj.blenderObject.xplane.lightLevel
+                        and attr
+                        and any(value is not None for value in attr.getValues())
+                    ):
+                        if obj is not self.xplaneObject:
+                            self.attributes["ATTR_light_level"].value = (
+                                attr.value.copy()
+                            )
+                        self.attributes["ATTR_light_level_reset"].setValue(False)
+                        break
+                bone = bone.parent
 
     def collectConditions(self, mat: bpy.types.Material) -> None:
         if mat.xplane.conditions:
