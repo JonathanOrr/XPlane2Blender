@@ -269,6 +269,9 @@ def validateAircraft(mat: XPlaneMaterial) -> MaterialValidationMsgs:
     if mat.options.draped:
         errors.append("Must not be draped.")
 
+    if mat.options.solid_camera:
+        errors.append("Must have camera collision disabled.")
+
     if mat.blenderObject.xplane.manip.enabled:
         errors.append("Must not be a manipulator.")
 
