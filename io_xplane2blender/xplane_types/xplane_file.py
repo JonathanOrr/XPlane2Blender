@@ -632,7 +632,7 @@ class XPlaneFile:
 
         def get_xplane_objects_from_bone_tree(
             bone: XPlaneBone,
-        ) -> List["XPlaneObjects"]:
+        ) -> List["XPlaneObject"]:
             xp_objects = []
             if bone.xplaneObject:
                 xp_objects.append(bone.xplaneObject)

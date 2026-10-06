@@ -322,7 +322,7 @@ def _set_shadow_local_and_delete_global_shadow(
     )
 
     def _update_potential_materials(
-        potential_materials: List[bpy.types.Material], layer_options: "XPlaneLayer"
+        potential_materials: List[bpy.types.Material], layer_options: "xplane_props.XPlaneLayer"
     ) -> None:
         for mat in potential_materials:
             # Default for shadow was True. get can't find shadow == no explicit value give
@@ -641,6 +641,7 @@ def load_handler(dummy):
     try:
         xplane_lights_txt_parser.parse_lights_file()
     except (FileNotFoundError, OSError) as oe:
+        message = str(oe)
 
         def draw(self, context):
             self.layout.label(
@@ -649,7 +650,7 @@ def load_handler(dummy):
             self.layout.label(
                 text="Check for a missing or broken lights.txt file or re-install addon"
             )
-            self.layout.label(text=str(oe))
+            self.layout.label(text=message)
 
         bpy.context.window_manager.popup_menu(
             draw,
@@ -657,6 +658,7 @@ def load_handler(dummy):
             icon="ERROR",
         )
     except xplane_lights_txt_parser.LightsTxtFileParsingError as pe:
+        message = str(pe)
 
         def draw(self, context):
             self.layout.label(
@@ -665,7 +667,7 @@ def load_handler(dummy):
             self.layout.label(
                 text="Check replace lights.txt from X-Plane or re-install addon"
             )
-            self.layout.label(text=str(pe))
+            self.layout.label(text=message)
 
         bpy.context.window_manager.popup_menu(
             draw,

@@ -27,7 +27,7 @@ relationships, it cannot be assumed that the XPlaneBone Tree and Blender Hierarc
 """
 
 import math
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import bpy
 import mathutils
@@ -44,6 +44,10 @@ from io_xplane2blender.xplane_types.xplane_keyframe import XPlaneKeyframe
 from io_xplane2blender.xplane_types.xplane_keyframe_collection import (
     XPlaneKeyframeCollection,
 )
+
+if TYPE_CHECKING:
+    from io_xplane2blender.xplane_types.xplane_file import XPlaneFile
+    from io_xplane2blender.xplane_types.xplane_object import XPlaneObject
 
 # from xplane_object import XPlaneObject
 
