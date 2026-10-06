@@ -127,6 +127,12 @@ class XPlaneObject:
         for (dataref_index, dataref) in enumerate(self.blenderObject.xplane.datarefs):
             # show/hide animation
             if dataref.anim_type in (ANIM_TYPE_SHOW, ANIM_TYPE_HIDE):
+                if is_multiplayer_dataref(dataref.path):
+                    logger.error(
+                        "'{}' uses the multiplayer dataref '{}', which must not be used in objects. Choose another dataref.".format(
+                            self.blenderObject.name, dataref.path
+                        )
+                    )
                 name = "ANIM_" + dataref.anim_type
                 value = (dataref.show_hide_v1, dataref.show_hide_v2, dataref.path)
                 self.animAttributes.add(XPlaneAttribute(XPlaneAttributeName(name, dataref_index + 1), value))
