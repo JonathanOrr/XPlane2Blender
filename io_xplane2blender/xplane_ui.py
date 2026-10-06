@@ -64,6 +64,20 @@ class MATERIAL_PT_xplane(bpy.types.Panel):
                 conditions_layout(self.layout, obj.active_material)
 
 
+def get_active_export_root(
+    active_object: Optional[Object], collection: Optional[bpy.types.Collection]
+) -> Optional[Union[Object, bpy.types.Collection]]:
+    """
+    Returns the exportable root the Render panel's bake op should use,
+    or None when neither the active object nor the collection is exportable
+    """
+    if active_object is not None and active_object.xplane.isExportableRoot:
+        return active_object
+    if collection is not None and collection.xplane.is_exportable_collection:
+        return collection
+    return None
+
+
 class RENDER_PT_xplane(bpy.types.Panel):
     """X-Plane Render Panel"""
 
@@ -80,12 +94,9 @@ class RENDER_PT_xplane(bpy.types.Panel):
         def draw_bake_op(layout: bpy.types.UILayout):
             scene = context.scene
             row = layout.row()
-            if context.active_object.xplane.isExportableRoot:
-                active_root = context.active_object
-            elif context.collection.xplane.is_exportable_collection:
-                active_root = context.collection
-            else:
-                active_root = None
+            active_root = get_active_export_root(
+                context.active_object, context.collection
+            )
 
             if active_root and active_root.xplane.layer.export_type in {
                 EXPORT_TYPE_AIRCRAFT,
