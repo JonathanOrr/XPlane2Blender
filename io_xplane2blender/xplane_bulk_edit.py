@@ -349,6 +349,8 @@ class VIEW3D_PT_xplane_bulk_edit(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "X-Plane"
     bl_label = "Find and Replace"
+    bl_parent_id = "XPLANE_PT_tools"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         s = settings(context)
