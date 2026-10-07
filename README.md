@@ -38,6 +38,14 @@ See the [Introduction to XPlane2Blender Video](https://developer.x-plane.com/too
 ## Exporting Work In Progress
 You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 61 light levels without a dataref`. The full list is in the `XPlane2Blender.log` text file. Today this covers light levels without a dataref (an empty one would write an invalid line) and meshes without a material (they export with X-Plane's default material state). A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
 
+## Find And Replace, Duplicate And Replace
+For the many controls that differ only by side or number. In the 3D viewport's sidebar (N), the **X-Plane** tab has a **Find and Replace** panel: add pairs such as `cockpit/mcdu/` → `cockpit/mcdu_2/` and `Captain` → `First Officer`, choose which settings to touch (commands, datarefs, light levels, tooltips, custom attributes) and which objects (selected, selected and their children, or the whole scene), and the panel previews every change before you apply it.
+- **Find and Replace** changes the objects in place.
+- **Duplicate and Replace** copies the selection, renames the settings on the copies only and lets you move them, like Shift+D. Copy the captain's MCDU once and the first officer's is done.
+- Pairs are applied in order, **Match Case** is on by default (X-Plane names are case sensitive) and **Regex** allows regular expressions with `\1` groups.
+- A material or light that objects outside the selection also use is left alone, so changing one side never changes the other. The panel says how many were skipped.
+- Both are normal Blender operations: Ctrl+Z undoes them and the Adjust Last Operation panel works.
+
 ## Importing X-Plane Aircraft And Objects
 Open **File > Import > X-Plane Aircraft (.acf)**, pick an aircraft's `.acf` file, and the whole aircraft is brought in: every object it lists, in the right place, with its textures, normal maps, materials, animations, manipulators and lights. It works with the text based `.acf` files of X-Plane 10, 11 and 12. **File > Import > X-Plane Object (.obj)** imports single OBJ8 files (several at once is fine), and you can also drag an `.acf` or `.obj` onto the 3D viewport in Blender 4.1 and later.
 
