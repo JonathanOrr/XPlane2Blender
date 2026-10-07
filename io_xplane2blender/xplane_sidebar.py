@@ -196,6 +196,21 @@ class XPlaneSidebarState(bpy.types.PropertyGroup):
         description="List every collection, so any of them can be made an export file",
         default=False,
     )
+    show_click_zones: bpy.props.BoolProperty(
+        name="Click Zones",
+        description="Outline what can be clicked in X-Plane: orange runs commands, blue sets datarefs, green is dragged",
+        default=False,
+    )
+    click_labels: bpy.props.EnumProperty(
+        name="Click Labels",
+        description="Say what clicking each object does",
+        items=(
+            ("OFF", "No Labels", "No labels"),
+            ("SELECTED", "Labels: Selected", "Label the selected clickable objects"),
+            ("ALL", "Labels: All", "Label every clickable object"),
+        ),
+        default="OFF",
+    )
     checked: bpy.props.BoolProperty(default=False)
     check_items: bpy.props.CollectionProperty(type=XPlaneCheckItem)
     check_index: bpy.props.IntProperty()
@@ -1121,9 +1136,10 @@ class XPLANE_PT_surface(_Card, bpy.types.Panel):
         if material is None:
             layout.label(text="No material: exported with the default look", icon="INFO")
             return
-        users = sum(1 for o in bpy.data.objects if o.type == "MESH" and material.name in o.data.materials)
+        # Each mesh using the material is one user
+        users = material.users - (1 if material.use_fake_user else 0)
         if users > 1:
-            layout.label(text=f"Shared by {users} objects: changes apply to all", icon="LINKED")
+            layout.label(text=f"Shared by {users} meshes: changes apply to all", icon="LINKED")
         m = material.xplane
         col = layout.column()
         col.prop(m, "draw", text="Visible")
@@ -1515,6 +1531,9 @@ class XPLANE_PT_tools(_Sidebar, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+        row = layout.row(align=True)
+        row.prop(state(context), "show_click_zones", toggle=True, icon="RESTRICT_SELECT_OFF")
+        row.prop(state(context), "click_labels", text="")
         layout.operator(
             xplane_light_tools.XPLANE_OT_lights_preview.bl_idname, text="Preview Every Light As In X-Plane", icon="LIGHT"
         ).selected_only = False

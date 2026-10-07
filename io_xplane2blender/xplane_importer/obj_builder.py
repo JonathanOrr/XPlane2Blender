@@ -662,6 +662,23 @@ class ObjBuilder:
                 x.size = nums[4]
                 x.uv = nums[5:9]
                 x.dataref = light.args[9] if len(light.args) > 9 else ""
+            elif light.kind == "vlight":
+                # X-Plane 9 lights: the color says what kind, the exporter writes it back the same way
+                rgb = [_number(a) for a in light.args[:3]]
+                special = {
+                    9.9: xplane_constants.LIGHT_PULSING,
+                    9.8: xplane_constants.LIGHT_STROBE,
+                    9.7: xplane_constants.LIGHT_TRAFFIC,
+                }
+                kind = next((k for v, k in special.items() if all(abs(c - v) < 1e-3 for c in rgb)), None)
+                if kind:
+                    x.type = kind
+                elif rgb[0] < 0:
+                    x.type = xplane_constants.LIGHT_FLASHING
+                    blender_light.color = [min(max(c, 0.0), 1.0) for c in (-rgb[0], rgb[1], rgb[2])]
+                else:
+                    x.type = xplane_constants.LIGHT_DEFAULT
+                    blender_light.color = [min(max(c, 0.0), 1.0) for c in rgb]
             elif light.kind == "spill_custom":
                 # r g b a size dx dy dz width dataref, the exporter always writes an alpha of 1
                 x.type = xplane_constants.LIGHT_SPILL_CUSTOM

@@ -15,7 +15,7 @@ from io_xplane2blender.xplane_utils import xplane_lights_txt_parser
 
 from ..xplane_config import getDebug
 from ..xplane_constants import *
-from ..xplane_helpers import floatToStr, logger, vec_b_to_x, vec_x_to_b
+from ..xplane_helpers import floatToStr, logger, unfinished, vec_b_to_x, vec_x_to_b
 
 
 @dataclass
@@ -131,9 +131,9 @@ class XPlaneLight(xplane_object.XPlaneObject):
             LIGHT_PARAM,
             LIGHT_AUTOMATIC,
         }:
-            logger.error(
-                f"{self.blenderObject.name} is a {self.lightType.title()} light but has no light name"
-            )
+            # Unfinished work, not an error: the light is left out and the rest of the file exports
+            unfinished.add("lights without an X-Plane light chosen", self.blenderObject.name)
+            self.lightType = LIGHT_NON_EXPORTING
             return
         try:
             parsed_light = xplane_lights_txt_parser.get_parsed_light(self.lightName)

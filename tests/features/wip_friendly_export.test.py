@@ -50,6 +50,25 @@ class TestWipFriendlyExport(XPlaneTestCase):
         self.assertFalse(logger.hasErrors())
         self.assertEqual(["button_lit"], unfinished.items["light levels without a dataref"])
 
+    def test_light_without_a_name_is_left_out(self) -> None:
+        from io_xplane2blender.xplane_utils import xplane_lights_txt_parser
+
+        xplane_lights_txt_parser.parse_lights_file()
+        test_creation_helpers.create_datablock_collection("Panel")
+        mesh("panel", "Panel")
+        for name in ("flood", "dome"):
+            data = bpy.data.lights.new(name, "SPOT")
+            data.xplane.type = "automatic"
+            data.xplane.name = "" if name == "flood" else "airplane_landing_core"
+            obj = bpy.data.objects.new(name, data)
+            bpy.data.collections["Panel"].objects.link(obj)
+
+        out = self.exportExportableRoot("Panel")
+
+        self.assertFalse(logger.hasErrors(), logger.messagesToString())
+        self.assertEqual(1, len(lines_starting(out, "LIGHT_PARAM")))
+        self.assertEqual(["flood"], unfinished.items["lights without an X-Plane light chosen"])
+
     def test_material_light_level_without_a_dataref_is_left_out(self) -> None:
         test_creation_helpers.create_datablock_collection("Panel")
         obj = mesh("panel_lit", "Panel")
