@@ -1,11 +1,11 @@
 """
-The X-Plane tab of the 3D viewport's sidebar (N): one place for everything, following the selection.
+The X-Plane panels of the Properties editor, each in the tab it belongs to, following the selection:
 
-- Selected: what the active object is, which file it exports in, and a card for each thing it can do
-  (Clickable, Moves, Shows / Hides, Glow, Light, Surface, Attachment), in plain words
-- Export: the OBJ files of the scene, one Export button, and the settings of the chosen file
-- Unfinished Work: a list of what is not filled in yet. It never stops an export
-- Tools: find and replace, tables
+- Object tab: what the active object is in plain words, which file it exports in, what is unfinished, and a card for
+  each thing it can do (Clickable, Light, Attachment Point, Moves, Shows / Hides, Glow, Advanced)
+- Material tab: the material's Surface settings (materials are shared between objects)
+- Collection tab: whether the collection is an OBJ file, and a way to its settings
+- Scene tab: the OBJ files with one Export button and the chosen file's settings, Unfinished Work, Tools
 
 The settings underneath are the same stored X-Plane properties as before, so older .blend files open unchanged.
 """
@@ -32,32 +32,6 @@ from io_xplane2blender.xplane_utils import (
     xplane_lights_txt_parser,
 )
 
-CATEGORY = "X-Plane"
-ADDON = __package__
-
-
-def preferences(context=None) -> Optional[bpy.types.AddonPreferences]:
-    addon = (context or bpy.context).preferences.addons.get(ADDON)
-    return addon.preferences if addon else None
-
-
-def classic_panels(context) -> bool:
-    prefs = preferences(context)
-    return bool(prefs and prefs.classic_panels)
-
-
-class XPlaneAddonPreferences(bpy.types.AddonPreferences):
-    bl_idname = ADDON
-
-    classic_panels: bpy.props.BoolProperty(
-        name="Classic Panels In The Properties Editor",
-        description="Also show the X-Plane panels of earlier versions in the Properties editor's Object, Material, Light and Scene tabs",
-        default=False,
-    )
-
-    def draw(self, context):
-        self.layout.label(text="Everything is in the 3D viewport's sidebar (N), X-Plane tab.")
-        self.layout.prop(self, "classic_panels")
 
 
 # ---- Search: X-Plane's datarefs and commands, and the ones this file already uses -------------------------------
@@ -118,7 +92,7 @@ def _search_items_callback(self, context):
 def _resolve(context, target: str):
     """'object:xplane.manip.command' -> (the active object's manip settings, 'command')"""
     where, _, path = target.partition(":")
-    obj = context.active_object
+    obj = context.object
     base = {
         "object": obj,
         "material": obj.active_material if obj else None,
@@ -173,7 +147,7 @@ class XPLANE_OT_search(bpy.types.Operator):
 
 
 def text_with_search(layout, data, prop: str, label: str, kind: str, target: str) -> None:
-    """A dataref or command field with its search button. The label goes above it: the sidebar is narrow"""
+    """A dataref or command field with its search button. The label goes above it, so long labels are not cut off"""
     col = layout.column(align=True)
     col.label(text=label)
     row = col.row(align=True)
@@ -189,7 +163,7 @@ class XPlaneCheckItem(bpy.types.PropertyGroup):
     text: bpy.props.StringProperty()
 
 
-class XPlaneSidebarState(bpy.types.PropertyGroup):
+class XPlanePanelState(bpy.types.PropertyGroup):
     file_index: bpy.props.IntProperty(name="File", default=-1)
     show_all_collections: bpy.props.BoolProperty(
         name="All Collections",
@@ -216,8 +190,8 @@ class XPlaneSidebarState(bpy.types.PropertyGroup):
     check_index: bpy.props.IntProperty()
 
 
-def state(context) -> XPlaneSidebarState:
-    return context.window_manager.xplane_sidebar
+def state(context) -> XPlanePanelState:
+    return context.window_manager.xplane_panels
 
 
 def active_file(context) -> Optional[I.FileOwner]:
@@ -228,7 +202,7 @@ def active_file(context) -> Optional[I.FileOwner]:
         collection = bpy.data.collections[index]
         if I.is_file(collection) and collection in xplane_helpers.get_collections_in_scene(scene):
             return collection
-    obj = context.active_object
+    obj = context.object
     if obj is not None:
         owners = I.files_of(obj, scene)
         if owners:
@@ -240,8 +214,8 @@ def active_file(context) -> Optional[I.FileOwner]:
 # ---- Operators -----------------------------------------------------------------------------------------------------
 def _selected_or_active(context) -> List[bpy.types.Object]:
     objects = list(context.selected_objects)
-    if context.active_object is not None and context.active_object not in objects:
-        objects.append(context.active_object)
+    if context.object is not None and context.object not in objects:
+        objects.append(context.object)
     return objects
 
 
@@ -310,10 +284,10 @@ class XPLANE_OT_copy_to_selected(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object is not None and len(context.selected_objects) > 1
+        return context.object is not None and len(context.selected_objects) > 1
 
     def execute(self, context):
-        source = context.active_object
+        source = context.object
         done = sum(
             1
             for target in context.selected_objects
@@ -345,10 +319,10 @@ class XPLANE_OT_add_dataref(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object is not None
+        return context.object is not None
 
     def execute(self, context):
-        dataref = context.active_object.xplane.datarefs.add()
+        dataref = context.object.xplane.datarefs.add()
         dataref.anim_type = self.anim_type
         if self.anim_type != C.ANIM_TYPE_TRANSFORM:
             dataref.show_hide_v1, dataref.show_hide_v2 = 1.0, 1.0
@@ -365,7 +339,7 @@ class XPLANE_OT_remove_dataref(bpy.types.Operator):
     index: bpy.props.IntProperty()
 
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         if obj is None or not 0 <= self.index < len(obj.xplane.datarefs):
             return {"CANCELLED"}
         obj.xplane.datarefs.remove(self.index)
@@ -385,10 +359,10 @@ class XPLANE_OT_key_pose(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return context.active_object is not None
+        return context.object is not None
 
     def execute(self, context):
-        obj = context.active_object
+        obj = context.object
         frame = context.scene.frame_current
         obj.keyframe_insert(data_path=f"xplane.datarefs[{self.index}].value", frame=frame, group="XPlane Datarefs")
         obj.keyframe_insert(data_path="location", frame=frame, group="Object Transforms")
@@ -443,7 +417,7 @@ class XPLANE_OT_new_file(bpy.types.Operator):
 
     def invoke(self, context, event):
         if not self.name:
-            self.name = context.active_object.name if context.active_object else "new_object"
+            self.name = context.object.name if context.object else "new_object"
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context):
@@ -500,7 +474,7 @@ class XPLANE_MT_move_to_file(bpy.types.Menu):
 
 
 class XPLANE_OT_show_file(bpy.types.Operator):
-    """Show this file's settings in the Export panel"""
+    """Show this file's settings in the Scene tab's X-Plane Export panel"""
 
     bl_idname = "xplane.show_file"
     bl_label = "Show File"
@@ -510,6 +484,9 @@ class XPLANE_OT_show_file(bpy.types.Operator):
 
     def execute(self, context):
         state(context).file_index = bpy.data.collections.find(self.collection)
+        space = context.space_data
+        if space is not None and space.type == "PROPERTIES":
+            space.context = "SCENE"
         return {"FINISHED"}
 
 
@@ -668,7 +645,7 @@ class XPLANE_OT_add_click_zone(bpy.types.Operator):
 
     def execute(self, context):
         bpy.ops.mesh.primitive_cube_add(size=self.size, location=context.scene.cursor.location)
-        obj = context.active_object
+        obj = context.object
         obj.name = "click zone"
         material = bpy.data.materials.get("X-Plane Click Zone")
         if material is None:
@@ -779,15 +756,14 @@ def _context_menu_entry(self, context):
     self.layout.menu(XPLANE_MT_object_context.bl_idname, icon="AUTO")
 
 
-# ---- Panels: Selected ----------------------------------------------------------------------------------------------
-class _Sidebar:
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = CATEGORY
+# ---- Panels: Object tab --------------------------------------------------------------------------------------------
+class _Properties:
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
 
 
 def _line_width(icon: str) -> int:
-    """About how many characters fit across the sidebar"""
+    """About how many characters fit across the panel"""
     region = bpy.context.region
     if region is None or region.width < 50:
         return 44
@@ -810,32 +786,18 @@ def _wrapped(layout, text: str, icon: str = "NONE") -> None:
         col.label(text=line, icon=icon if first else ("BLANK1" if icon != "NONE" else "NONE"))
 
 
-TYPE_ICONS = {"MESH": "MESH_DATA", "LIGHT": "LIGHT", "EMPTY": "EMPTY_DATA", "ARMATURE": "ARMATURE_DATA"}
+class XPLANE_PT_object(_Properties, bpy.types.Panel):
+    bl_label = "X-Plane"
+    bl_context = "object"
 
-
-class XPLANE_PT_selected(_Sidebar, bpy.types.Panel):
-    bl_label = ""
-    bl_order = 0
-
-    def draw_header(self, context):
-        obj = context.active_object
-        if obj is not None:
-            self.layout.label(text=obj.name, icon=TYPE_ICONS.get(obj.type, "OBJECT_DATA"))
-        else:
-            self.layout.label(text="Nothing Selected")
-
-    def draw_header_preset(self, context):
-        # Puts the sidebar on the other side of the viewport
-        self.layout.operator("screen.region_flip", text="", icon="ARROW_LEFTRIGHT", emboss=False)
+    @classmethod
+    def poll(cls, context):
+        return context.object is not None
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj = context.object
         scene = context.scene
-        if obj is None:
-            _wrapped(layout, "Click something in the viewport to see and change what it does in X-Plane.", "INFO")
-            layout.menu(XPLANE_MT_add.bl_idname, text="Add X-Plane Object", icon="ADD")
-            return
 
         _wrapped(layout, " · ".join(I.summary(obj)))
         selected = context.selected_objects
@@ -873,13 +835,14 @@ class XPLANE_PT_selected(_Sidebar, bpy.types.Panel):
             _wrapped(layout, problem, "DOT")
 
 
-class _Card(_Sidebar):
-    bl_parent_id = "XPLANE_PT_selected"
+class _Card(_Properties):
+    bl_context = "object"
+    bl_parent_id = "XPLANE_PT_object"
     object_types = ("MESH",)
 
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
+        obj = context.object
         return obj is not None and obj.type in cls.object_types
 
 
@@ -888,14 +851,14 @@ class XPLANE_PT_click(_Card, bpy.types.Panel):
     bl_order = 1
 
     def draw_header(self, context):
-        self.layout.prop(context.active_object.xplane.manip, "enabled", text="")
+        self.layout.prop(context.object.xplane.manip, "enabled", text="")
 
     def draw_header_preset(self, context):
         copy_button(self.layout, context, "CLICK")
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj = context.object
         manip = obj.xplane.manip
         if not manip.enabled:
             _wrapped(layout, "Not clickable. Pick what it is to make it clickable in the cockpit:")
@@ -925,7 +888,7 @@ class XPLANE_PT_motion(_Card, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj = context.object
         motion = I.motion_datarefs(obj)
         presets = layout.row(align=True)
         presets.operator(xplane_anim_presets.XPLANE_OT_anim_push_button.bl_idname, text="Button")
@@ -968,7 +931,7 @@ class XPLANE_PT_visibility(_Card, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj = context.object
         rules = I.visibility_datarefs(obj)
         if not rules:
             _wrapped(layout, "Always shown. Add a rule to show or hide it with a dataref:")
@@ -1011,13 +974,13 @@ class XPLANE_PT_glow(_Card, bpy.types.Panel):
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw_header(self, context):
-        self.layout.prop(context.active_object.xplane, "lightLevel", text="")
+        self.layout.prop(context.object.xplane, "lightLevel", text="")
 
     def draw_header_preset(self, context):
         copy_button(self.layout, context, "GLOW")
 
     def draw(self, context):
-        glow_layout(self.layout.column(), context.active_object.xplane, "object:xplane.lightLevel_dataref")
+        glow_layout(self.layout.column(), context.object.xplane, "object:xplane.lightLevel_dataref")
 
 
 def _automatic_light_layout(layout, obj) -> None:
@@ -1059,7 +1022,7 @@ class XPLANE_PT_light(_Card, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj = context.object
         data = obj.data
         x = data.xplane
         layout.menu(XPLANE_MT_light_kind.bl_idname, text=light_kind_label(x.type), icon="LIGHT")
@@ -1112,30 +1075,30 @@ class XPLANE_PT_attachment(_Card, bpy.types.Panel):
         copy_button(self.layout, context, "ATTACHMENT")
 
     def draw(self, context):
-        xplane_ui.empty_layout(self.layout, context.active_object)
+        xplane_ui.empty_layout(self.layout, context.object)
 
 
 BLEND_LABELS = ((C.BLEND_ON, "Smooth"), (C.BLEND_OFF, "Hard Edge"), (C.BLEND_SHADOW, "Cut Shadow"))
 SCREEN_LABELS = ((C.COCKPIT_FEATURE_NONE, "None"), (C.COCKPIT_FEATURE_PANEL, "2D Panel"), (C.COCKPIT_FEATURE_DEVICE, "Avionics"))
 
 
-class XPLANE_PT_surface(_Card, bpy.types.Panel):
-    bl_label = "Surface"
-    bl_order = 5
+# ---- Panels: Material tab ----------------------------------------------------------------------------------------
+class _MaterialTab(_Properties):
+    bl_context = "material"
 
     @classmethod
     def poll(cls, context):
-        obj = context.active_object
-        return obj is not None and obj.type == "MESH"
+        obj = context.object
+        return context.material is not None and obj is not None and obj.type == "MESH"
+
+
+class XPLANE_PT_surface(_MaterialTab, bpy.types.Panel):
+    bl_label = "X-Plane"
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
-        layout.template_ID(obj, "active_material", new="material.new")
-        material = obj.active_material
-        if material is None:
-            layout.label(text="No material: exported with the default look", icon="INFO")
-            return
+        obj = context.object
+        material = context.material
         # Each mesh using the material is one user
         users = material.users - (1 if material.use_fake_user else 0)
         if users > 1:
@@ -1190,19 +1153,14 @@ class XPLANE_PT_surface(_Card, bpy.types.Panel):
             glow_layout(col.box().column(), m, "material:xplane.lightLevel_dataref")
 
 
-class XPLANE_PT_surface_more(_Sidebar, bpy.types.Panel):
-    bl_label = "More Surface Settings"
+class XPLANE_PT_surface_more(_MaterialTab, bpy.types.Panel):
+    bl_label = "More"
     bl_parent_id = "XPLANE_PT_surface"
     bl_options = {"DEFAULT_CLOSED"}
 
-    @classmethod
-    def poll(cls, context):
-        obj = context.active_object
-        return obj is not None and obj.type == "MESH" and obj.active_material is not None
-
     def draw(self, context):
         layout = self.layout
-        material = context.active_object.active_material
+        material = context.material
         m = material.xplane
         col = layout.column()
         col.prop(m, "surfaceType", text="Hard Surface")
@@ -1214,6 +1172,15 @@ class XPLANE_PT_surface_more(_Sidebar, bpy.types.Panel):
             xplane_ui.conditions_layout(col, material)
 
 
+class XPLANE_PT_material_every_setting(_MaterialTab, bpy.types.Panel):
+    bl_label = "Every Setting (Classic)"
+    bl_parent_id = "XPLANE_PT_surface"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        xplane_ui.MATERIAL_PT_xplane.draw(SimpleNamespace(layout=self.layout.column()), context)
+
+
 class XPLANE_PT_more(_Card, bpy.types.Panel):
     bl_label = "Advanced"
     bl_order = 9
@@ -1222,7 +1189,7 @@ class XPLANE_PT_more(_Card, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj = context.object
         x = obj.xplane
         col = layout.column()
         if obj.type == "MESH":
@@ -1247,24 +1214,20 @@ class XPLANE_PT_more(_Card, bpy.types.Panel):
             xplane_ui.conditions_layout(col, obj)
 
 
-class XPLANE_PT_every_setting(_Sidebar, bpy.types.Panel):
+class XPLANE_PT_every_setting(_Card, bpy.types.Panel):
     bl_label = "Every Setting (Classic)"
     bl_parent_id = "XPLANE_PT_more"
     bl_options = {"DEFAULT_CLOSED"}
+    object_types = ("MESH", "LIGHT", "EMPTY", "ARMATURE")
 
     def draw(self, context):
         fake = SimpleNamespace(layout=self.layout.column())
-        obj = context.active_object
         xplane_ui.OBJECT_PT_xplane.draw(fake, context)
-        if obj.type in ("LIGHT", "EMPTY"):
+        if context.object.type in ("LIGHT", "EMPTY"):
             xplane_ui.DATA_PT_xplane.draw(fake, context)
-        if obj.type == "MESH" and obj.active_material is not None:
-            fake.layout.separator()
-            fake.layout.label(text=f"Material '{obj.active_material.name}'", icon="MATERIAL")
-            xplane_ui.MATERIAL_PT_xplane.draw(fake, context)
 
 
-# ---- Panels: Export ---------------------------------------------------------------------------------------------
+# ---- Panels: Scene tab -------------------------------------------------------------------------------------------
 class XPLANE_UL_files(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index=0, flt_flag=0):
         collection = item
@@ -1305,12 +1268,12 @@ class XPLANE_UL_files(bpy.types.UIList):
         return flags, []
 
 
-class XPLANE_PT_export(_Sidebar, bpy.types.Panel):
-    bl_label = "Export"
-    bl_order = 1
+class _SceneTab(_Properties):
+    bl_context = "scene"
 
-    def draw_header_preset(self, context):
-        self.layout.label(text="X-Plane 12")
+
+class XPLANE_PT_export(_SceneTab, bpy.types.Panel):
+    bl_label = "X-Plane Export"
 
     def draw(self, context):
         layout = self.layout
@@ -1346,7 +1309,7 @@ def _layer_textures(layout, layer) -> None:
     layout.operator(XPLANE_OT_textures_from_materials.bl_idname, icon="MATERIAL")
 
 
-class _FilePanel(_Sidebar):
+class _FilePanel(_SceneTab):
     bl_parent_id = "XPLANE_PT_export"
 
     @classmethod
@@ -1475,7 +1438,7 @@ class XPLANE_PT_file_more(_FilePanel, bpy.types.Panel):
         xplane_ui.custom_layer_layout(col, owner, version)
 
 
-class XPLANE_PT_export_options(_Sidebar, bpy.types.Panel):
+class XPLANE_PT_export_options(_SceneTab, bpy.types.Panel):
     bl_label = "Options"
     bl_parent_id = "XPLANE_PT_export"
     bl_order = 9
@@ -1489,9 +1452,6 @@ class XPLANE_PT_export_options(_Sidebar, bpy.types.Panel):
         col.prop(scene.xplane, "debug", text="Debug Info")
         if scene.xplane.debug:
             col.prop(scene.xplane, "log")
-        prefs = preferences(context)
-        if prefs is not None:
-            col.prop(prefs, "classic_panels")
         col.label(text=f"Add-on {xplane_helpers.VerStruct.current()}", icon="INFO")
         if scene.xplane.version != xplane_xp12.LATEST_VERSION:
             col.label(text="This scene still targets an older X-Plane", icon="ERROR")
@@ -1506,9 +1466,8 @@ class XPLANE_UL_check(bpy.types.UIList):
         row.label(text=f"{item.object_name}: {item.text}")
 
 
-class XPLANE_PT_check(_Sidebar, bpy.types.Panel):
-    bl_label = "Unfinished Work"
-    bl_order = 2
+class XPLANE_PT_check(_SceneTab, bpy.types.Panel):
+    bl_label = "X-Plane Unfinished Work"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -1526,9 +1485,8 @@ class XPLANE_PT_check(_Sidebar, bpy.types.Panel):
         layout.template_list("XPLANE_UL_check", "", s, "check_items", s, "check_index", rows=6)
 
 
-class XPLANE_PT_tools(_Sidebar, bpy.types.Panel):
-    bl_label = "Tools"
-    bl_order = 3
+class XPLANE_PT_tools(_SceneTab, bpy.types.Panel):
+    bl_label = "X-Plane Tools"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -1541,11 +1499,41 @@ class XPLANE_PT_tools(_Sidebar, bpy.types.Panel):
         ).selected_only = False
 
 
+# ---- Panels: Collection tab --------------------------------------------------------------------------------------
+class XPLANE_PT_collection(_Properties, bpy.types.Panel):
+    bl_label = "X-Plane"
+    bl_context = "collection"
+
+    @classmethod
+    def poll(cls, context):
+        collection = context.collection
+        return collection is not None and collection != context.scene.collection
+
+    def draw_header(self, context):
+        self.layout.prop(context.collection.xplane, "is_exportable_collection", text="")
+
+    def draw(self, context):
+        layout = self.layout
+        collection = context.collection
+        layer = collection.xplane.layer
+        if not collection.xplane.is_exportable_collection:
+            _wrapped(layout, "Tick to export this collection as an OBJ file.", "INFO")
+            if not layer.name.strip():
+                return
+        col = layout.column()
+        col.active = collection.xplane.is_exportable_collection
+        col.prop(layer, "name", text="Saved As")
+        row = col.row(align=True)
+        row.prop_enum(layer, "export_type", C.EXPORT_TYPE_AIRCRAFT, text="Aircraft Part")
+        row.prop_enum(layer, "export_type", C.EXPORT_TYPE_COCKPIT, text="Cockpit")
+        op = layout.operator(XPLANE_OT_show_file.bl_idname, text="File Settings And Export", icon="SCENE_DATA")
+        op.collection = collection.name
+
+
 # ---- Registration -----------------------------------------------------------------------------------------------
 _classes = (
-    XPlaneAddonPreferences,
     XPlaneCheckItem,
-    XPlaneSidebarState,
+    XPlanePanelState,
     XPLANE_OT_search,
     XPLANE_OT_set_control_kind,
     XPLANE_MT_control_kind,
@@ -1570,7 +1558,7 @@ _classes = (
     XPLANE_OT_add_attachment,
     XPLANE_MT_add,
     XPLANE_MT_object_context,
-    XPLANE_PT_selected,
+    XPLANE_PT_object,
     XPLANE_PT_click,
     XPLANE_PT_light,
     XPLANE_PT_attachment,
@@ -1579,6 +1567,7 @@ _classes = (
     XPLANE_PT_glow,
     XPLANE_PT_surface,
     XPLANE_PT_surface_more,
+    XPLANE_PT_material_every_setting,
     XPLANE_PT_more,
     XPLANE_PT_every_setting,
     XPLANE_UL_files,
@@ -1592,13 +1581,14 @@ _classes = (
     XPLANE_UL_check,
     XPLANE_PT_check,
     XPLANE_PT_tools,
+    XPLANE_PT_collection,
 )
 
 
 def register():
     for cls in _classes:
         bpy.utils.register_class(cls)
-    bpy.types.WindowManager.xplane_sidebar = bpy.props.PointerProperty(type=XPlaneSidebarState)
+    bpy.types.WindowManager.xplane_panels = bpy.props.PointerProperty(type=XPlanePanelState)
     bpy.types.VIEW3D_MT_add.append(_add_menu_entry)
     bpy.types.VIEW3D_MT_object_context_menu.append(_context_menu_entry)
 
@@ -1606,6 +1596,6 @@ def register():
 def unregister():
     bpy.types.VIEW3D_MT_object_context_menu.remove(_context_menu_entry)
     bpy.types.VIEW3D_MT_add.remove(_add_menu_entry)
-    del bpy.types.WindowManager.xplane_sidebar
+    del bpy.types.WindowManager.xplane_panels
     for cls in reversed(_classes):
         bpy.utils.unregister_class(cls)

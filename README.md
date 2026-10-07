@@ -14,8 +14,8 @@ How it differs from XPlane2Blender:
 - **X-Plane 12 only.** There is no X-Plane version setting and no scenery. Files made with XPlane2Blender open as they
   are and are converted once when opened: an older X-Plane version setting becomes X-Plane 12 and scenery files become
   aircraft files. Imported OBJs and aircraft from X-Plane 10, 11 and 12 come in set up for X-Plane 12
-- **One sidebar instead of panels in five Properties tabs.** Everything is in the 3D viewport's sidebar (press N),
-  **X-Plane** tab, and it follows the selection
+- **Plain-words panels that follow the selection.** An **X-Plane** panel in the Properties editor's Object, Material,
+  Collection and Scene tabs, each showing only what applies to what is selected
 - **Work in progress always exports.** Settings that are not filled in yet are left out, never an error
 - **An importer** for whole aircraft (.acf) and OBJ files
 
@@ -29,50 +29,56 @@ How it differs from XPlane2Blender:
 
 Always keep backups of your .blend files: a file opened and saved with this add-on has been converted to X-Plane 12.
 
-## The X-Plane Sidebar
-Press **N** in the 3D viewport and pick the **X-Plane** tab. The ↔ button in its header moves the sidebar to the left
-side of the viewport and back.
+## The X-Plane Panels
+Everything is in the Properties editor, in the tab it belongs to. Blender lists add-on panels after its own, so the
+**X-Plane** panel is near the bottom of a tab; drag it to the top by its ⠿ grip once and Blender keeps it there.
 
-**Selected** shows the active object: what it is in plain words (for example `Knob, two commands · Moves · Glows`),
-which OBJ file it exports in, or that it is not in any file and so is not exported (with **New File** and
-**Move To File** right there), and what is not filled in yet. Below it, a card for each thing the object can do:
+**Object tab > X-Plane** shows the active object: what it is in plain words (for example
+`Knob, two commands · Moves · Glows`), which OBJ file it exports in, or that it is not in any file and so is not
+exported (with **New File** and **Move To File** right there), and what is not filled in yet. Below it, a card for
+each thing the object can do:
 
 | Card | For |
 |---|---|
 | **Clickable** | Make it clickable in the cockpit. **Make Clickable As...** lists the kinds of control by what they do (runs commands, sets a dataref, dragged), and the card then shows only the settings that kind uses, with the help in one line. The search button next to a command or dataref searches X-Plane's own lists and the custom names this file already uses |
+| **Light** | For lights: a library light from lights.txt (with a search tagged spill / glow), a spill that lights its surroundings, a glow sprite, or not exported. **Preview As In X-Plane** makes the viewport show it the way X-Plane does |
+| **Attachment Point** | For empties: a wheel, a VR tablet mount or a particle emitter |
 | **Moves** | The **Button**, **Switch** and **Knob / Lever** presets key a whole control on every selected object in one step. An animated object lists its datarefs and its keys as buttons (click one to go to it); to key by hand, pose the object, type the dataref value and click **Key Pose** |
 | **Shows / Hides** | Show or hide it while a dataref is in a range |
 | **Glow** | The night (LIT) texture's brightness follows a dataref, like a backlight on a dimmer |
-| **Light** | For lights: a library light from lights.txt (with a search tagged spill / glow), a spill that lights its surroundings, a glow sprite, or not exported. **Preview As In X-Plane** makes the viewport show it the way X-Plane does |
-| **Attachment Point** | For empties: a wheel, a VR tablet mount or a particle emitter |
-| **Surface** | The material: visible or invisible (invisible click zones), transparency, shadows, camera collision, a screen (the 2D panel or an avionics device with its power buses) and the material's glow |
 | **Advanced** | HUD glass, rain, draw order, levels of detail, custom attributes, and **Every Setting (Classic)** with the complete earlier layout |
 
 With several objects selected, the copy button in a card's header copies that card's settings from the active object
 to the others.
 
-**Export** lists the OBJ files of the scene: tick a collection to export it, click **Cockpit** / **Part** to switch
-its kind, the arrow selects its objects. **Export N Files** writes them next to the .blend file. **New File From
-Selection** puts the selected objects (with their children) in a new file, taking them out of the files they were in,
-and fills in its textures from their materials. Under the list are the chosen file's settings: textures (with
-**From Materials**), look, cockpit panel, levels of detail, X-Plane 12 texture maps, rain and wipers, detail textures
-and more.
+**Material tab > X-Plane** is the material's surface, shared by every object using it: visible or invisible
+(invisible click zones), transparency, shadows, camera collision, a screen (the 2D panel or an avionics device with
+its power buses) and the material's glow. **More** and **Every Setting (Classic)** are below it.
 
-**Unfinished Work** lists what is not filled in yet in the export files, with a button to select each object.
+**Collection tab > X-Plane**: tick it to export the collection as an OBJ file, with its name and kind (aircraft part
+or cockpit). **File Settings And Export** opens the file in the Scene tab.
 
-**Tools** has **Find and Replace**, **Table**, the click zone overlay and the light preview for every light.
+**Scene tab > X-Plane Export** lists the OBJ files of the scene: tick a collection to export it, click **Cockpit** /
+**Part** to switch its kind, the arrow selects its objects. **Export N Files** writes them next to the .blend file.
+**New File From Selection** puts the selected objects (with their children) in a new file, taking them out of the
+files they were in, and fills in its textures from their materials. Under the list are the chosen file's settings:
+textures (with **From Materials**), look, cockpit panel, levels of detail, X-Plane 12 texture maps, rain and wipers,
+detail textures and more.
+
+**Scene tab > X-Plane Unfinished Work** lists what is not filled in yet in the export files, with a button to select
+each object.
+
+**Scene tab > X-Plane Tools** has **Find and Replace**, **Table**, the click zone overlay and the light preview for
+every light.
 
 Also: **Shift+A > X-Plane** adds an invisible click zone, a light or an attachment point at the 3D cursor; the
 viewport's right-click menu has **X-Plane > Make Clickable As**, the animation presets and **Move To File**; and the
 viewport's **Overlays** popover can outline everything clickable (orange runs commands, blue sets datarefs, green is
 dragged) and label it with what a click does.
 
-The X-Plane panels of earlier versions can still be shown in the Properties editor: Preferences > Add-ons >
-X-Plane 12 Aircraft Tools > **Classic Panels In The Properties Editor**.
-
 ### A coffee cup in the cup holder
 1. Model or append the cup, give it a material with an image texture
-2. Select it, **Export > New File From Selection**, name it `coffee_cup`
+2. Select it, then Scene tab > X-Plane Export > **New File From Selection**, name it `coffee_cup`
 3. Save the .blend in your aircraft's `objects` folder (OBJs are written next to the .blend) and click **Export 1 File**
 4. Add `coffee_cup.obj` to the aircraft in Plane Maker (Standard > Objects)
 
@@ -80,7 +86,7 @@ X-Plane 12 Aircraft Tools > **Classic Panels In The Properties Editor**.
 You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 61 light levels without a dataref`. The full list is in the `XPlane2Blender.log` text file. This covers light levels without a dataref (an empty one would write an invalid line), meshes without a material (they export with X-Plane's default material state) and library lights with no light chosen yet. A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
 
 ## Find And Replace, Duplicate And Replace
-For the many controls that differ only by side or number. **Tools > Find and Replace** in the sidebar: add pairs such as `cockpit/mcdu/` → `cockpit/mcdu_2/` and `Captain` → `First Officer`, choose which settings to touch (commands, datarefs, light levels, tooltips, custom attributes) and which objects (selected, selected and their children, or the whole scene), and the panel previews every change before you apply it.
+For the many controls that differ only by side or number. **Scene tab > X-Plane Tools > Find and Replace**: add pairs such as `cockpit/mcdu/` → `cockpit/mcdu_2/` and `Captain` → `First Officer`, choose which settings to touch (commands, datarefs, light levels, tooltips, custom attributes) and which objects (selected, selected and their children, or the whole scene), and the panel previews every change before you apply it.
 - **Find and Replace** changes the objects in place.
 - **Duplicate and Replace** copies the selection, renames the settings on the copies only and lets you move them, like Shift+D. Copy the captain's MCDU once and the first officer's is done.
 - Pairs are applied in order, **Match Case** is on by default (X-Plane names are case sensitive) and **Regex** allows regular expressions with `\1` groups.
@@ -88,7 +94,7 @@ For the many controls that differ only by side or number. **Tools > Find and Rep
 - Both are normal Blender operations: Ctrl+Z undoes them and the Adjust Last Operation panel works.
 
 ## Tables And CSV
-**Tools > Table** lists every object with a manipulator, a light level or animation datarefs in one place. Click a row to select that object in the viewport, type in the search box to filter by name, command or dataref, and drag the sidebar wider to edit the type, command and tooltip in place (a narrow sidebar shows the end of each command, where `key/A` and `key/B` differ). **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the animation table holds the dataref paths and show/hide values.
+**Scene tab > X-Plane Tools > Table** lists every object with a manipulator, a light level or animation datarefs in one place. Click a row to select that object in the viewport, type in the search box to filter by name, command or dataref, and widen the Properties editor to edit the type, command and tooltip in place (a narrow one shows the end of each command, where `key/A` and `key/B` differ). **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the animation table holds the dataref paths and show/hide values.
 
 ## Animation Presets
 In the **Moves** card (and the viewport's right-click menu), on every selected object:
@@ -118,7 +124,7 @@ The options are in the side panel of the file browser:
 | Lights | Creates lights with their XPlane2Blender settings. See "How lights come in" below |
 | All LODs | Imports every level of detail instead of only the first |
 | Hide What X-Plane Hides | Hides the objects that X-Plane would not draw with the datarefs at their default values. Unhide them before exporting again, hidden objects are not exported |
-| Make Export Roots | Ticks each OBJ's collection as an export file. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in and the files are listed unticked in the sidebar's Export panel, so one tick exports one again |
+| Make Export Roots | Ticks each OBJ's collection as an export file. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in and the files are listed unticked in the Scene tab's X-Plane Export panel, so one tick exports one again |
 | Night Light Strength | How much the `_LIT` texture glows, 0 shows the daytime look |
 | Light Strength | Switches the spill lights on, such as the cockpit annunciator and panel lights. 0 keeps them from lighting the scene (they are off in the parked pose), 1 is the brightness the light's parameters ask for |
 | Damage / Part Attached / Not Drawn Objects | Also brings in objects that are normally left out (they only show when a part breaks, move with a wing or gear part, or are drawn nowhere) |

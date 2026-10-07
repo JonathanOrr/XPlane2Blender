@@ -1,6 +1,6 @@
 """
-What an object is for X-Plane, in plain words, worked out from the settings it already has. The sidebar
-(xplane_sidebar.py) draws from this; nothing here draws or stores anything of its own.
+What an object is for X-Plane, in plain words, worked out from the settings it already has. The panels
+(xplane_panels.py) draw from this; nothing here draws or stores anything of its own.
 
 An object can be several things at once: a button that moves and glows is "Clickable", "Moves" and "Glows".
 """

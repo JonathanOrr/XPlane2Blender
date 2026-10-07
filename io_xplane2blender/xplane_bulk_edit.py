@@ -345,9 +345,9 @@ PREVIEW_ROWS = 6
 
 
 class VIEW3D_PT_xplane_bulk_edit(bpy.types.Panel):
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "X-Plane"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
     bl_label = "Find and Replace"
     bl_parent_id = "XPLANE_PT_tools"
     bl_options = {"DEFAULT_CLOSED"}

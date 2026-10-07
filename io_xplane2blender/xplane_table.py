@@ -2,7 +2,7 @@
 Tables of the X-Plane settings of many objects: manipulators, light levels and animation datarefs.
 
 A cockpit has hundreds of each, and the properties editor shows one object at a time. The table lists them all
-in the 3D viewport's sidebar, editable in place, and CSV export and import lets them be reviewed and edited in a
+in the Scene tab's X-Plane Tools, editable in place, and CSV export and import lets them be reviewed and edited in a
 spreadsheet: sort by command, fill a column, compare with a systems list, then read it back.
 
 The CSV columns come from the add-on's own property definitions, so every setting is covered. Keyframes stay in
@@ -270,7 +270,7 @@ class XPLANE_UL_object_table(bpy.types.UIList):
         obj = item
         table = table_settings(context).table
         x = obj.xplane
-        # The sidebar is narrow until it is dragged wider, so the columns that matter most come first
+        # A narrow Properties editor fits few columns, so the ones that matter most come first
         width = context.region.width / max(context.preferences.system.ui_scale, 0.5)
         wide, medium = width > 640, width > 400
         # Characters that fit in the text column when it is too narrow to edit, about 9 pixels each
@@ -367,9 +367,9 @@ class XPLANE_OT_table_import_csv(bpy.types.Operator, ImportHelper):
 
 
 class VIEW3D_PT_xplane_table(bpy.types.Panel):
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "X-Plane"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "scene"
     bl_label = "Table"
     bl_parent_id = "XPLANE_PT_tools"
     bl_options = {"DEFAULT_CLOSED"}

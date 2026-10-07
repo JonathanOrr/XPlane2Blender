@@ -34,13 +34,13 @@ class TestPropertyGroups(XPlaneTestCase):
         self.assertEqual(len(armature.data.bones[0].xplane.datarefs), 1)
 
     def test_xplane_panels_are_registered(self) -> None:
+        # Object, material, light, collection and scene settings are in xplane_panels.py
         for name in (
-            "RENDER_PT_xplane",
-            "SCENE_PT_xplane",
-            "OBJECT_PT_xplane",
-            "DATA_PT_xplane",
+            "XPLANE_PT_object",
+            "XPLANE_PT_surface",
+            "XPLANE_PT_collection",
+            "XPLANE_PT_export",
             "BONE_PT_xplane",
-            "MATERIAL_PT_xplane",
         ):
             with self.subTest(panel=name):
                 self.assertTrue(hasattr(bpy.types, name))
