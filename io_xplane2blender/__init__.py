@@ -33,16 +33,16 @@ bl_info = {
 
 if "" not in locals():
 
-    from . import xplane_ui
     from . import xplane_props
     from . import xplane_export
     from . import xplane_ops
+    from . import xplane_ops_wiper
     from . import xplane_ops_dev
     from . import xplane_bulk_edit
     from . import xplane_table
     from . import xplane_light_tools
     from . import xplane_anim_presets
-    from . import xplane_panels
+    from . import ui
     from . import xplane_overlay
     from . import xplane_config
     from . import xplane_updater
@@ -51,16 +51,16 @@ if "" not in locals():
     from .xplane_utils import xplane_wiper_gradient
 else:
     import importlib
-    xplane_ui      = importlib.reload(xplane_ui)
     xplane_props   = importlib.reload(xplane_props)
     xplane_export  = importlib.reload(xplane_export)
     xplane_ops     = importlib.reload(xplane_ops)
+    xplane_ops_wiper = importlib.reload(xplane_ops_wiper)
     xplane_ops_dev = importlib.reload(xplane_ops_dev)
     xplane_bulk_edit = importlib.reload(xplane_bulk_edit)
     xplane_table = importlib.reload(xplane_table)
     xplane_light_tools = importlib.reload(xplane_light_tools)
     xplane_anim_presets = importlib.reload(xplane_anim_presets)
-    xplane_panels = importlib.reload(xplane_panels)
+    ui = importlib.reload(ui)
     xplane_overlay = importlib.reload(xplane_overlay)
     xplane_config  = importlib.reload(xplane_config)
     xplane_updater = importlib.reload(xplane_updater)
@@ -87,9 +87,9 @@ def register():
     xplane_export.register()
     xplane_props.register()
     xplane_ops.register()
+    xplane_ops_wiper.register()
     xplane_ops_dev.register()
-    xplane_ui.register()
-    xplane_panels.register()
+    ui.register()
     xplane_overlay.register()
     xplane_bulk_edit.register()
     xplane_table.register()
@@ -109,8 +109,8 @@ def unregister():
     xplane_table.unregister()
     xplane_bulk_edit.unregister()
     xplane_overlay.unregister()
-    xplane_panels.unregister()
-    xplane_ui.unregister()
+    ui.unregister()
+    xplane_ops_wiper.unregister()
     xplane_ops.unregister()
     xplane_ops_dev.unregister()
     xplane_props.unregister()

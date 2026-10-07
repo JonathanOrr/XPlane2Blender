@@ -14,7 +14,7 @@ class TestWriteXPlaneFiles(XPlaneTestCase):
     def test_write_static(self):
         filename = 'test_write_static'
         # This is the "Who knows, just a bunch of stuff" style unit test
-        filters = {"REQUIRE_DRY", "SLOPE_LIMIT", "TILTED", "TEXTURE", "ANIM", "TRIS", "VLIGHT", "LIGHTS"}
+        filters = {"TEXTURE", "ANIM", "TRIS", "LIGHT"}
         self.assertLayerExportEqualsFixture(0, os.path.join(__dirname__, 'fixtures', filename + '.obj'), filters, filename)
 
     def test_write_trans_animated(self):

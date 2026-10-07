@@ -1,5 +1,5 @@
 """
-The X-Plane sidebar's operators do what their buttons say
+The X-Plane panels' operators do what their buttons say
 """
 
 from types import SimpleNamespace
@@ -8,18 +8,12 @@ import bpy
 
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
-from io_xplane2blender import xplane_panels as S
-from io_xplane2blender import xplane_helpers, xplane_ui
+from io_xplane2blender.ui import search as S
+from io_xplane2blender import xplane_helpers
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests import test_creation_helpers
 from io_xplane2blender.tests.fake_layout import FakeLayout, draw_panel
 
-PANELS = [
-    cls
-    for cls in S._classes
-    if isinstance(cls, type) and issubclass(cls, bpy.types.Panel)
-]
-MENUS = [cls for cls in S._classes if isinstance(cls, type) and issubclass(cls, bpy.types.Menu)]
 
 
 def mesh(name: str, collection: str = "Panel") -> bpy.types.Object:

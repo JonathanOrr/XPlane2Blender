@@ -58,10 +58,7 @@ class XPlaneEmpty(XPlaneObject):
 
         special_empty_props = self.blenderObject.xplane.special_empty_props
 
-        if int(bpy.context.scene.xplane.version) >= 1130 and (
-            special_empty_props.special_type == EMPTY_USAGE_EMITTER_PARTICLE
-            or special_empty_props.special_type == EMPTY_USAGE_EMITTER_SOUND
-        ):
+        if special_empty_props.special_type in {EMPTY_USAGE_EMITTER_PARTICLE, EMPTY_USAGE_EMITTER_SOUND}:
             if not self.xplaneBone.xplaneFile.options.particle_system_file.endswith(
                 ".pss"
             ):
@@ -102,10 +99,7 @@ class XPlaneEmpty(XPlaneObject):
                 o += " {}".format(special_empty_props.emitter_props.index)
 
             o += "\n"
-        elif (
-            int(bpy.context.scene.xplane.version) >= 1130
-            and special_empty_props.special_type == EMPTY_USAGE_MAGNET
-        ):
+        elif special_empty_props.special_type == EMPTY_USAGE_MAGNET:
             bake_matrix = self.xplaneBone.getBakeMatrixForAttached()
             em_location = xplane_helpers.vec_b_to_x(bake_matrix.to_translation())
             # yaw,pitch,roll
@@ -122,10 +116,7 @@ class XPlaneEmpty(XPlaneObject):
                 theta=floatToStr(theta),  # pitch up
                 psi=floatToStr(psi),
             )  # roll right
-        elif (
-            int(bpy.context.scene.xplane.version) >= 1220
-            and special_empty_props.special_type == EMPTY_USAGE_WHEEL
-        ):
+        elif special_empty_props.special_type == EMPTY_USAGE_WHEEL:
             bake_matrix = self.xplaneBone.getBakeMatrixForAttached()
             em_location = xplane_helpers.vec_b_to_x(bake_matrix.to_translation())
             # yaw,pitch,roll

@@ -15,14 +15,12 @@ import collections
 import dataclasses
 import itertools
 import operator
-from pprint import pprint
 from typing import Dict, List, NamedTuple, Optional, Set, Tuple, Union
 
 import bpy
 import mathutils
 
 from io_xplane2blender import xplane_constants, xplane_helpers, xplane_props
-from io_xplane2blender.tests import test_creation_helpers
 from io_xplane2blender.xplane_types import (
     xplane_empty,
     xplane_material,
@@ -43,7 +41,6 @@ from .xplane_light import XPlaneLight
 from .xplane_mesh import XPlaneMesh
 from .xplane_object import XPlaneObject
 from .xplane_primitive import XPlanePrimitive
-from .xplane_vlights import XPlaneVLights
 
 
 class NotExportableRootError(ValueError):
@@ -241,12 +238,11 @@ class XPlaneFile:
         self.errors_at_start = logger.errorCount()
         self.collection_errors = 0
 
-        self.lights = XPlaneVLights()
         self.mesh = XPlaneMesh()
         self._bl_obj_name_to_bone: Dict[str, XPlaneBone] = {}
 
         # Materials to be used for writing the header directives, a list of 2
-        self.referenceMaterials: List[xplane_material.XPlaneMaterial] = None
+        self.reference_material: Optional[xplane_material.XPlaneMaterial] = None
 
         # the root bone: origin for all animations/objects
         # This isn't really a None type, it is created immediately
@@ -254,7 +250,7 @@ class XPlaneFile:
         self.rootBone: XPlaneBone = None
 
         # Header assumes that its xplaneFile is completely formed
-        self.header = XPlaneHeader(self, 8)
+        self.header = XPlaneHeader(self)
 
         # You'll never ever forget to call XPlaneFile, so,
         # we stick this here
@@ -515,13 +511,6 @@ class XPlaneFile:
                     new_xplane_obj.export_animation_only
                     or not blender_obj.visible_get()
                 )
-                # This is asking if it is an old-style light,
-                # not it's Blender Light Type!
-                if (
-                    isinstance(new_xplane_obj, XPlaneLight)
-                    and not new_xplane_obj.export_animation_only
-                ):
-                    self.lights.append(new_xplane_obj)
                 new_xplane_obj.collect()
             elif not found_blender_obj_already and blender_obj:
                 print(f"Blender Object: {blender_obj.name}, didn't convert")
@@ -653,40 +642,15 @@ class XPlaneFile:
         return get_xplane_objects_from_bone_tree(self.rootBone)
 
     def validateMaterials(self) -> bool:
-        objects = self.get_xplane_objects()
-
-        for xplaneObject in objects:
+        for xplaneObject in self.get_xplane_objects():
             if xplaneObject.type == "MESH" and xplaneObject.material.options:
-                errors, warnings = xplaneObject.material.isValid(
-                    self.options.export_type
-                )
-
-                for error in errors:
-                    logger.error(
-                        'Material "%s" in object "%s" %s'
-                        % (
-                            xplaneObject.material.name,
-                            xplaneObject.blenderObject.name,
-                            error,
-                        )
-                    )
-
-                for warning in warnings:
-                    logger.warn(
-                        'Material "%s" in object "%s" %s'
-                        % (
-                            xplaneObject.material.name,
-                            xplaneObject.blenderObject.name,
-                            warning,
-                        )
-                    )
+                material = xplaneObject.material
+                for error in xplane_material_utils.validate(material, self.options.export_type):
+                    logger.error(f'Material "{material.name}" in object "{xplaneObject.blenderObject.name}" {error}')
 
         # Only this file's errors count, an earlier file's errors must not stop this one
-        if logger.errorCount() > self.errors_at_start:
-            return False
+        return logger.errorCount() <= self.errors_at_start
 
-        return True
-    
     def validateOptions(self) -> bool:
         if self.options.texture_normal and self.options.texture_map_normal:
             logger.error(f'"Normal / Specular" and "Normal" provided in "{self.options.name}", use only one.')
@@ -722,45 +686,6 @@ class XPlaneFile:
 
         return materials
 
-    def compareMaterials(self, refMaterials):
-        materials = self.getMaterials()
-
-        for refMaterial in refMaterials:
-            if refMaterial is not None:
-                for material in materials:
-                    # only compare draped materials agains draped
-                    # and non-draped agains non-draped
-                    if refMaterial.options.draped == material.options.draped:
-                        errors, warnings = material.isCompatibleTo(
-                            refMaterial, self.options.export_type, False
-                        )
-                        xplaneObject = material.xplaneObject
-                        for error in errors:
-                            logger.error(
-                                'Material "%s" in object "%s" %s'
-                                % (
-                                    material.name,
-                                    xplaneObject.blenderObject.name,
-                                    error,
-                                )
-                            )
-
-                        for warning in warnings:
-                            logger.warn(
-                                'Material "%s" in object "%s" %s'
-                                % (
-                                    material.name,
-                                    xplaneObject.blenderObject.name,
-                                    warning,
-                                )
-                            )
-
-        # Only this file's errors count, an earlier file's errors must not stop this one
-        if logger.errorCount() > self.errors_at_start:
-            return False
-
-        return True
-
     def writeFooter(self):
         return "# Build with Blender %s (build %s). Exported with XPlane2Blender %s" % (
             bpy.app.version_string,
@@ -775,34 +700,14 @@ class XPlaneFile:
         """
         self.mesh.collectXPlaneObjects(self.get_xplane_objects())
 
-        # - validateMaterials() > every object's material's XPlaneMaterial.isValid > xplane_material_utils.validate
-        # - getReferenceMaterials can end up revalidating all of self.getMaterials
-        # - compareMaterials compares all materials in the OBJ are consistent
-        #
-        # We validate all material's internal state, then ensure they all match with each other. This way XPlane2Blender
-        # always acts consistently. Nothing mysteriously works based on co-incidence or superstition
-        # and no "reference material" can be used without all materials being consistenly correct.
-        # The downside is tediousness when one material is slightly wrong
         if not self.validateMaterials():
             return ""
         if not self.validateOptions():
             return ""
 
-        self.referenceMaterials = xplane_material_utils.getReferenceMaterials(
+        self.reference_material = xplane_material_utils.reference_material(
             self.getMaterials(), self.options.export_type
         )
-
-        refMatNames = [refMat.name for refMat in self.referenceMaterials if refMat]
-        logger.info(
-            "Using the following reference materials: %s" % ", ".join(refMatNames)
-        )
-
-        # TODO: One day we'll have a autodetect feature again
-        # if self.options.autodetectTextures == False:
-        #    logger.info('Autodetect textures overridden for file %s: not fully checking manually entered textures against Blender-based reference materials\' textures' % (self.filename))
-
-        if not self.compareMaterials(self.referenceMaterials):
-            return ""
 
         o = ""
         o += self.header.write()
@@ -812,13 +717,6 @@ class XPlaneFile:
         o += meshOut
 
         if len(meshOut):
-            o += "\n"
-
-        # TODO: Deprecate this one day...
-        lightsOut = self.lights.write()
-        o += lightsOut
-
-        if len(lightsOut):
             o += "\n"
 
         lodsOut = self._writeLods()

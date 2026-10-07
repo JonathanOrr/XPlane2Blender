@@ -68,6 +68,7 @@ class FakeLayout:
         _check_icon(icon)
         assert prop in data.bl_rna.properties, f"{data.bl_rna.identifier} has no property {prop!r}"
         self.drawn.append(("prop", prop))
+        self.drawn.append(("setting", f"{data.bl_rna.identifier}.{prop}"))
 
     def prop_enum(self, data, prop: str, value: str, text: str = None, icon: str = "NONE", **kwargs) -> None:
         _check_icon(icon)
@@ -76,6 +77,7 @@ class FakeLayout:
         # Enums with an items function list nothing here
         assert not items or value in items, f"{prop} has no value {value!r}"
         self.drawn.append(("prop_enum", f"{prop}={value}"))
+        self.drawn.append(("setting", f"{data.bl_rna.identifier}.{prop}"))
 
     def operator(self, idname: str, text: str = None, icon: str = "NONE", **kwargs):
         _check_icon(icon)
@@ -105,6 +107,10 @@ class FakeLayout:
     def props(self) -> List[str]:
         return [what for kind, what in self.drawn if kind == "prop"]
 
+    def settings(self) -> List[str]:
+        """'Struct.property' of everything drawn, such as 'XPlaneLayer.texture'"""
+        return [what for kind, what in self.drawn if kind == "setting"]
+
     def labels(self) -> List[str]:
         return [what for kind, what in self.drawn if kind == "label"]
 
@@ -123,6 +129,9 @@ class PropertiesContext:
             return bpy.context.view_layer.active_layer_collection.collection
         if name == "space_data":
             return None
+        if name == "bone":
+            obj = bpy.context.object
+            return obj.data.bones.active if obj is not None and obj.type == "ARMATURE" else None
         return getattr(bpy.context, name)
 
 

@@ -24,12 +24,12 @@ class TestLayersToCollections(XPlaneTestCase):
 
         Each value is tested per type, floats are tested wtih assertFloatAlmostEqual
         """
-        assert (
-            set(xplane_layer.bl_rna.properties.keys())
-            - {"rna_type", "index", "expanded"}
-        ) == correct_values.keys(), (
-            "correct_values's keys do not equal XPlaneLayer's properties"
+        layer_props = set(xplane_layer.bl_rna.properties.keys()) - {"rna_type"}
+        assert layer_props <= correct_values.keys(), (
+            f"correct_values is missing XPlaneLayer's {layer_props - correct_values.keys()}"
         )
+        # The values of settings that no longer exist (scenery, X-Plane 9 and 10) are not checked
+        correct_values = {k: v for k, v in correct_values.items() if k in layer_props}
 
         def assert_prop(
             prop_id: str,
@@ -326,7 +326,7 @@ class TestLayersToCollections(XPlaneTestCase):
         d.update(
             {
                 "name": "scenery_properties_copied",
-                "export_type": "scenery",
+                "export_type": "aircraft",  # was scenery, converted when opened
                 "lods": "4",
                 "lod": [
                     {"near": 0, "far": 100},
@@ -360,7 +360,7 @@ class TestLayersToCollections(XPlaneTestCase):
         d.update(
             {
                 "name": "instanced_scenery_properties_copied",
-                "export_type": "instanced_scenery",
+                "export_type": "aircraft",  # was instanced scenery, converted when opened
                 "export_path_directives": [
                     {"export_path": "export_path_directive_1"},
                     {"export_path": "export_path_directive_2"},

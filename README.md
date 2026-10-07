@@ -11,11 +11,13 @@ A Blender add-on (Blender 3.6 and up, 5.2 LTS recommended) for making **X-Plane 
 aircraft or an OBJ, change it or add to it, and export X-Plane 12 OBJs.
 
 How it differs from XPlane2Blender:
-- **X-Plane 12 only.** There is no X-Plane version setting and no scenery. Files made with XPlane2Blender open as they
-  are and are converted once when opened: an older X-Plane version setting becomes X-Plane 12 and scenery files become
-  aircraft files. Imported OBJs and aircraft from X-Plane 10, 11 and 12 come in set up for X-Plane 12
-- **Plain-words panels that follow the selection.** An **X-Plane** panel in the Properties editor's Object, Material,
-  Collection and Scene tabs, each showing only what applies to what is selected
+- **X-Plane 12 aircraft only.** There is no X-Plane version setting and nothing for scenery (draped geometry, layer
+  groups, slope limits, library export paths, tint) or for X-Plane 9 and 10 (VLIGHT lights, conditions). Files made
+  with XPlane2Blender open and are converted once: scenery files become aircraft files, and X-Plane 9 lights wait for
+  an X-Plane 12 light to be picked. Every other setting of XPlane2Blender is kept, under the same stored names, and has
+  a place in the panels. Imported OBJs and aircraft from X-Plane 10, 11 and 12 come in set up for X-Plane 12
+- **Plain-words panels that follow the selection.** An **X-Plane** panel in the Properties editor's Object, Bone,
+  Material, Collection and Scene tabs, each showing only what applies to what is selected
 - **Work in progress always exports.** Settings that are not filled in yet are left out, never an error
 - **An importer** for whole aircraft (.acf) and OBJ files
 
@@ -46,14 +48,18 @@ each thing the object can do:
 | **Moves** | The **Button**, **Switch** and **Knob / Lever** presets key a whole control on every selected object in one step. An animated object lists its datarefs and its keys as buttons (click one to go to it); to key by hand, pose the object, type the dataref value and click **Key Pose** |
 | **Shows / Hides** | Show or hide it while a dataref is in a range |
 | **Glow** | The night (LIT) texture's brightness follows a dataref, like a backlight on a dimmer |
-| **Advanced** | HUD glass, rain, draw order, levels of detail, custom attributes, and **Every Setting (Classic)** with the complete earlier layout |
+| **Advanced** | HUD glass, rain, draw order, levels of detail, exporting the object as its own file from its own origin (a root object), and extra OBJ lines typed by hand for anything without a setting |
 
 With several objects selected, the copy button in a card's header copies that card's settings from the active object
 to the others.
 
 **Material tab > X-Plane** is the material's surface, shared by every object using it: visible or invisible
 (invisible click zones), transparency, shadows, camera collision, a screen (the 2D panel or an avionics device with
-its power buses) and the material's glow. **More** and **Every Setting (Classic)** are below it.
+its power buses) and the material's glow. **More** below it has the hard surface, deck, polygon offset and extra OBJ
+lines.
+
+**Bone tab > X-Plane Moves**: the datarefs that move or show and hide an armature's bone, keyed the same way as an
+object's.
 
 **Collection tab > X-Plane**: tick it to export the collection as an OBJ file, with its name and kind (aircraft part
 or cockpit). **File Settings And Export** opens the file in the Scene tab.
@@ -62,8 +68,9 @@ or cockpit). **File Settings And Export** opens the file in the Scene tab.
 **Part** to switch its kind, the arrow selects its objects. **Export N Files** writes them next to the .blend file.
 **New File From Selection** puts the selected objects (with their children) in a new file, taking them out of the
 files they were in, and fills in its textures from their materials. Under the list are the chosen file's settings:
-textures (with **From Materials**), look, cockpit panel, levels of detail, X-Plane 12 texture maps, rain and wipers,
-detail textures and more.
+textures (with **From Materials**), look, cockpit panel, levels of detail, X-Plane 12 texture maps, rain, defrost and
+wipers, detail textures and more. **Options** has the debug output and, for people working on the add-on itself,
+**Developer Tools**.
 
 **Scene tab > X-Plane Unfinished Work** lists what is not filled in yet in the export files, with a button to select
 each object.
@@ -108,7 +115,9 @@ Movement is along or around the object's own axis, from where it stands. Keys ar
 - The search button next to a light's **Name** lists every light in lights.txt, tagged **spill** (lights its surroundings), **glow** (a visible halo that lights nothing) or both. Under the name, the card says what the chosen light is, or that the name is not in lights.txt.
 - For **Library Light, Typed Parameters** the card lists the parameters in order and says when the typed values are too few or too many.
 - **Preview As In X-Plane** makes lights look in the viewport the way X-Plane draws them: spill lights light their surroundings, custom spills only out to their reach in meters, and glow-only and custom lights light nothing. It only changes Blender settings the exporter never reads (power, except for glow sprites whose power is the exported alpha, cutoff distance and ray visibility), so the exported OBJ stays the same. Ctrl+Z undoes it.
-- Old X-Plane 9 lights (`LIGHTS`) still export as before; the Light card offers the X-Plane 12 kinds to replace them.
+- Old X-Plane 9 lights (`VLIGHT` / `LIGHTS`) have no X-Plane 12 equivalent. Opened or imported, they keep their place
+  and color and are listed as unfinished work until an X-Plane 12 light is picked; until then they are left out of
+  exports.
 
 ## Importing X-Plane Aircraft And Objects
 Open **File > Import > X-Plane Aircraft (.acf)**, pick an aircraft's `.acf` file, and the whole aircraft is brought in: every object it lists, in the right place, with its textures, normal maps, materials, animations, manipulators and lights. It works with the text based `.acf` files of X-Plane 10, 11 and 12. **File > Import > X-Plane Object (.obj)** imports single OBJ8 files (several at once is fine), and you can also drag an `.acf` or `.obj` onto the 3D viewport in Blender 4.1 and later.
@@ -149,14 +158,11 @@ Limits worth knowing:
 - Imported textures are referenced by their full path, keep the aircraft where it is or relink them in Blender
 
 ## Relationship To XPlane2Blender
-This fork started from XPlane2Blender 4.5 and diverged at the tag `upstream-base`. The exporter core (`xplane_types/`,
-`xplane_export.py`) is kept close to upstream, including its code for older X-Plane versions that the add-on no longer
-offers, so fixes can move both ways:
-- A fix that also applies to XPlane2Blender: branch from `upstream-base`, fix it there with its test, then merge that
-  branch into `develop`. The same branch can be offered upstream as it is
-- A fix from XPlane2Blender: cherry-pick it onto `develop`
-- The upstream test suite runs on every push with `XPLANE2BLENDER_KEEP_OLD_SETTINGS=1`, so its test files keep the
-  X-Plane version they were saved with
+This fork started from XPlane2Blender 4.5 (the tag `upstream-base`) and has since been rewritten for X-Plane 12
+aircraft only: the exporter no longer has code for older X-Plane versions or scenery, and the settings, panels and
+updater are reorganized into small modules. Fixes no longer move between the two projects by cherry-picking; a fix
+that matters to both is ported by hand. The settings keep XPlane2Blender's stored names, so a file can still be opened
+with XPlane2Blender, which sees its aircraft settings as they are.
 
 ## Documentation Sources
 - [XPlane2Blender Manual](https://xp2b-docs.gitbook.io/xplane2blender-docs)

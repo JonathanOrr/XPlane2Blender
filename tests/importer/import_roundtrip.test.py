@@ -3,7 +3,9 @@ import os
 
 import bpy
 from mathutils import Vector
+from io_xplane2blender import xplane_constants
 from io_xplane2blender.tests import *
+from io_xplane2blender.xplane_helpers import unfinished
 from io_xplane2blender.tests.importer_helpers import (
     TempFolder,
     obj_text,
@@ -149,15 +151,22 @@ class TestImportRoundTrip(XPlaneTestCase):
         )
 
     def test_x_plane_9_lights(self) -> None:
-        # Plain, pulsing (9.9) and flashing (negative red) old-style lights come back as they were
+        # X-Plane 12 has no equivalent of the old VLIGHT lights: they come in keeping their color,
+        # wait for an X-Plane 12 light to be picked, and are left out of exports until then
         vertices = HOUSE_VT + "VLIGHT 1 2 3 1 0.5 0\nVLIGHT 0 1 0 9.9 9.9 9.9\nVLIGHT 0 0 1 -1 0 0.25\n"
         text = obj_text("LIGHTS 0 3\n", header="TEXTURE tex.png\n", vertices=vertices, indices=HOUSE_IDX, tris="TRIS 0 6\n")
         path = write_file(self.folder.join("old_lights.obj"), text)
         built = import_obj_file(path, ImportOptions(make_exportable=True), ImportReport())
+        lights = [o.data for o in built.collection.all_objects if o.type == "LIGHT"]
+        self.assertEqual(3, len(lights))
+        for light in lights:
+            self.assertEqual(xplane_constants.LIGHT_AUTOMATIC, light.xplane.type)
+            self.assertEqual("", light.xplane.name)
+        self.assertIn((1.0, 0.5, 0.0), [tuple(round(c, 3) for c in light.color) for light in lights])
         exported = self.exportExportableRoot(built.collection)
         self.assertLoggerErrors(0)
-        self.assertEqual(light_summaries(text), light_summaries(exported))
-        self.assertEqual(3, len(light_summaries(exported)))
+        self.assertEqual([], light_summaries(exported))
+        self.assertEqual(3, len(unfinished.items["lights without an X-Plane light chosen"]))
 
     def test_lights_in_moving_parts_keep_their_direction(self) -> None:
         # A static rotation around a spill light is folded into its position, the cone must still point the same way

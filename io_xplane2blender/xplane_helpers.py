@@ -80,17 +80,7 @@ def resolveBlenderPath(path: str) -> str:
 
 
 def effective_normal_metalness(xp_file: "xplane_file.XPlaneFile") -> bool:
-    return (
-        int(bpy.context.scene.xplane.version) >= 1100
-        and xp_file.options.normal_metalness
-    )
-
-
-def effective_normal_metalness_draped(xp_file: "xplane_file.XPlaneFile") -> bool:
-    return (
-        int(bpy.context.scene.xplane.version) >= 1100
-        and xp_file.options.normal_metalness_draped
-    )
+    return xp_file.options.normal_metalness
 
 
 def is_path_decal_lib(file_path: str) -> bool:

@@ -68,12 +68,10 @@ class XPlanePrimitive(XPlaneObject):
 
     def collect(self) -> None:
         super().collect()
-        xplane_version = int(bpy.context.scene.xplane.version)
         bl_obj = self.blenderObject
-        if 1200 <= xplane_version and bl_obj.xplane.hud_glass:
+        if bl_obj.xplane.hud_glass:
             self.attributes["ATTR_hud_glass"].setValue(True)
             self.attributes["ATTR_hud_reset"].setValue(False)
-            pass
 
         # add manipulator attributes
         self.manipulator.collect()
@@ -86,7 +84,6 @@ class XPlanePrimitive(XPlaneObject):
             self.material.collect()
 
     def collectLightLevelAttributes(self) -> None:
-        xplane_version = int(bpy.context.scene.xplane.version)
         bl_obj = self.blenderObject
         if bl_obj.xplane.lightLevel and not bl_obj.xplane.lightLevel_dataref.strip():
             # Not filled in yet. Without a dataref the line would be invalid, so leave it out
@@ -97,7 +94,7 @@ class XPlanePrimitive(XPlaneObject):
                 bl_obj.xplane.lightLevel_v2,
                 bl_obj.xplane.lightLevel_dataref,
             ]
-            if 1200 <= xplane_version and bl_obj.xplane.lightLevel_photometric:
+            if bl_obj.xplane.lightLevel_photometric:
                 ll_values.append(bl_obj.xplane.lightLevel_brightness)
             self.attributes["ATTR_light_level"].setValue(tuple(ll_values))
             self.material.attributes["ATTR_light_level_reset"].setValue(False)

@@ -3,14 +3,12 @@ import os
 import bpy
 
 from io_xplane2blender.tests import *
-from io_xplane2blender.xplane_constants import VERSION_1210
 
 __dirname__ = os.path.dirname(__file__)
 
 
 class TestDecalParams(XPlaneTestCase):
     def test_decal_constant_strength_exported_per_slot(self) -> None:
-        bpy.context.scene.xplane.version = VERSION_1210
         coll = test_creation_helpers.create_datablock_collection("Layer 1")
         layer = coll.xplane.layer
 

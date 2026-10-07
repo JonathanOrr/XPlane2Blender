@@ -1,64 +1,64 @@
 """
-This fork makes X-Plane 12 aircraft and cockpits only. Files made for older X-Plane versions or for scenery
-are converted when they are opened or imported, so they are one click away from an X-Plane 12 export.
-
-The exporter itself still knows the older versions: its code stays close to upstream XPlane2Blender so fixes
-can move between the two. Only the settings that pick an older version or scenery are changed here.
+This add-on makes X-Plane 12 aircraft and cockpit objects only. Files saved before version 5 are
+converted when they are opened: the settings for older X-Plane versions and for scenery are gone,
+so what they chose is read from the values Blender still keeps in the file.
 """
 
-import os
 from typing import List
 
 import bpy
 
-from io_xplane2blender import xplane_constants
+from io_xplane2blender import xplane_constants as C
+from io_xplane2blender.xplane_utils.xplane_updater_helpers import delete_property_from_datablock
 
-LATEST_VERSION = xplane_constants.VERSION_1220
-FILE_TYPES = (xplane_constants.EXPORT_TYPE_AIRCRAFT, xplane_constants.EXPORT_TYPE_COCKPIT)
-LEGACY_LIGHT_TYPES = {
-    xplane_constants.LIGHT_DEFAULT,
-    xplane_constants.LIGHT_FLASHING,
-    xplane_constants.LIGHT_PULSING,
-    xplane_constants.LIGHT_STROBE,
-    xplane_constants.LIGHT_TRAFFIC,
-}
+FILE_TYPES = (C.EXPORT_TYPE_AIRCRAFT, C.EXPORT_TYPE_COCKPIT)
 
-# The upstream export tests check the exporter at the X-Plane version saved in each test file
-KEEP_OLD_SETTINGS_VARIABLE = "XPLANE2BLENDER_KEEP_OLD_SETTINGS"
+# What the stored numbers of removed drop down items were
+_SCENERY_EXPORT_TYPES = {2: "scenery", 3: "instanced scenery"}
+_XP9_LIGHT_TYPES = {0: "default", 1: "flashing", 2: "pulsing", 3: "strobe", 4: "traffic"}
 
 
-def keep_old_settings() -> bool:
-    return bool(os.environ.get(KEEP_OLD_SETTINGS_VARIABLE))
+def _names(names: List[str]) -> str:
+    names = sorted(names)
+    return ", ".join(names[:10]) + (f" and {len(names) - 10} more" if len(names) > 10 else "")
 
 
-def _has_layer_settings():
+def _file_owners():
     yield from bpy.data.collections
     yield from bpy.data.objects
 
 
 def convert_to_xp12() -> List[str]:
     """
-    Changes the settings that target older X-Plane versions or scenery. Returns what changed, in words.
+    Converts what older files chose that X-Plane 12 aircraft can't use. Returns what changed, in words.
     Running it again changes nothing.
     """
     changes = []
     for scene in bpy.data.scenes:
-        if scene.xplane.version != LATEST_VERSION:
-            changes.append(f"Scene '{scene.name}': X-Plane version setting changed to 12")
-            scene.xplane.version = LATEST_VERSION
+        # Without it the original add-on defaults to X-Plane 12 too
+        if delete_property_from_datablock(scene.xplane, "version") is not None:
+            changes.append(f"Scene '{scene.name}' is now exported for X-Plane 12")
 
-    for owner in _has_layer_settings():
+    scenery = []
+    for owner in _file_owners():
         layer = owner.xplane.layer
-        if layer.export_type not in FILE_TYPES:
-            changes.append(f"'{owner.name}' was a scenery file, it is now an aircraft file")
-            layer.export_type = xplane_constants.EXPORT_TYPE_AIRCRAFT
+        if layer.get("export_type") in _SCENERY_EXPORT_TYPES:
+            scenery.append(owner.name)
+            layer.export_type = C.EXPORT_TYPE_AIRCRAFT
+    if scenery:
+        changes.append(f"Scenery files are now aircraft files: {_names(scenery)}")
 
-    legacy_lights = [light.name for light in bpy.data.lights if light.xplane.type in LEGACY_LIGHT_TYPES]
-    if legacy_lights:
-        # There is no faithful X-Plane 12 version of these, so they are pointed out rather than changed
-        changes.append(
-            f"{len(legacy_lights)} light(s) use the old X-Plane 9 light types and still export as before: "
-            + ", ".join(sorted(legacy_lights)[:10])
-            + (" ..." if len(legacy_lights) > 10 else "")
-        )
+    xp9_lights = []
+    for light in bpy.data.lights:
+        if light.xplane.get("type") in _XP9_LIGHT_TYPES:
+            xp9_lights.append(light.name)
+            # With no light chosen it is listed as unfinished work and left out of exports
+            light.xplane.type = C.LIGHT_AUTOMATIC
+            light.xplane.name = ""
+    if xp9_lights:
+        changes.append(f"X-Plane 9 lights need an X-Plane 12 light picked: {_names(xp9_lights)}")
+
+    draped = [m.name for m in bpy.data.materials if delete_property_from_datablock(m.xplane, "draped")]
+    if draped:
+        changes.append(f"Draped (scenery) materials are now normal surfaces: {_names(draped)}")
     return changes

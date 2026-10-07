@@ -21,7 +21,7 @@ class TestPropertyGroups(XPlaneTestCase):
     def test_properties_exist_on_new_datablocks(self) -> None:
         bpy.ops.wm.read_homefile(use_factory_startup=True)
         scene = bpy.context.scene
-        self.assertTrue(hasattr(scene.xplane, "version"))
+        self.assertTrue(hasattr(scene.xplane, "optimize"))
         self.assertTrue(hasattr(scene.xplane, "xplane2blender_ver_history"))
         bpy.ops.object.armature_add()
         armature = bpy.context.object
@@ -34,13 +34,13 @@ class TestPropertyGroups(XPlaneTestCase):
         self.assertEqual(len(armature.data.bones[0].xplane.datarefs), 1)
 
     def test_xplane_panels_are_registered(self) -> None:
-        # Object, material, light, collection and scene settings are in xplane_panels.py
+        # Object, bone, material, collection and scene settings are in the ui package
         for name in (
             "XPLANE_PT_object",
+            "XPLANE_PT_bone",
             "XPLANE_PT_surface",
             "XPLANE_PT_collection",
             "XPLANE_PT_export",
-            "BONE_PT_xplane",
         ):
             with self.subTest(panel=name):
                 self.assertTrue(hasattr(bpy.types, name))

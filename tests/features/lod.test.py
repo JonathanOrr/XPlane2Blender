@@ -44,7 +44,6 @@ def create_test_cubes():
     #####################
     # Set Scene Options #
     #####################
-    scene.xplane.version = "1050"
     scene.xplane.debug = True
 
     ########################
@@ -62,7 +61,7 @@ def create_test_cubes():
             #layer_i+1_LOD-near_LOD-far (increments of 200)
             layer.name = "layer_%i_%i_%i" % (layer_index + 1, 0, lod_val_far_str)
 
-        layer.export_type = "instanced_scenery"
+        layer.export_type = "aircraft"
 
         #The number of lods in this layer
         layer.lods = str(layer_index)

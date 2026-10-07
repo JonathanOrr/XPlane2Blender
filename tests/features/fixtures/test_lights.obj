@@ -3,34 +3,24 @@ I
 OBJ
 
 GLOBAL_cockpit_lit
-POINT_COUNTS	0	0	5	0
+POINT_COUNTS	0	0	0	0
 
-VLIGHT	1	1	-1	0	1	0
 
-VLIGHT	2	2	-2	-1	1	1
 
-VLIGHT	3	3	-3	9.9	9.9	9.9
 
-VLIGHT	4	4	-4	9.8	9.8	9.8
 
-VLIGHT	5	5	-5	9.7	9.7	9.7
 
 # 0 ROOT
 	# 1 Light: 01_Lamp_default
 	# LIGHT: 01_Lamp_default	weight: 10000
-	LIGHTS	0 1
 	# 1 Light: 02_Lamp_flash
 	# LIGHT: 02_Lamp_flash	weight: 10000
-	LIGHTS	1 1
 	# 1 Light: 03_Lamp_pulse
 	# LIGHT: 03_Lamp_pulse	weight: 10000
-	LIGHTS	2 1
 	# 1 Light: 04_Lamp_strobe
 	# LIGHT: 04_Lamp_strobe	weight: 10000
-	LIGHTS	3 1
 	# 1 Light: 05_Lamp_traffic
 	# LIGHT: 05_Lamp_traffic	weight: 10000
-	LIGHTS	4 1
 	# 1 Light: 06_Lamp_named
 	# LIGHT: 06_Lamp_named	weight: 10000
 	LIGHT_NAMED	airplane_nav_left 6 6 -6

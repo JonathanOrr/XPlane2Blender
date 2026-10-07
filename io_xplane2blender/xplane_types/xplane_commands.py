@@ -94,7 +94,6 @@ class XPlaneCommands:
             "ATTR_poly_os": "ATTR_poly_os 0",
             "ATTR_hard|ATTR_hard_deck": "ATTR_no_hard",
             "ATTR_no_blend|ATTR_shadow_blend": "ATTR_blend",
-            "ATTR_draped": "ATTR_no_draped",
             "ATTR_solid_camera": "ATTR_no_solid_camera",
         }
 
@@ -111,7 +110,6 @@ class XPlaneCommands:
             "ATTR_no_solid_camera": True,
             "ATTR_shadow": True,
             "ATTR_draw_enable": True,
-            "ATTR_no_draped": True,
             "ATTR_light_level_reset": True,
         }
 
@@ -150,58 +148,23 @@ class XPlaneCommands:
         o += xplaneBone.writeAnimationPrefix()
 
         xplaneObject = xplaneBone.xplaneObject
-        xplaneObjectWritten = False
-
         if xplaneObject and not xplaneObject.export_animation_only:
-            if lod_bucket_index is None:
-                o += self._writeXPlaneObjectPrefix(xplaneObject)
-                xplaneObjectWritten = True
-            elif (
-                lod_bucket_index is not None
-                and xplaneObject.effective_buckets[lod_bucket_index]
-            ):
-                o += self._writeXPlaneObjectPrefix(xplaneObject)
-                xplaneObjectWritten = True
+            if lod_bucket_index is None or xplaneObject.effective_buckets[lod_bucket_index]:
+                o += self._write_object(xplaneObject)
 
         # write bone children
         for childBone in xplaneBone.children:
             o += self.writeXPlaneBone(childBone, lod_bucket_index)
 
-        if xplaneObject and xplaneObjectWritten:
-            o += self._writeXPlaneObjectSuffix(xplaneObject)
-
         o += xplaneBone.writeAnimationSuffix()
 
         return o
 
-    def _writeXPlaneObjectPrefix(self, xplaneObject):
-        o = ""
-
-        # open material conditions
-        if hasattr(xplaneObject, "material"):
-            o += self._writeConditions(xplaneObject.material.conditions, xplaneObject)
-
-        # open object conditions
-        o += self._writeConditions(xplaneObject.conditions, xplaneObject)
+    def _write_object(self, xplaneObject):
         try:
-            o += xplaneObject.write()
+            return xplaneObject.write()
         except xplane_helpers.UnwriteableXPlaneType:
-            pass
-        return o
-
-    def _writeXPlaneObjectSuffix(self, xplaneObject: xplane_object.XPlaneObject):
-        o = ""
-
-        # close material conditions
-        if hasattr(xplaneObject, "material"):
-            o += self._writeConditions(
-                xplaneObject.material.conditions, xplaneObject, True
-            )
-
-        # close object conditions
-        o += self._writeConditions(xplaneObject.conditions, xplaneObject, True)
-
-        return o
+            return ""
 
     def writeAttribute(
         self,
@@ -350,8 +313,6 @@ class XPlaneCommands:
             "ATTR_no_blend",
             "ATTR_shadow_blend",
             "ATTR_blend",
-            "ATTR_draped",
-            "ATTR_no_draped",
             "ATTR_shadow",
             "ATTR_no_shadow",
             "ATTR_solid_camera",
@@ -408,19 +369,4 @@ class XPlaneCommands:
                     # print("orphan: "+orphan)
                     # we've reset an attribute so remove it from written as it will need rewrite with next object
                     del self.written[orphan]
-        return o
-
-    def _writeConditions(self, conditions, xplaneObject, close=False):
-        o = ""
-        indent = xplaneObject.xplaneBone.getIndent()
-
-        for condition in conditions:
-            if close == True:
-                o += indent + "ENDIF\n"
-            else:
-                if condition.value == True:
-                    o += indent + "IF %s\n" % condition.variable
-                else:
-                    o += indent + "IF NOT %s\n" % condition.variable
-
         return o

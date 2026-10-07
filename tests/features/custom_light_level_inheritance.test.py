@@ -1,7 +1,7 @@
 import bpy
 
 from io_xplane2blender.tests import XPlaneTestCase, runTestCases, test_creation_helpers
-from io_xplane2blender.xplane_constants import EXPORT_TYPE_AIRCRAFT, VERSION_1200
+from io_xplane2blender.xplane_constants import EXPORT_TYPE_AIRCRAFT
 
 DATAREF = "sim/flightmodel2/misc/custom_slider_ratio[0]"
 OVERRIDE = "sim/test/override_light_level"
@@ -11,7 +11,6 @@ class TestCustomLightLevelInheritance(XPlaneTestCase):
     def setUp(self):
         super().setUp()
         bpy.ops.wm.read_homefile(use_empty=True)
-        bpy.context.scene.xplane.version = VERSION_1200
         self.root = test_creation_helpers.create_datablock_collection("LightLevels")
         self.root.xplane.layer.export_type = EXPORT_TYPE_AIRCRAFT
 

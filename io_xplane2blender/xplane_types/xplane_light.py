@@ -60,24 +60,12 @@ class _LightSpillCustomParams:
 class XPlaneLight(xplane_object.XPlaneObject):
     def __init__(self, blenderObject: bpy.types.Object):
         super().__init__(blenderObject)
-        # Indices for VLIGHTs table
-        self.indices = [0, 0]
 
         # Our light type, not the Blender light type
         self.lightType = blenderObject.data.xplane.type
 
         # Color, for use by CUSTOM or AUTOMATIC lights
-        # change color according to type
-        if self.lightType == LIGHT_FLASHING:
-            self.color: List[float] = list(blenderObject.data.color)
-            self.color[0] = -self.color[0]
-        elif self.lightType == LIGHT_PULSING:
-            self.color = [9.9] * 3
-        elif self.lightType == LIGHT_STROBE:
-            self.color = [9.8] * 3
-        elif self.lightType == LIGHT_TRAFFIC:
-            self.color = [9.7] * 3
-        elif blenderObject.data.xplane.enable_rgb_override:
+        if blenderObject.data.xplane.enable_rgb_override:
             self.color: List[float] = blenderObject.data.xplane.rgb_override_values[:]
         else:
             self.color: List[float] = list(blenderObject.data.color)
@@ -488,11 +476,6 @@ class XPlaneLight(xplane_object.XPlaneObject):
             p.dx, p.dy, p.dz = new_dxyz_vec_x()
             p.width = width_param_new_value()
             p.dataref = self.dataref
-        # X-Plane Light Type | Light Type | parsed_light | light_param_defs | Result
-        # -------------------|------------|--------------|------------------|-------
-        # LIGHT_{OLD_TYPES}  | *          | N/A          | N/A              | Write
-        elif self.lightType in LIGHTS_OLD_TYPES:
-            pass
         else:
             assert (
                 False
@@ -704,11 +687,6 @@ class XPlaneLight(xplane_object.XPlaneObject):
             )
         elif self.lightType == LIGHT_SPILL_CUSTOM:
             o += f"{indent}LIGHT_SPILL_CUSTOM {translation_xp_str} {self.params}\n"
-        # do not render lights with no indices
-        elif self.indices[1] > self.indices[0]:
-            offset = self.indices[0]
-            count = self.indices[1] - self.indices[0]
-            o += f"{indent}LIGHTS\t{offset} {count}\n"
 
         if has_anim:
             o += f"{indent}ANIM_end\n"

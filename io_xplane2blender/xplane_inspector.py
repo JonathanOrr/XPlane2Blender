@@ -1,6 +1,6 @@
 """
 What an object is for X-Plane, in plain words, worked out from the settings it already has. The panels
-(xplane_panels.py) draw from this; nothing here draws or stores anything of its own.
+(the ui package) draw from this; nothing here draws or stores anything of its own.
 
 An object can be several things at once: a button that moves and glows is "Clickable", "Moves" and "Glows".
 """
@@ -310,10 +310,10 @@ def visibility_datarefs(obj) -> List[Tuple[int, "bpy.types.PropertyGroup"]]:
     return [(i, d) for i, d in enumerate(obj.xplane.datarefs) if d.anim_type in (C.ANIM_TYPE_SHOW, C.ANIM_TYPE_HIDE)]
 
 
-def dataref_keys(obj: bpy.types.Object, index: int) -> List[Tuple[float, float]]:
-    """(frame, dataref value) of each key of xplane.datarefs[index]"""
-    path = f"xplane.datarefs[{index}].value"
-    for fcurve in get_action_fcurves(obj):
+def dataref_keys(id_data: bpy.types.ID, index: int, bone: Optional[bpy.types.Bone] = None) -> List[Tuple[float, float]]:
+    """(frame, dataref value) of each key of xplane.datarefs[index] of an object, or of a bone of armature data"""
+    path = f'bones["{bone.name}"].xplane.datarefs[{index}].value' if bone else f"xplane.datarefs[{index}].value"
+    for fcurve in get_action_fcurves(id_data):
         if fcurve.data_path == path:
             return [(k.co[0], k.co[1]) for k in fcurve.keyframe_points]
     return []
