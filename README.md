@@ -46,6 +46,9 @@ For the many controls that differ only by side or number. In the 3D viewport's s
 - A material or light that objects outside the selection also use is left alone, so changing one side never changes the other. The panel says how many were skipped.
 - Both are normal Blender operations: Ctrl+Z undoes them and the Adjust Last Operation panel works.
 
+## Tables And CSV
+The **Table** panel in the same sidebar tab lists every object with a manipulator, a light level or animation datarefs in one place. Click a row to select that object in the viewport, type in the search box to filter by name, command or dataref, and drag the sidebar wider to edit the type, command and tooltip in place (a narrow sidebar shows the end of each command, where `key/A` and `key/B` differ). **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the animation table holds the dataref paths and show/hide values.
+
 ## Importing X-Plane Aircraft And Objects
 Open **File > Import > X-Plane Aircraft (.acf)**, pick an aircraft's `.acf` file, and the whole aircraft is brought in: every object it lists, in the right place, with its textures, normal maps, materials, animations, manipulators and lights. It works with the text based `.acf` files of X-Plane 10, 11 and 12. **File > Import > X-Plane Object (.obj)** imports single OBJ8 files (several at once is fine), and you can also drag an `.acf` or `.obj` onto the 3D viewport in Blender 4.1 and later.
 
