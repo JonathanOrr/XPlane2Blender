@@ -43,6 +43,23 @@ class TestOverlay(XPlaneTestCase):
         self.assertEqual(24, len(points))
         self.assertTrue(all(p.x > 5 for p in points))
 
+    def test_typed_drag_directions_get_an_arrow(self) -> None:
+        obj = test_creation_helpers.create_datablock_mesh(
+            test_creation_helpers.DatablockInfo("MESH", "trim wheel", collection="Panel")
+        )
+        manip = obj.xplane.manip
+        manip.enabled, manip.type = True, C.MANIP_DRAG_AXIS
+        manip.dx, manip.dy, manip.dz = 0, 0.1, 0
+        bpy.context.view_layer.update()
+        arrow = xplane_overlay.drag_arrow(obj)
+        self.assertEqual(6, len(arrow))
+        # X-Plane's up (y) is Blender's z
+        self.assertAlmostEqual(0.1, (arrow[1] - arrow[0]).z)
+        manip.autodetect_settings_opt_in = True
+        self.assertEqual([], xplane_overlay.drag_arrow(obj))
+        manip.type = C.MANIP_COMMAND
+        self.assertEqual([], xplane_overlay.drag_arrow(obj))
+
     def test_overlay_popover_draws(self) -> None:
         layout = FakeLayout()
         xplane_overlay.overlay_popover(SimpleNamespace(layout=layout), SimpleNamespace(screen=bpy.data.screens[0]))

@@ -35,7 +35,11 @@ def _bsdf(material: bpy.types.Material):
 
 
 def _socket(sockets, name: str, kind: Optional[str] = None):
-    return next(s for s in sockets if s.name == name and s.enabled and (kind is None or s.type == kind))
+    return next(
+        s
+        for s in sockets
+        if s.name == name and s.enabled and (kind is None or s.type == kind)
+    )
 
 
 class _Builder:
@@ -75,7 +79,11 @@ class _Builder:
         mapping = self.new("ShaderNodeMapping", "Tiling")
         if projected:
             self.link(self.coords().outputs["Object"], mapping.inputs["Vector"])
-            scale = (getattr(layer, f"{prefix}_x_scale"), getattr(layer, f"{prefix}_y_scale"), 1.0)
+            scale = (
+                getattr(layer, f"{prefix}_x_scale"),
+                getattr(layer, f"{prefix}_y_scale"),
+                1.0,
+            )
         else:
             self.link(self.coords().outputs["UV"], mapping.inputs["Vector"])
             scale = (getattr(layer, f"{prefix}_scale"),) * 2 + (1.0,)
@@ -113,7 +121,9 @@ class _Builder:
 def _load(path: str, report: List[str]) -> Optional[bpy.types.Image]:
     full = bpy.path.abspath(path)
     if is_path_decal_lib(path):
-        report.append(f"{os.path.basename(path)} is a decal library, its texture can't be previewed")
+        report.append(
+            f"{os.path.basename(path)} is a decal library, its texture can't be previewed"
+        )
         return None
     if not os.path.isfile(full):
         report.append(f"{path} was not found")
@@ -128,7 +138,11 @@ def _channels(b: _Builder, base_socket, layer):
         alpha = base_socket.node.outputs["Alpha"]
     else:
         alpha_input = b.bsdf.inputs.get("Alpha")
-        alpha = alpha_input.links[0].from_socket if alpha_input is not None and alpha_input.is_linked else None
+        alpha = (
+            alpha_input.links[0].from_socket
+            if alpha_input is not None and alpha_input.is_linked
+            else None
+        )
     modulator = None
     image = _load(layer.texture_modulator, []) if layer.texture_modulator else None
     if image is not None:
@@ -153,7 +167,11 @@ def add_preview(material: bpy.types.Material, layer, report: List[str]) -> bool:
     bsdf = _bsdf(material)
     if bsdf is None:
         return False
-    color_images = [(i, _load(getattr(layer, f"file_decal{i}"), report)) for i in (1, 2) if getattr(layer, f"file_decal{i}")]
+    color_images = [
+        (i, _load(getattr(layer, f"file_decal{i}"), report))
+        for i in (1, 2)
+        if getattr(layer, f"file_decal{i}")
+    ]
     normal_images = [
         (i, _load(getattr(layer, f"file_normal_decal{i}"), report))
         for i in (1, 2)
@@ -165,7 +183,11 @@ def add_preview(material: bpy.types.Material, layer, report: List[str]) -> bool:
         return False
 
     b = _Builder(material, bsdf)
-    original_color = bsdf.inputs["Base Color"].links[0].from_socket if bsdf.inputs["Base Color"].is_linked else None
+    original_color = (
+        bsdf.inputs["Base Color"].links[0].from_socket
+        if bsdf.inputs["Base Color"].is_linked
+        else None
+    )
     base = _base_color(b)
     channels = _channels(b, base, layer)
 
@@ -178,7 +200,12 @@ def add_preview(material: bpy.types.Material, layer, report: List[str]) -> bool:
         _socket(doubled.inputs, "Scale").default_value = 2.0
         mix = b.new("ShaderNodeMix", f"Color {i}")
         mix.data_type, mix.blend_type = "RGBA", "MULTIPLY"
-        b.link(b.strength(channels, tuple(getattr(layer, f"rgb_decal{i}_{k}") for k in KEYS)), mix.inputs[0])
+        b.link(
+            b.strength(
+                channels, tuple(getattr(layer, f"rgb_decal{i}_{k}") for k in KEYS)
+            ),
+            mix.inputs[0],
+        )
         b.link(color, _socket(mix.inputs, "A", "RGBA"))
         b.link(doubled.outputs[0], _socket(mix.inputs, "B", "RGBA"))
         color = _socket(mix.outputs, "Result", "RGBA")
@@ -193,7 +220,12 @@ def add_preview(material: bpy.types.Material, layer, report: List[str]) -> bool:
         texture = b.tiled_image(image, layer, f"normal_decal{i}", "Non-Color")
         normal_map = b.new("ShaderNodeNormalMap", f"Normal {i}")
         b.link(texture.outputs["Color"], normal_map.inputs["Color"])
-        b.link(b.strength(channels, tuple(getattr(layer, f"normal_decal{i}_{k}") for k in KEYS)), normal_map.inputs["Strength"])
+        b.link(
+            b.strength(
+                channels, tuple(getattr(layer, f"normal_decal{i}_{k}") for k in KEYS)
+            ),
+            normal_map.inputs["Strength"],
+        )
         if normal is None:
             normal = normal_map.outputs["Normal"]
             continue
@@ -254,7 +286,9 @@ class XPLANE_OT_detail_preview(bpy.types.Operator):
     bl_label = "Preview Detail Textures"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
-    remove: bpy.props.BoolProperty(name="Remove", description="Take the preview out again", default=False)
+    remove: bpy.props.BoolProperty(
+        name="Remove", description="Take the preview out again", default=False
+    )
 
     def execute(self, context):
         from io_xplane2blender.ui.state import active_file
@@ -274,11 +308,19 @@ class XPLANE_OT_detail_preview(bpy.types.Operator):
         for problem in sorted(set(problems)):
             self.report({"WARNING"}, problem)
         if self.remove:
-            self.report({"INFO"}, f"Detail texture preview removed from {changed} material(s)")
+            self.report(
+                {"INFO"}, f"Detail texture preview removed from {changed} material(s)"
+            )
         elif changed:
-            self.report({"INFO"}, f"Detail textures shown on {changed} material(s), in Material Preview shading")
+            self.report(
+                {"INFO"},
+                f"Detail textures shown on {changed} material(s), in Material Preview shading",
+            )
         else:
-            self.report({"WARNING"}, "No detail texture could be shown: set one, and give the materials a Principled BSDF")
+            self.report(
+                {"WARNING"},
+                "No detail texture could be shown: set one, and give the materials a Principled BSDF",
+            )
         return {"FINISHED"}
 
 

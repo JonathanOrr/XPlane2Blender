@@ -42,10 +42,18 @@ def motion_shape(obj: bpy.types.Object, motion: Motion):
     """(path as pairs of points, the point of each keyframe, the hinge line) of where the part's middle travels"""
     if motion.kind == TURN:
         hub, arm = hub_and_arm(obj, motion)
-        steps = [motion.low + (motion.high - motion.low) * i / ARC_STEPS for i in range(ARC_STEPS + 1)]
-        path = draw.strip(draw.arc(hub, motion.axis, arm, [t - motion.now for t in steps]))
+        steps = [
+            motion.low + (motion.high - motion.low) * i / ARC_STEPS
+            for i in range(ARC_STEPS + 1)
+        ]
+        path = draw.strip(
+            draw.arc(hub, motion.axis, arm, [t - motion.now for t in steps])
+        )
         keys = draw.arc(hub, motion.axis, arm, [t - motion.now for t in motion.travel])
-        hinge = [hub - motion.axis * arm.length * 0.6, hub + motion.axis * arm.length * 0.6]
+        hinge = [
+            hub - motion.axis * arm.length * 0.6,
+            hub + motion.axis * arm.length * 0.6,
+        ]
         return path, keys, hinge
     base = draw.box_center(obj) - motion.axis * motion.now
     path = [base + motion.axis * motion.low, base + motion.axis * motion.high]
@@ -73,7 +81,11 @@ def draw_motion(context) -> None:
     points, hinges = [], []
     for obj, motion in _motions(context):
         path, keys, hinge = motion_shape(obj, motion)
-        span = (path[0] - path[-1]).length if motion.kind != TURN else (keys[0] - hinge[0]).length
+        span = (
+            (path[0] - path[-1]).length
+            if motion.kind != TURN
+            else (keys[0] - hinge[0]).length
+        )
         points += path + _ticks(keys, max(span * 0.03, 0.002))
         hinges += hinge
     draw.lines(points, MOTION_COLOR)
@@ -90,13 +102,22 @@ def draw_motion_labels(context) -> None:
             text.at(keys[i], f"{motion.values[i]:g}", MOTION_COLOR)
         if obj == context.object:
             now = motion.value_at_frame(frame)
-            text.at(draw.box_center(obj), f"{short_name(motion.dataref)} = {now:.3g}", (1, 1, 1, 1), dy=-22)
+            text.at(
+                draw.box_center(obj),
+                f"{short_name(motion.dataref)} = {now:.3g}",
+                (1, 1, 1, 1),
+                dy=-22,
+            )
     text.done()
 
 
 def light_color(light: bpy.types.Light):
     settings = light.xplane
-    rgb = settings.rgb_override_values[:] if settings.enable_rgb_override else light.color[:]
+    rgb = (
+        settings.rgb_override_values[:]
+        if settings.enable_rgb_override
+        else light.color[:]
+    )
     return (*(min(max(c, 0.0), 1.0) for c in rgb), 1.0)
 
 
@@ -105,12 +126,16 @@ def light_name(light: bpy.types.Light) -> Optional[str]:
     settings = light.xplane
     if settings.type in (C.LIGHT_AUTOMATIC, C.LIGHT_NAMED, C.LIGHT_PARAM):
         return settings.name.strip() or None
-    return {C.LIGHT_CUSTOM: "Glow sprite", C.LIGHT_SPILL_CUSTOM: "Spill"}.get(settings.type, "")
+    return {C.LIGHT_CUSTOM: "Glow sprite", C.LIGHT_SPILL_CUSTOM: "Spill"}.get(
+        settings.type, ""
+    )
 
 
 def x_plane_lights(context) -> List[bpy.types.Object]:
     return [
-        o for o in context.visible_objects if o.type == "LIGHT" and o.data.xplane.type != C.LIGHT_NON_EXPORTING
+        o
+        for o in context.visible_objects
+        if o.type == "LIGHT" and o.data.xplane.type != C.LIGHT_NON_EXPORTING
     ]
 
 
@@ -123,17 +148,27 @@ def draw_lights(context) -> None:
             continue
         name = light_name(obj.data)
         color = light_color(obj.data) if name is not None else PROBLEM_COLOR
-        ring = draw.circle(Vector((where.x, where.y, 0)), Vector((0, 0, 1)), 6, segments=12)
+        ring = draw.circle(
+            Vector((where.x, where.y, 0)), Vector((0, 0, 1)), 6, segments=12
+        )
         by_color.setdefault(color, []).extend(ring)
         if obj.select_get():
-            text.at(obj.matrix_world.translation, name if name is not None else "No light chosen", color, dx=9)
+            text.at(
+                obj.matrix_world.translation,
+                name if name is not None else "No light chosen",
+                color,
+                dx=9,
+            )
     for color, ring in by_color.items():
         draw.lines(ring, color, width=2.0)
     text.done()
 
 
 def unfinished_objects(context):
-    names = {item.object_name: item.text for item in context.window_manager.xplane_panels.check_items}
+    names = {
+        item.object_name: item.text
+        for item in context.window_manager.xplane_panels.check_items
+    }
     return [(o, names[o.name]) for o in context.visible_objects if o.name in names]
 
 

@@ -12,7 +12,20 @@ from mathutils import Matrix, Vector
 Color = Tuple[float, float, float, float]
 
 # The 12 edges of Blender's bound_box corner order
-BOX_EDGES = ((0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7))
+BOX_EDGES = (
+    (0, 1),
+    (1, 2),
+    (2, 3),
+    (3, 0),
+    (4, 5),
+    (5, 6),
+    (6, 7),
+    (7, 4),
+    (0, 4),
+    (1, 5),
+    (2, 6),
+    (3, 7),
+)
 
 
 def box_lines(obj: bpy.types.Object) -> List[Vector]:
@@ -30,10 +43,15 @@ def strip(points: Sequence[Vector]) -> List[Vector]:
     return [p for i in range(1, len(points)) for p in (points[i - 1], points[i])]
 
 
-def circle(center: Vector, normal: Vector, radius: float, segments: int = 24) -> List[Vector]:
+def circle(
+    center: Vector, normal: Vector, radius: float, segments: int = 24
+) -> List[Vector]:
     """A closed circle as pairs of points"""
     turn = normal.to_track_quat("Z", "Y").to_matrix()
-    ring = [center + turn @ Vector((math.cos(a), math.sin(a), 0)) * radius for a in _angles(segments)]
+    ring = [
+        center + turn @ Vector((math.cos(a), math.sin(a), 0)) * radius
+        for a in _angles(segments)
+    ]
     return strip(ring + ring[:1])
 
 
@@ -41,7 +59,9 @@ def _angles(segments: int) -> Iterable[float]:
     return (2 * math.pi * i / segments for i in range(segments))
 
 
-def arc(center: Vector, axis: Vector, start: Vector, angles: Sequence[float]) -> List[Vector]:
+def arc(
+    center: Vector, axis: Vector, start: Vector, angles: Sequence[float]
+) -> List[Vector]:
     """Points of start turned around axis (through center) by each angle"""
     return [center + Matrix.Rotation(a, 3, axis) @ start for a in angles]
 
@@ -104,7 +124,9 @@ class Text:
         blf.enable(0, blf.SHADOW)
         blf.shadow(0, 3, 0.0, 0.0, 0.0, 0.9)
 
-    def at(self, point: Vector, text: str, color: Color, dx: float = 6, dy: float = -4) -> None:
+    def at(
+        self, point: Vector, text: str, color: Color, dx: float = 6, dy: float = -4
+    ) -> None:
         where = screen_point(self.context, point)
         if where is None:
             return

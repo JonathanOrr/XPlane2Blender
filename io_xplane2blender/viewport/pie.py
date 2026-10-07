@@ -19,7 +19,9 @@ class XPLANE_MT_animate(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator(presets.XPLANE_OT_anim_push_button.bl_idname, text="Push Button")
+        layout.operator(
+            presets.XPLANE_OT_anim_push_button.bl_idname, text="Push Button"
+        )
         layout.operator(presets.XPLANE_OT_anim_switch.bl_idname, text="Switch")
         layout.operator(presets.XPLANE_OT_anim_range.bl_idname, text="Knob / Lever")
 
@@ -37,7 +39,9 @@ class XPLANE_OT_check_in_viewport(bpy.types.Operator):
         s = view_settings(context)
         if s is not None:
             s.show_unfinished = True
-        self.report({"INFO"}, f"{count} thing(s) to finish" if count else "Nothing unfinished")
+        self.report(
+            {"INFO"}, f"{count} thing(s) to finish" if count else "Nothing unfinished"
+        )
         return {"FINISHED"}
 
 
@@ -48,7 +52,11 @@ class XPLANE_MT_pie(bpy.types.Menu):
     def draw(self, context):
         # Pie order: left, right, bottom, top, top left, top right, bottom left, bottom right
         pie = self.layout.menu_pie()
-        pie.menu("XPLANE_MT_control_kind", text="Make Clickable As", icon="RESTRICT_SELECT_OFF")
+        pie.menu(
+            "XPLANE_MT_control_kind",
+            text="Make Clickable As",
+            icon="RESTRICT_SELECT_OFF",
+        )
         pie.menu(XPLANE_MT_animate.bl_idname, icon="ANIM")
         pie.operator("scene.export_to_relative_dir", text="Export", icon="EXPORT")
         s = view_settings(context)

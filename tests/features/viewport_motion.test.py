@@ -43,7 +43,11 @@ class TestViewportMotion(XPlaneTestCase):
         test_creation_helpers.delete_everything()
 
     def test_a_lever_turns_around_its_origin(self) -> None:
-        obj = animated("lever", ((1, 0.0, (0, 0, 0)), (2, 1.0, (math.radians(90), 0, 0))), location=(1, 2, 3))
+        obj = animated(
+            "lever",
+            ((1, 0.0, (0, 0, 0)), (2, 1.0, (math.radians(90), 0, 0))),
+            location=(1, 2, 3),
+        )
         motion = motion_of(obj)
         self.assertEqual(TURN, motion.kind)
         self.assertEqual("a321/lever", motion.dataref)
@@ -64,7 +68,12 @@ class TestViewportMotion(XPlaneTestCase):
         parent = bpy.data.objects.new("pedestal", None)
         bpy.context.scene.collection.objects.link(parent)
         parent.scale = (2, 2, 2)
-        obj = animated("throttle", ((1, 0.0, (0, 0, 0)), (3, 1.0, (0, 0.1, 0))), channel="location", parent=parent)
+        obj = animated(
+            "throttle",
+            ((1, 0.0, (0, 0, 0)), (3, 1.0, (0, 0.1, 0))),
+            channel="location",
+            parent=parent,
+        )
         bpy.context.view_layer.update()
         motion = motion_of(obj)
         self.assertEqual(SLIDE, motion.kind)
@@ -75,9 +84,13 @@ class TestViewportMotion(XPlaneTestCase):
 
     def test_still_parts_have_no_motion(self) -> None:
         self.assertIsNone(motion_of(None))
-        obj = test_creation_helpers.create_datablock_mesh(test_creation_helpers.DatablockInfo("MESH", "still"))
+        obj = test_creation_helpers.create_datablock_mesh(
+            test_creation_helpers.DatablockInfo("MESH", "still")
+        )
         self.assertIsNone(motion_of(obj))
-        self.assertIsNone(motion_of(animated("stuck", ((1, 0.0, (0, 0, 0)), (2, 1.0, (0, 0, 0))))))
+        self.assertIsNone(
+            motion_of(animated("stuck", ((1, 0.0, (0, 0, 0)), (2, 1.0, (0, 0, 0)))))
+        )
 
     def test_interpolate_clamps_and_reads_there_and_back(self) -> None:
         self.assertEqual(0.0, interpolate(-5, [0, 10], [0, 1]))
@@ -86,7 +99,11 @@ class TestViewportMotion(XPlaneTestCase):
         self.assertAlmostEqual(0.5, interpolate(5, [0, 10, 0], [0, 1, 2]))
 
     def test_motion_path_and_lever_placement(self) -> None:
-        obj = animated("door", ((1, 0.0, (0, 0, 0)), (2, 1.0, (0, 0, math.radians(90)))), location=(0, 0, 0))
+        obj = animated(
+            "door",
+            ((1, 0.0, (0, 0, 0)), (2, 1.0, (0, 0, math.radians(90)))),
+            location=(0, 0, 0),
+        )
         obj.data.transform(__import__("mathutils").Matrix.Translation((1, 0, 0)))
         bpy.context.view_layer.update()
         motion = motion_of(obj)
@@ -100,16 +117,25 @@ class TestViewportMotion(XPlaneTestCase):
         self.assertLess((matrix.col[1].xyz - Vector((1, 0, 0))).length, 1e-4)
 
     def test_lever_handle_shows_only_when_asked_for_an_animated_part(self) -> None:
-        obj = animated("flap", ((1, 0.0, (0, 0, 0)), (2, 1.0, (0, math.radians(30), 0))))
+        obj = animated(
+            "flap", ((1, 0.0, (0, 0, 0)), (2, 1.0, (0, math.radians(30), 0)))
+        )
         screen = bpy.data.screens[0]
         context = SimpleNamespace(screen=screen, mode="OBJECT", object=obj)
         screen.xplane_view.show_lever = False
         self.assertFalse(lever.XPLANE_GGT_lever.poll(context))
         screen.xplane_view.show_lever = True
         self.assertTrue(lever.XPLANE_GGT_lever.poll(context))
-        self.assertFalse(lever.XPLANE_GGT_lever.poll(SimpleNamespace(screen=None, mode="OBJECT", object=obj)))
+        self.assertFalse(
+            lever.XPLANE_GGT_lever.poll(
+                SimpleNamespace(screen=None, mode="OBJECT", object=obj)
+            )
+        )
         lever.set_frame(bpy.context.scene, 1.5)
-        self.assertEqual((1, 0.5), (bpy.context.scene.frame_current, bpy.context.scene.frame_subframe))
+        self.assertEqual(
+            (1, 0.5),
+            (bpy.context.scene.frame_current, bpy.context.scene.frame_subframe),
+        )
 
     def test_lights_and_unfinished_overlays(self) -> None:
         data = bpy.data.lights.new("beacon", "POINT")
@@ -126,7 +152,9 @@ class TestViewportMotion(XPlaneTestCase):
         self.assertEqual([], overlay_more.x_plane_lights(bpy.context))
         item = bpy.context.window_manager.xplane_panels.check_items.add()
         item.object_name, item.text = "beacon", "No light chosen"
-        self.assertEqual([(obj, "No light chosen")], overlay_more.unfinished_objects(bpy.context))
+        self.assertEqual(
+            [(obj, "No light chosen")], overlay_more.unfinished_objects(bpy.context)
+        )
         bpy.context.window_manager.xplane_panels.check_items.clear()
 
 

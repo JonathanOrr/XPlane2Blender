@@ -62,7 +62,10 @@ class TestViewportTools(XPlaneTestCase):
         layout = FakeLayout()
         pie.XPLANE_MT_pie.draw(SimpleNamespace(layout=layout), context)
         self.assertIn("xplane.key_pose", layout.operators())
-        pie.XPLANE_MT_pie.draw(SimpleNamespace(layout=FakeLayout()), SimpleNamespace(screen=None, object=None))
+        pie.XPLANE_MT_pie.draw(
+            SimpleNamespace(layout=FakeLayout()),
+            SimpleNamespace(screen=None, object=None),
+        )
         pie.XPLANE_MT_animate.draw(SimpleNamespace(layout=FakeLayout()), bpy.context)
 
     def test_check_in_viewport(self) -> None:
@@ -89,7 +92,9 @@ class TestViewportTools(XPlaneTestCase):
         for screen in space.screens:
             self.assertTrue(screen.xplane_view.show_click_zones)
             self.assertTrue(screen.xplane_view.show_lever)
-        self.assertFalse(workspace.XPLANE_OT_workspace.poll(SimpleNamespace(window=None)))
+        self.assertFalse(
+            workspace.XPLANE_OT_workspace.poll(SimpleNamespace(window=None))
+        )
 
     def test_detail_preview_goes_in_and_comes_out(self) -> None:
         material, bsdf, base = textured_material("paint")
@@ -100,8 +105,12 @@ class TestViewportTools(XPlaneTestCase):
         self.layer.normal_decal1_red_key = 0.5
 
         self.assertEqual({"FINISHED"}, bpy.ops.xplane.detail_preview())
-        self.assertTrue(detail_preview.is_preview(bsdf.inputs["Base Color"].links[0].from_node))
-        self.assertTrue(detail_preview.is_preview(bsdf.inputs["Normal"].links[0].from_node))
+        self.assertTrue(
+            detail_preview.is_preview(bsdf.inputs["Base Color"].links[0].from_node)
+        )
+        self.assertTrue(
+            detail_preview.is_preview(bsdf.inputs["Normal"].links[0].from_node)
+        )
         # From Materials still finds the base texture behind the preview
         self.assertEqual(base.image, I.material_images(material)["texture"])
         # Showing it again replaces it
@@ -112,7 +121,9 @@ class TestViewportTools(XPlaneTestCase):
         bpy.ops.xplane.detail_preview(remove=True)
         self.assertEqual(base, bsdf.inputs["Base Color"].links[0].from_node)
         self.assertFalse(bsdf.inputs["Normal"].is_linked)
-        self.assertFalse(any(detail_preview.is_preview(n) for n in material.node_tree.nodes))
+        self.assertFalse(
+            any(detail_preview.is_preview(n) for n in material.node_tree.nodes)
+        )
 
     def test_detail_preview_skips_what_it_cannot_show(self) -> None:
         material, bsdf, _ = textured_material("plain")

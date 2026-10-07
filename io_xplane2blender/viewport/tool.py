@@ -14,9 +14,17 @@ from io_xplane2blender import xplane_inspector as I
 from .draw import screen_point
 
 WHAT = (
-    ("CLICK", "Click", "What clicking does: kind of control, commands, datarefs, tooltip"),
+    (
+        "CLICK",
+        "Click",
+        "What clicking does: kind of control, commands, datarefs, tooltip",
+    ),
     ("GLOW", "Glow", "Light level: brightness following a dataref"),
-    ("VISIBILITY", "Shows / Hides", "Show and hide animation, added to what the object has"),
+    (
+        "VISIBILITY",
+        "Shows / Hides",
+        "Show and hide animation, added to what the object has",
+    ),
     ("LIGHT", "Light", "X-Plane light settings"),
     ("ATTACHMENT", "Attachment", "Wheel, tablet mount or particle emitter settings"),
 )
@@ -57,7 +65,9 @@ class XPLANE_OT_copy_tool_click(bpy.types.Operator):
     bl_label = "Copy X-Plane Settings"
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
-    what: bpy.props.EnumProperty(name="Copy", items=WHAT, options={"ENUM_FLAG"}, default={"CLICK"})
+    what: bpy.props.EnumProperty(
+        name="Copy", items=WHAT, options={"ENUM_FLAG"}, default={"CLICK"}
+    )
 
     @classmethod
     def poll(cls, context):
@@ -87,13 +97,26 @@ class XPLANE_WT_copy(bpy.types.WorkSpaceTool):
         " to set up rows of buttons, lights or attachments alike"
     )
     bl_icon = "brush.paint_texture.clone"
-    bl_keymap = ((XPLANE_OT_copy_tool_click.bl_idname, {"type": "LEFTMOUSE", "value": "PRESS"}, None),)
+    bl_keymap = (
+        (
+            XPLANE_OT_copy_tool_click.bl_idname,
+            {"type": "LEFTMOUSE", "value": "PRESS"},
+            None,
+        ),
+    )
 
     @staticmethod
     def draw_settings(context, layout, tool):
         props = tool.operator_properties(XPLANE_OT_copy_tool_click.bl_idname)
         source = context.object
-        layout.label(text=f"From: {source.name}" if source else "Make the object to copy from active", icon="COPYDOWN")
+        layout.label(
+            text=(
+                f"From: {source.name}"
+                if source
+                else "Make the object to copy from active"
+            ),
+            icon="COPYDOWN",
+        )
         layout.prop(props, "what", expand=True)
 
 
@@ -101,7 +124,9 @@ classes = (XPLANE_OT_copy_tool_click,)
 
 
 def register_tool():
-    bpy.utils.register_tool(XPLANE_WT_copy, after={"builtin.transform"}, separator=True, group=False)
+    bpy.utils.register_tool(
+        XPLANE_WT_copy, after={"builtin.transform"}, separator=True, group=False
+    )
 
 
 def unregister_tool():

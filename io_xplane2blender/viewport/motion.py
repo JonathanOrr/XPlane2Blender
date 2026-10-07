@@ -32,7 +32,11 @@ def interpolate(x: float, xs: Sequence[float], ys: Sequence[float]) -> float:
     for i in range(1, len(xs)):
         a, b = xs[i - 1], xs[i]
         if min(a, b) <= x <= max(a, b):
-            return ys[i - 1] if a == b else ys[i - 1] + (ys[i] - ys[i - 1]) * (x - a) / (b - a)
+            return (
+                ys[i - 1]
+                if a == b
+                else ys[i - 1] + (ys[i] - ys[i - 1]) * (x - a) / (b - a)
+            )
     return ys[-1]
 
 
@@ -69,7 +73,10 @@ class Motion:
 
 
 def _keyed(obj: bpy.types.Object) -> Dict[Tuple[str, int], bpy.types.FCurve]:
-    return {(fc.data_path, fc.array_index): fc for fc in xplane_helpers.get_action_fcurves(obj)}
+    return {
+        (fc.data_path, fc.array_index): fc
+        for fc in xplane_helpers.get_action_fcurves(obj)
+    }
 
 
 def _channel(obj, curves, path: str, frame: float) -> List[float]:
@@ -81,18 +88,26 @@ def _channel(obj, curves, path: str, frame: float) -> List[float]:
     return values
 
 
-def pose_at(obj: bpy.types.Object, frame: float, curves=None) -> Tuple[Vector, Quaternion]:
+def pose_at(
+    obj: bpy.types.Object, frame: float, curves=None
+) -> Tuple[Vector, Quaternion]:
     """The object's location and rotation (relative to its parent) at a frame, from its keyframes"""
     curves = _keyed(obj) if curves is None else curves
     location = Vector(_channel(obj, curves, "location", frame))
     mode = obj.rotation_mode
     if mode == "QUATERNION":
-        rotation = Quaternion(_channel(obj, curves, "rotation_quaternion", frame)).normalized()
+        rotation = Quaternion(
+            _channel(obj, curves, "rotation_quaternion", frame)
+        ).normalized()
     elif mode == "AXIS_ANGLE":
         angle, *axis = _channel(obj, curves, "rotation_axis_angle", frame)
-        rotation = Quaternion(Vector(axis), angle) if Vector(axis).length > 0 else Quaternion()
+        rotation = (
+            Quaternion(Vector(axis), angle) if Vector(axis).length > 0 else Quaternion()
+        )
     else:
-        rotation = Euler(_channel(obj, curves, "rotation_euler", frame), mode).to_quaternion()
+        rotation = Euler(
+            _channel(obj, curves, "rotation_euler", frame), mode
+        ).to_quaternion()
     return location, rotation
 
 
@@ -104,7 +119,9 @@ def _turn(a: Quaternion, b: Quaternion) -> Tuple[Vector, float]:
     return axis, angle
 
 
-def motion_keys(obj: bpy.types.Object) -> Optional[Tuple[str, List[float], List[float]]]:
+def motion_keys(
+    obj: bpy.types.Object,
+) -> Optional[Tuple[str, List[float], List[float]]]:
     """(dataref, frames, values) of the object's first moving dataref with two keyframes or more"""
     for index, dataref in I.motion_datarefs(obj):
         keys = sorted(I.dataref_keys(obj, index))
@@ -113,7 +130,9 @@ def motion_keys(obj: bpy.types.Object) -> Optional[Tuple[str, List[float], List[
     return None
 
 
-def motion_of(obj: Optional[bpy.types.Object], frame_now: Optional[float] = None) -> Optional[Motion]:
+def motion_of(
+    obj: Optional[bpy.types.Object], frame_now: Optional[float] = None
+) -> Optional[Motion]:
     """How the object moves through its animation, or None if it is not animated by a dataref"""
     if obj is None or obj.type == "ARMATURE":
         return None
@@ -137,10 +156,21 @@ def motion_of(obj: Optional[bpy.types.Object], frame_now: Optional[float] = None
             travel.append(travel[-1] + (angle if axis.dot(main_axis) >= 0 else -angle))
         origin = obj.matrix_world.translation.copy()
         world_axis = (to_world.to_3x3() @ main_axis).normalized()
-        return Motion(TURN, dataref, frames, values, travel, origin, world_axis, interpolate(frame_now, frames, travel))
+        return Motion(
+            TURN,
+            dataref,
+            frames,
+            values,
+            travel,
+            origin,
+            world_axis,
+            interpolate(frame_now, frames, travel),
+        )
 
     start = poses[0][0]
-    farthest = max((p[0] for p in poses), key=lambda location: (location - start).length)
+    farthest = max(
+        (p[0] for p in poses), key=lambda location: (location - start).length
+    )
     direction = farthest - start
     if direction.length < _MIN_DISTANCE:
         return None
@@ -148,4 +178,13 @@ def motion_of(obj: Optional[bpy.types.Object], frame_now: Optional[float] = None
     scale = (to_world.to_3x3() @ direction).length
     travel = [(p[0] - start).dot(direction) * scale for p in poses]
     world_axis = (to_world.to_3x3() @ direction).normalized()
-    return Motion(SLIDE, dataref, frames, values, travel, to_world @ start, world_axis, interpolate(frame_now, frames, travel))
+    return Motion(
+        SLIDE,
+        dataref,
+        frames,
+        values,
+        travel,
+        to_world @ start,
+        world_axis,
+        interpolate(frame_now, frames, travel),
+    )

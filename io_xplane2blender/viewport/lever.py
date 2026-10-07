@@ -65,7 +65,12 @@ class XPLANE_GGT_lever(bpy.types.GizmoGroup):
     @classmethod
     def poll(cls, context):
         s = view_settings(context)
-        return bool(s and s.show_lever and context.mode == "OBJECT" and motion_of(context.object) is not None)
+        return bool(
+            s
+            and s.show_lever
+            and context.mode == "OBJECT"
+            and motion_of(context.object) is not None
+        )
 
     def _motion(self):
         return motion_of(bpy.context.object)
@@ -99,7 +104,9 @@ class XPLANE_GGT_lever(bpy.types.GizmoGroup):
         self.dial.draw_options = {"ANGLE_VALUE"}
         self.dial.target_set_handler("offset", **self._handlers(lambda: 1.0))
         self.arrow = self.gizmos.new("GIZMO_GT_arrow_3d")
-        self.arrow.target_set_handler("offset", **self._handlers(lambda: self.arrow_length))
+        self.arrow.target_set_handler(
+            "offset", **self._handlers(lambda: self.arrow_length)
+        )
         for gizmo in (self.dial, self.arrow):
             gizmo.color, gizmo.alpha = COLOR, 0.7
             gizmo.color_highlight, gizmo.alpha_highlight = HIGHLIGHT, 1.0
@@ -120,7 +127,9 @@ class XPLANE_GGT_lever(bpy.types.GizmoGroup):
             self.dial.matrix_basis = matrix @ Matrix.Scale(max(radius, 0.005), 4)
         else:
             self.arrow_length = max((motion.high - motion.low) * 0.3, 0.005)
-            self.arrow.matrix_basis = slide_matrix(obj, motion) @ Matrix.Scale(self.arrow_length, 4)
+            self.arrow.matrix_basis = slide_matrix(obj, motion) @ Matrix.Scale(
+                self.arrow_length, 4
+            )
 
 
 classes = (XPLANE_GGT_lever,)

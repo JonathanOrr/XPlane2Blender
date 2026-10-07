@@ -63,7 +63,9 @@ class PartsBuilder:
         return (name or "object").strip()[:60] or "object"
 
     # ---- object level settings -----------------------------------------------------------
-    def _apply_object_state(self, blender_obj: bpy.types.Object, group: "_Group") -> None:
+    def _apply_object_state(
+        self, blender_obj: bpy.types.Object, group: "_Group"
+    ) -> None:
         state = group.object_state
         light_level = state.get("light_level")
         if light_level:
