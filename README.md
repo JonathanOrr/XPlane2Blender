@@ -35,6 +35,9 @@ For less stable betas or different versions see the [releases page](https://gith
 ## Get Started!
 See the [Introduction to XPlane2Blender Video](https://developer.x-plane.com/tools/blender/) and download the example files and you'll be well on your way to exporting your first mesh and seeing it in X-Plane! Although the Blender version shown is Blender 2.79, XPlane2Blender is almost entirely the same across versions.
 
+## Exporting Work In Progress
+You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 61 light levels without a dataref`. The full list is in the `XPlane2Blender.log` text file. Today this covers light levels without a dataref (an empty one would write an invalid line) and meshes without a material (they export with X-Plane's default material state). A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
+
 ## Importing X-Plane Aircraft And Objects
 Open **File > Import > X-Plane Aircraft (.acf)**, pick an aircraft's `.acf` file, and the whole aircraft is brought in: every object it lists, in the right place, with its textures, normal maps, materials, animations, manipulators and lights. It works with the text based `.acf` files of X-Plane 10, 11 and 12. **File > Import > X-Plane Object (.obj)** imports single OBJ8 files (several at once is fine), and you can also drag an `.acf` or `.obj` onto the 3D viewport in Blender 4.1 and later.
 

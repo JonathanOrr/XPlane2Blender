@@ -15,7 +15,7 @@ from io_xplane2blender.xplane_types import xplane_manipulator
 
 from ..xplane_config import getDebug
 from ..xplane_constants import *
-from ..xplane_helpers import logger
+from ..xplane_helpers import logger, unfinished
 from .xplane_attribute import XPlaneAttribute
 from .xplane_manipulator import XPlaneManipulator
 from .xplane_material import XPlaneMaterial
@@ -88,7 +88,10 @@ class XPlanePrimitive(XPlaneObject):
     def collectLightLevelAttributes(self) -> None:
         xplane_version = int(bpy.context.scene.xplane.version)
         bl_obj = self.blenderObject
-        if bl_obj.xplane.lightLevel:
+        if bl_obj.xplane.lightLevel and not bl_obj.xplane.lightLevel_dataref.strip():
+            # Not filled in yet. Without a dataref the line would be invalid, so leave it out
+            unfinished.add("light levels without a dataref", bl_obj.name)
+        elif bl_obj.xplane.lightLevel:
             ll_values = [
                 bl_obj.xplane.lightLevel_v1,
                 bl_obj.xplane.lightLevel_v2,
