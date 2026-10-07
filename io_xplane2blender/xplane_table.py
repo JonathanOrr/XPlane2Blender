@@ -371,6 +371,8 @@ class VIEW3D_PT_xplane_table(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "X-Plane"
     bl_label = "Table"
+    bl_parent_id = "XPLANE_PT_tools"
+    bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         s = table_settings(context)

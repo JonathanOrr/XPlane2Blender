@@ -2,44 +2,85 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 
-> **This is an unofficial community fork**, not affiliated with or supported by Laminar Research.
-> It keeps XPlane2Blender working on current Blender releases (5.2 LTS). The official add-on is at
-> [X-Plane/XPlane2Blender](https://github.com/X-Plane/XPlane2Blender). Please report problems with this
-> fork [here](https://github.com/JonathanOrr/XPlane2Blender/issues), not to Laminar Research.
+> **X-Plane 12 Aircraft Tools is an unofficial fork of [XPlane2Blender](https://github.com/X-Plane/XPlane2Blender)**,
+> not affiliated with or supported by Laminar Research. Please report problems with it
+> [here](https://github.com/JonathanOrr/XPlane2Blender/issues), not to Laminar Research.
 
-# Introduction
-This addon for Blender 3.6 and up makes it possible to export models made in Blender to the X-Plane object format (.obj). 
-This fork also has a full **importer** for X-Plane objects and whole aircraft, see [Importing](#importing-x-plane-aircraft-and-objects).
+# X-Plane 12 Aircraft Tools
+A Blender add-on (Blender 3.6 and up, 5.2 LTS recommended) for making **X-Plane 12 aircraft and cockpits**: import an
+aircraft or an OBJ, change it or add to it, and export X-Plane 12 OBJs.
 
-## Contact Us
-The best way to contact us is through [a bug report](https://github.com/X-Plane/XPlane2Blender/issues). Otherwise, e-mail **ted at x-plane dot com**, especially if you're worried about the security of your models while we debug them.
+How it differs from XPlane2Blender:
+- **X-Plane 12 only.** There is no X-Plane version setting and no scenery. Files made with XPlane2Blender open as they
+  are and are converted once when opened: an older X-Plane version setting becomes X-Plane 12 and scenery files become
+  aircraft files. Imported OBJs and aircraft from X-Plane 10, 11 and 12 come in set up for X-Plane 12
+- **One sidebar instead of panels in five Properties tabs.** Everything is in the 3D viewport's sidebar (press N),
+  **X-Plane** tab, and it follows the selection
+- **Work in progress always exports.** Settings that are not filled in yet are left out, never an error
+- **An importer** for whole aircraft (.acf) and OBJ files
 
-## General Requirements
-- Blender 3.6 or newer, with Blender 5.2 LTS recommended. Every push runs the test suite on Blender 3.6 LTS, 4.2 LTS, 4.5 LTS and 5.2 LTS, and 4.1 has been checked by hand
-- For the greatest stability, use the latest non-beta version of [XPlane2Blender](https://github.com/X-Plane/XPlane2Blender/releases/latest)
+## Installation
+1. Download the add-on .zip from the [releases](https://github.com/JonathanOrr/XPlane2Blender/releases), named like
+   `io_xplane2blender_5_0_0-alpha_1-123_20261008120000.zip`. Do not unzip it
+2. In Blender, Edit > Preferences > Add-ons: in Blender 4.2 and later use the drop-down at the top right and
+   **Install from Disk...**, in older versions **Install...**. Pick the .zip
+3. Tick **X-Plane 12 Aircraft Tools**. It replaces XPlane2Blender (same add-on folder), so do not enable both
+4. Restart Blender
 
-For Blender 2.79 through 3.5, use the releases from the [official repository](https://github.com/X-Plane/XPlane2Blender/releases). The experimental Blender 2.49 converter also lives there and is not part of this fork.
+Always keep backups of your .blend files: a file opened and saved with this add-on has been converted to X-Plane 12.
 
-## Automatic Installation
-**Note: This process will override an existing copy of the plugin!** To backup your current version of the plugin, see the manual instructions in the [manual](https://xp2b-docs.gitbook.io/xplane2blender-docs/index-3/34_installation). **Always make backups of your work, especially when beta testing, as newer versions may not be backwards compatibility.** Read the release notes for more details.
+## The X-Plane Sidebar
+Press **N** in the 3D viewport and pick the **X-Plane** tab. The ↔ button in its header moves the sidebar to the left
+side of the viewport and back.
 
-1. Download the [addon](https://github.com/X-Plane/XPlane2Blender/releases/latest) with a name like ``io_xplane2blender_4_0_0-rc_1-89_20200910152046.zip``. **Do not download the .zip file called "Source Code", do not unzip the io_xplane2blender .zip file**
-2. In Blender, open up the Preferences and go to the Add-ons tab. In Blender 4.2 and later, open the drop-down menu in the top right and click "Install from Disk...". In older versions, click "Install..." at the top
-3. Using the file picker, find the .zip file and click "Install from Disk..." (or "Install Add-on"). This will automatically unzip to the addons folder
-4. Ensure the checkbox next to the words "Import-Export: Export: X-Plane (.obj)" is checked
-5. **Restart Blender even if you see the UI change**
-6. Begin using XPlane2Blender!
+**Selected** shows the active object: what it is in plain words (for example `Knob, two commands · Moves · Glows`),
+which OBJ file it exports in, or that it is not in any file and so is not exported (with **New File** and
+**Move To File** right there), and what is not filled in yet. Below it, a card for each thing the object can do:
 
-For less stable betas or different versions see the [releases page](https://github.com/X-Plane/XPlane2Blender/releases). Be sure to read the notes.
+| Card | For |
+|---|---|
+| **Clickable** | Make it clickable in the cockpit. **Make Clickable As...** lists the kinds of control by what they do (runs commands, sets a dataref, dragged), and the card then shows only the settings that kind uses, with the help in one line. The search button next to a command or dataref searches X-Plane's own lists and the custom names this file already uses |
+| **Moves** | The **Button**, **Switch** and **Knob / Lever** presets key a whole control on every selected object in one step. An animated object lists its datarefs and its keys as buttons (click one to go to it); to key by hand, pose the object, type the dataref value and click **Key Pose** |
+| **Shows / Hides** | Show or hide it while a dataref is in a range |
+| **Glow** | The night (LIT) texture's brightness follows a dataref, like a backlight on a dimmer |
+| **Light** | For lights: a library light from lights.txt (with a search tagged spill / glow), a spill that lights its surroundings, a glow sprite, or not exported. **Preview As In X-Plane** makes the viewport show it the way X-Plane does |
+| **Attachment Point** | For empties: a wheel, a VR tablet mount or a particle emitter |
+| **Surface** | The material: visible or invisible (invisible click zones), transparency, shadows, camera collision, a screen (the 2D panel or an avionics device with its power buses) and the material's glow |
+| **Advanced** | HUD glass, rain, draw order, levels of detail, custom attributes, and **Every Setting (Classic)** with the complete earlier layout |
 
-## Get Started!
-See the [Introduction to XPlane2Blender Video](https://developer.x-plane.com/tools/blender/) and download the example files and you'll be well on your way to exporting your first mesh and seeing it in X-Plane! Although the Blender version shown is Blender 2.79, XPlane2Blender is almost entirely the same across versions.
+With several objects selected, the copy button in a card's header copies that card's settings from the active object
+to the others.
+
+**Export** lists the OBJ files of the scene: tick a collection to export it, click **Cockpit** / **Part** to switch
+its kind, the arrow selects its objects. **Export N Files** writes them next to the .blend file. **New File From
+Selection** puts the selected objects (with their children) in a new file, taking them out of the files they were in,
+and fills in its textures from their materials. Under the list are the chosen file's settings: textures (with
+**From Materials**), look, cockpit panel, levels of detail, X-Plane 12 texture maps, rain and wipers, detail textures
+and more.
+
+**Unfinished Work** lists what is not filled in yet in the export files, with a button to select each object.
+
+**Tools** has **Find and Replace**, **Table**, the click zone overlay and the light preview for every light.
+
+Also: **Shift+A > X-Plane** adds an invisible click zone, a light or an attachment point at the 3D cursor; the
+viewport's right-click menu has **X-Plane > Make Clickable As**, the animation presets and **Move To File**; and the
+viewport's **Overlays** popover can outline everything clickable (orange runs commands, blue sets datarefs, green is
+dragged) and label it with what a click does.
+
+The X-Plane panels of earlier versions can still be shown in the Properties editor: Preferences > Add-ons >
+X-Plane 12 Aircraft Tools > **Classic Panels In The Properties Editor**.
+
+### A coffee cup in the cup holder
+1. Model or append the cup, give it a material with an image texture
+2. Select it, **Export > New File From Selection**, name it `coffee_cup`
+3. Save the .blend in your aircraft's `objects` folder (OBJs are written next to the .blend) and click **Export 1 File**
+4. Add `coffee_cup.obj` to the aircraft in Plane Maker (Standard > Objects)
 
 ## Exporting Work In Progress
-You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 61 light levels without a dataref`. The full list is in the `XPlane2Blender.log` text file. Today this covers light levels without a dataref (an empty one would write an invalid line) and meshes without a material (they export with X-Plane's default material state). A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
+You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 61 light levels without a dataref`. The full list is in the `XPlane2Blender.log` text file. This covers light levels without a dataref (an empty one would write an invalid line), meshes without a material (they export with X-Plane's default material state) and library lights with no light chosen yet. A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
 
 ## Find And Replace, Duplicate And Replace
-For the many controls that differ only by side or number. In the 3D viewport's sidebar (N), the **X-Plane** tab has a **Find and Replace** panel: add pairs such as `cockpit/mcdu/` → `cockpit/mcdu_2/` and `Captain` → `First Officer`, choose which settings to touch (commands, datarefs, light levels, tooltips, custom attributes) and which objects (selected, selected and their children, or the whole scene), and the panel previews every change before you apply it.
+For the many controls that differ only by side or number. **Tools > Find and Replace** in the sidebar: add pairs such as `cockpit/mcdu/` → `cockpit/mcdu_2/` and `Captain` → `First Officer`, choose which settings to touch (commands, datarefs, light levels, tooltips, custom attributes) and which objects (selected, selected and their children, or the whole scene), and the panel previews every change before you apply it.
 - **Find and Replace** changes the objects in place.
 - **Duplicate and Replace** copies the selection, renames the settings on the copies only and lets you move them, like Shift+D. Copy the captain's MCDU once and the first officer's is done.
 - Pairs are applied in order, **Match Case** is on by default (X-Plane names are case sensitive) and **Regex** allows regular expressions with `\1` groups.
@@ -47,20 +88,21 @@ For the many controls that differ only by side or number. In the 3D viewport's s
 - Both are normal Blender operations: Ctrl+Z undoes them and the Adjust Last Operation panel works.
 
 ## Tables And CSV
-The **Table** panel in the same sidebar tab lists every object with a manipulator, a light level or animation datarefs in one place. Click a row to select that object in the viewport, type in the search box to filter by name, command or dataref, and drag the sidebar wider to edit the type, command and tooltip in place (a narrow sidebar shows the end of each command, where `key/A` and `key/B` differ). **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the animation table holds the dataref paths and show/hide values.
+**Tools > Table** lists every object with a manipulator, a light level or animation datarefs in one place. Click a row to select that object in the viewport, type in the search box to filter by name, command or dataref, and drag the sidebar wider to edit the type, command and tooltip in place (a narrow sidebar shows the end of each command, where `key/A` and `key/B` differ). **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the animation table holds the dataref paths and show/hide values.
 
 ## Animation Presets
-The **Animate** panel in the sidebar's X-Plane tab keys a whole control in one step, on every selected object:
-- **Push Button** moves the button in while its command is held, with a `CMND=` dataref. Leave the command empty and each button uses its own manipulator command, so a hundred buttons get their animation in one click. Buttons without a manipulator get one (tick off **Make Clickable** to skip that).
+In the **Moves** card (and the viewport's right-click menu), on every selected object:
+- **Button** moves the button in while its command is held, with a `CMND=` dataref. Leave the command empty and each button uses its own manipulator command, so a hundred buttons get their animation in one click. Buttons without a manipulator get one (tick off **Make Clickable** to skip that).
 - **Switch** gives each of a number of positions a dataref value and an angle or a distance, for toggles, rotary selectors and pull switches. The dialog shows the result, for example `0 → 20°  1 → 0°  2 → -20°`.
 - **Knob / Lever** follows a dataref over a range, turning or sliding. **Loop Every** makes an endless knob.
 
-Movement is along or around the object's own axis, from where it stands. Keys are linear, as X-Plane interpolates them, and turns over 90° get extra keys in between so whole turns are kept. `{name}` in a command or dataref becomes the object's name. Objects that are already animated are left alone unless **Replace** is ticked, and Replace starts again from where the object stood before the preset first animated it. On the A321XLR cockpit the Push Button preset reproduces 40 of 40 hand-made button animations key for key.
+Movement is along or around the object's own axis, from where it stands. Keys are linear, as X-Plane interpolates them, and turns over 90° get extra keys in between so whole turns are kept. `{name}` in a command or dataref becomes the object's name. Objects that are already animated are left alone unless **Replace** is ticked, and Replace starts again from where the object stood before the preset first animated it. On the A321XLR cockpit the Button preset reproduces 40 of 40 hand-made button animations key for key.
 
 ## Lights
-- The search button next to a light's **Name** lists every light in lights.txt, tagged **spill** (lights its surroundings), **glow** (a visible halo that lights nothing) or both. Under the name, the panel says what the chosen light is, or that the name is not in lights.txt.
-- For **Manual Param** lights the panel lists the parameters in order and says when the typed values are too few or too many.
-- **Preview As In X-Plane** (light panel, or F3 search) makes lights look in the viewport the way X-Plane draws them: spill lights light their surroundings, custom spills only out to their **Size** in meters, and glow-only and custom lights light nothing. It only changes Blender settings the exporter never reads (power, except for Custom lights whose power is the exported alpha, cutoff distance and ray visibility), so the exported OBJ stays the same. Ctrl+Z undoes it.
+- The search button next to a light's **Name** lists every light in lights.txt, tagged **spill** (lights its surroundings), **glow** (a visible halo that lights nothing) or both. Under the name, the card says what the chosen light is, or that the name is not in lights.txt.
+- For **Library Light, Typed Parameters** the card lists the parameters in order and says when the typed values are too few or too many.
+- **Preview As In X-Plane** makes lights look in the viewport the way X-Plane draws them: spill lights light their surroundings, custom spills only out to their reach in meters, and glow-only and custom lights light nothing. It only changes Blender settings the exporter never reads (power, except for glow sprites whose power is the exported alpha, cutoff distance and ray visibility), so the exported OBJ stays the same. Ctrl+Z undoes it.
+- Old X-Plane 9 lights (`LIGHTS`) still export as before; the Light card offers the X-Plane 12 kinds to replace them.
 
 ## Importing X-Plane Aircraft And Objects
 Open **File > Import > X-Plane Aircraft (.acf)**, pick an aircraft's `.acf` file, and the whole aircraft is brought in: every object it lists, in the right place, with its textures, normal maps, materials, animations, manipulators and lights. It works with the text based `.acf` files of X-Plane 10, 11 and 12. **File > Import > X-Plane Object (.obj)** imports single OBJ8 files (several at once is fine), and you can also drag an `.acf` or `.obj` onto the 3D viewport in Blender 4.1 and later.
@@ -76,7 +118,7 @@ The options are in the side panel of the file browser:
 | Lights | Creates lights with their XPlane2Blender settings. See "How lights come in" below |
 | All LODs | Imports every level of detail instead of only the first |
 | Hide What X-Plane Hides | Hides the objects that X-Plane would not draw with the datarefs at their default values. Unhide them before exporting again, hidden objects are not exported |
-| Make Export Roots | Ticks each OBJ's collection as an XPlane2Blender root collection so Export OBJs writes it again. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in, so you can tick a single collection later |
+| Make Export Roots | Ticks each OBJ's collection as an export file. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in and the files are listed unticked in the sidebar's Export panel, so one tick exports one again |
 | Night Light Strength | How much the `_LIT` texture glows, 0 shows the daytime look |
 | Light Strength | Switches the spill lights on, such as the cockpit annunciator and panel lights. 0 keeps them from lighting the scene (they are off in the parked pose), 1 is the brightness the light's parameters ask for |
 | Damage / Part Attached / Not Drawn Objects | Also brings in objects that are normally left out (they only show when a part breaks, move with a wing or gear part, or are drawn nowhere) |
@@ -99,6 +141,16 @@ Limits worth knowing:
 - Textures in the BC6/BC7 DDS formats can't be read by Blender, those materials have no image
 - Re-exporting complex drag rotate manipulators needs the parent and child animation layout XPlane2Blender asks for
 - Imported textures are referenced by their full path, keep the aircraft where it is or relink them in Blender
+
+## Relationship To XPlane2Blender
+This fork started from XPlane2Blender 4.5 and diverged at the tag `upstream-base`. The exporter core (`xplane_types/`,
+`xplane_export.py`) is kept close to upstream, including its code for older X-Plane versions that the add-on no longer
+offers, so fixes can move both ways:
+- A fix that also applies to XPlane2Blender: branch from `upstream-base`, fix it there with its test, then merge that
+  branch into `develop`. The same branch can be offered upstream as it is
+- A fix from XPlane2Blender: cherry-pick it onto `develop`
+- The upstream test suite runs on every push with `XPLANE2BLENDER_KEEP_OLD_SETTINGS=1`, so its test files keep the
+  X-Plane version they were saved with
 
 ## Documentation Sources
 - [XPlane2Blender Manual](https://xp2b-docs.gitbook.io/xplane2blender-docs)

@@ -44,7 +44,7 @@ import bpy
 from bpy.app.handlers import persistent
 
 import io_xplane2blender
-from io_xplane2blender import xplane_constants, xplane_helpers, xplane_props
+from io_xplane2blender import xplane_constants, xplane_helpers, xplane_props, xplane_xp12
 from io_xplane2blender.xplane_constants import (
     BLEND_GLASS,
     LOGGER_LEVEL_ERROR,
@@ -608,6 +608,11 @@ def update(
         "4.1.0-beta.1+100.20201117112800"
     ):
         _regions_change_panel_mode(logger)
+
+    # Version 5 is the X-Plane 12 only fork
+    if tuple(last_version.addon_version) < (5, 0, 0) and not xplane_xp12.keep_old_settings():
+        for change in xplane_xp12.convert_to_xp12():
+            logger.info(change)
 
 
 def _synchronize_last_version_across_histories(last_version: xplane_helpers.VerStruct):

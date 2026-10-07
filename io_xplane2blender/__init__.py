@@ -19,12 +19,12 @@ import bpy
 
 # Contains informations for Blender to recognize and categorize the addon.
 bl_info = {
-    "name": "XPlane2Blender Export for X-Plane OBJs",
-    "description": "Export X-Plane objects/planes (.obj format)",
-    "author": "Ted Greene, Ben Supnik, Amy Parent, Maya F. Eroğlu",
-    "version": (4, 5, 0),
+    "name": "X-Plane 12 Aircraft Tools",
+    "description": "Build, import and export X-Plane 12 aircraft and cockpit objects (.obj). A fork of XPlane2Blender",
+    "author": "Jonathan Orr; XPlane2Blender by Ted Greene, Ben Supnik, Amy Parent, Maya F. Eroğlu",
+    "version": (5, 0, 0),
     "blender": (3, 6, 0),
-    "location": "File > Import/Export > X-Plane",
+    "location": "3D Viewport > Sidebar > X-Plane, File > Import/Export > X-Plane",
     "warning": "",
     "doc_url": "https://xp2b-docs.gitbook.io/xplane2blender-docs",
     "tracker_url": "https://github.com/JonathanOrr/XPlane2Blender/issues",
@@ -42,6 +42,8 @@ if "" not in locals():
     from . import xplane_table
     from . import xplane_light_tools
     from . import xplane_anim_presets
+    from . import xplane_sidebar
+    from . import xplane_overlay
     from . import xplane_config
     from . import xplane_updater
     from .xplane_importer import ops as xplane_import_ops
@@ -58,6 +60,8 @@ else:
     xplane_table = importlib.reload(xplane_table)
     xplane_light_tools = importlib.reload(xplane_light_tools)
     xplane_anim_presets = importlib.reload(xplane_anim_presets)
+    xplane_sidebar = importlib.reload(xplane_sidebar)
+    xplane_overlay = importlib.reload(xplane_overlay)
     xplane_config  = importlib.reload(xplane_config)
     xplane_updater = importlib.reload(xplane_updater)
     xplane_import_ops = importlib.reload(xplane_import_ops)
@@ -85,6 +89,8 @@ def register():
     xplane_ops.register()
     xplane_ops_dev.register()
     xplane_ui.register()
+    xplane_sidebar.register()
+    xplane_overlay.register()
     xplane_bulk_edit.register()
     xplane_table.register()
     xplane_light_tools.register()
@@ -102,6 +108,8 @@ def unregister():
     xplane_light_tools.unregister()
     xplane_table.unregister()
     xplane_bulk_edit.unregister()
+    xplane_overlay.unregister()
+    xplane_sidebar.unregister()
     xplane_ui.unregister()
     xplane_ops.unregister()
     xplane_ops_dev.unregister()

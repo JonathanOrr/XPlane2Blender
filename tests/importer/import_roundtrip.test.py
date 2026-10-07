@@ -148,6 +148,17 @@ class TestImportRoundTrip(XPlaneTestCase):
             "LIGHT_SPILL_CUSTOM -1 1 0 0.9 0.8 0.7 1 0.15 0.6 -0.8 0 0.75 none\n"
         )
 
+    def test_x_plane_9_lights(self) -> None:
+        # Plain, pulsing (9.9) and flashing (negative red) old-style lights come back as they were
+        vertices = HOUSE_VT + "VLIGHT 1 2 3 1 0.5 0\nVLIGHT 0 1 0 9.9 9.9 9.9\nVLIGHT 0 0 1 -1 0 0.25\n"
+        text = obj_text("LIGHTS 0 3\n", header="TEXTURE tex.png\n", vertices=vertices, indices=HOUSE_IDX, tris="TRIS 0 6\n")
+        path = write_file(self.folder.join("old_lights.obj"), text)
+        built = import_obj_file(path, ImportOptions(make_exportable=True), ImportReport())
+        exported = self.exportExportableRoot(built.collection)
+        self.assertLoggerErrors(0)
+        self.assertEqual(light_summaries(text), light_summaries(exported))
+        self.assertEqual(3, len(light_summaries(exported)))
+
     def test_lights_in_moving_parts_keep_their_direction(self) -> None:
         # A static rotation around a spill light is folded into its position, the cone must still point the same way
         text = obj_text(

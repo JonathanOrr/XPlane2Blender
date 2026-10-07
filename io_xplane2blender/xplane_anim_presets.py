@@ -342,22 +342,8 @@ class XPLANE_OT_anim_range(_Preset, bpy.types.Operator):
         return self.finish(done, skipped)
 
 
-class VIEW3D_PT_xplane_animate(bpy.types.Panel):
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "X-Plane"
-    bl_label = "Animate"
-
-    def draw(self, context):
-        col = self.layout.column(align=True)
-        col.scale_y = 1.2
-        col.operator(XPLANE_OT_anim_push_button.bl_idname, icon="TRIA_DOWN_BAR")
-        col.operator(XPLANE_OT_anim_switch.bl_idname, icon="SNAP_INCREMENT")
-        col.operator(XPLANE_OT_anim_range.bl_idname, icon="DRIVER_ROTATIONAL_DIFFERENCE")
-        self.layout.label(text=f"{len(context.selected_objects)} selected object(s)")
-
-
-_classes = (XPLANE_OT_anim_push_button, XPLANE_OT_anim_switch, XPLANE_OT_anim_range, VIEW3D_PT_xplane_animate)
+# The presets are in the sidebar's Moves card and the viewport's right-click menu
+_classes = (XPLANE_OT_anim_push_button, XPLANE_OT_anim_switch, XPLANE_OT_anim_range)
 
 
 def register():
