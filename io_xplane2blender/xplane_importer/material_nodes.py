@@ -193,60 +193,7 @@ class MaterialNodes:
         return node
 
     def _reconstruct_normal(self, tree, tex):
-        """Normal maps that store only X and Y in red and green: rebuild Z and return a color socket"""
-        sep = (
-            tree.nodes.new("ShaderNodeSeparateColor")
-            if hasattr(bpy.types, "ShaderNodeSeparateColor")
-            else tree.nodes.new("ShaderNodeSeparateRGB")
-        )
-        sep.location = (-400, -150)
-        tree.links.new(tex.outputs["Color"], sep.inputs[0])
-        red = sep.outputs.get("Red") or sep.outputs["R"]
-        green = sep.outputs.get("Green") or sep.outputs["G"]
-
-        def math(op, a=None, b=None, loc=(0, 0), value=None):
-            node = tree.nodes.new("ShaderNodeMath")
-            node.operation = op
-            node.location = loc
-            if value is not None:
-                node.inputs[1].default_value = value
-            return node
-
-        # x = r * 2 - 1, y = g * 2 - 1
-        xs = math("MULTIPLY_ADD", loc=(-250, -100))
-        xs.inputs[1].default_value = 2.0
-        xs.inputs[2].default_value = -1.0
-        tree.links.new(red, xs.inputs[0])
-        ys = math("MULTIPLY_ADD", loc=(-250, -200))
-        ys.inputs[1].default_value = 2.0
-        ys.inputs[2].default_value = -1.0
-        tree.links.new(green, ys.inputs[0])
-        # z = sqrt(max(0, 1 - x^2 - y^2))
-        x2 = math("POWER", loc=(-100, -100), value=2.0)
-        tree.links.new(xs.outputs["Value"], x2.inputs[0])
-        y2 = math("POWER", loc=(-100, -200), value=2.0)
-        tree.links.new(ys.outputs["Value"], y2.inputs[0])
-        total = math("ADD", loc=(50, -150))
-        tree.links.new(x2.outputs["Value"], total.inputs[0])
-        tree.links.new(y2.outputs["Value"], total.inputs[1])
-        rest = math("SUBTRACT", loc=(150, -150))
-        rest.inputs[0].default_value = 1.0
-        tree.links.new(total.outputs["Value"], rest.inputs[1])
-        z = math("SQRT", loc=(250, -150))
-        tree.links.new(rest.outputs["Value"], z.inputs[0])
-        # back into 0..1 for the Normal Map node
-        combine = tree.nodes.new("ShaderNodeCombineXYZ")
-        combine.location = (350, -150)
-        tree.links.new(xs.outputs["Value"], combine.inputs["X"])
-        tree.links.new(ys.outputs["Value"], combine.inputs["Y"])
-        tree.links.new(z.outputs["Value"], combine.inputs["Z"])
-        scale = tree.nodes.new("ShaderNodeVectorMath")
-        scale.operation = "MULTIPLY_ADD"
-        scale.location = (500, -150)
-        scale.inputs[1].default_value = (0.5, 0.5, 0.5)
-        scale.inputs[2].default_value = (0.5, 0.5, 0.5)
-        tree.links.new(combine.outputs["Vector"], scale.inputs[0])
-        return scale.outputs["Vector"]
+        return reconstruct_normal(tree, tex)
 
     @staticmethod
     def _set_blend_mode(
@@ -270,3 +217,60 @@ class MaterialNodes:
                 mat.alpha_threshold = ratio
             if hasattr(mat, "shadow_method"):
                 mat.shadow_method = "HASHED"
+
+
+def reconstruct_normal(tree, tex):
+    """Normal maps that store only X and Y in red and green: rebuild Z and return a color socket"""
+    sep = (
+        tree.nodes.new("ShaderNodeSeparateColor")
+        if hasattr(bpy.types, "ShaderNodeSeparateColor")
+        else tree.nodes.new("ShaderNodeSeparateRGB")
+    )
+    sep.location = (-400, -150)
+    tree.links.new(tex.outputs["Color"], sep.inputs[0])
+    red = sep.outputs.get("Red") or sep.outputs["R"]
+    green = sep.outputs.get("Green") or sep.outputs["G"]
+
+    def math(op, a=None, b=None, loc=(0, 0), value=None):
+        node = tree.nodes.new("ShaderNodeMath")
+        node.operation = op
+        node.location = loc
+        if value is not None:
+            node.inputs[1].default_value = value
+        return node
+
+    # x = r * 2 - 1, y = g * 2 - 1
+    xs = math("MULTIPLY_ADD", loc=(-250, -100))
+    xs.inputs[1].default_value = 2.0
+    xs.inputs[2].default_value = -1.0
+    tree.links.new(red, xs.inputs[0])
+    ys = math("MULTIPLY_ADD", loc=(-250, -200))
+    ys.inputs[1].default_value = 2.0
+    ys.inputs[2].default_value = -1.0
+    tree.links.new(green, ys.inputs[0])
+    # z = sqrt(max(0, 1 - x^2 - y^2))
+    x2 = math("POWER", loc=(-100, -100), value=2.0)
+    tree.links.new(xs.outputs["Value"], x2.inputs[0])
+    y2 = math("POWER", loc=(-100, -200), value=2.0)
+    tree.links.new(ys.outputs["Value"], y2.inputs[0])
+    total = math("ADD", loc=(50, -150))
+    tree.links.new(x2.outputs["Value"], total.inputs[0])
+    tree.links.new(y2.outputs["Value"], total.inputs[1])
+    rest = math("SUBTRACT", loc=(150, -150))
+    rest.inputs[0].default_value = 1.0
+    tree.links.new(total.outputs["Value"], rest.inputs[1])
+    z = math("SQRT", loc=(250, -150))
+    tree.links.new(rest.outputs["Value"], z.inputs[0])
+    # back into 0..1 for the Normal Map node
+    combine = tree.nodes.new("ShaderNodeCombineXYZ")
+    combine.location = (350, -150)
+    tree.links.new(xs.outputs["Value"], combine.inputs["X"])
+    tree.links.new(ys.outputs["Value"], combine.inputs["Y"])
+    tree.links.new(z.outputs["Value"], combine.inputs["Z"])
+    scale = tree.nodes.new("ShaderNodeVectorMath")
+    scale.operation = "MULTIPLY_ADD"
+    scale.location = (500, -150)
+    scale.inputs[1].default_value = (0.5, 0.5, 0.5)
+    scale.inputs[2].default_value = (0.5, 0.5, 0.5)
+    tree.links.new(combine.outputs["Vector"], scale.inputs[0])
+    return scale.outputs["Vector"]
