@@ -49,6 +49,14 @@ For the many controls that differ only by side or number. In the 3D viewport's s
 ## Tables And CSV
 The **Table** panel in the same sidebar tab lists every object with a manipulator, a light level or animation datarefs in one place. Click a row to select that object in the viewport, type in the search box to filter by name, command or dataref, and drag the sidebar wider to edit the type, command and tooltip in place (a narrow sidebar shows the end of each command, where `key/A` and `key/B` differ). **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the animation table holds the dataref paths and show/hide values.
 
+## Animation Presets
+The **Animate** panel in the sidebar's X-Plane tab keys a whole control in one step, on every selected object:
+- **Push Button** moves the button in while its command is held, with a `CMND=` dataref. Leave the command empty and each button uses its own manipulator command, so a hundred buttons get their animation in one click. Buttons without a manipulator get one (tick off **Make Clickable** to skip that).
+- **Switch** gives each of a number of positions a dataref value and an angle or a distance, for toggles, rotary selectors and pull switches. The dialog shows the result, for example `0 → 20°  1 → 0°  2 → -20°`.
+- **Knob / Lever** follows a dataref over a range, turning or sliding. **Loop Every** makes an endless knob.
+
+Movement is along or around the object's own axis, from where it stands. Keys are linear, as X-Plane interpolates them, and turns over 90° get extra keys in between so whole turns are kept. `{name}` in a command or dataref becomes the object's name. Objects that are already animated are left alone unless **Replace** is ticked, and Replace starts again from where the object stood before the preset first animated it. On the A321XLR cockpit the Push Button preset reproduces 40 of 40 hand-made button animations key for key.
+
 ## Lights
 - The search button next to a light's **Name** lists every light in lights.txt, tagged **spill** (lights its surroundings), **glow** (a visible halo that lights nothing) or both. Under the name, the panel says what the chosen light is, or that the name is not in lights.txt.
 - For **Manual Param** lights the panel lists the parameters in order and says when the typed values are too few or too many.
