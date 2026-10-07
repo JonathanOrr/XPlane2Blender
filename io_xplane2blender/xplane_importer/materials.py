@@ -566,6 +566,13 @@ class MaterialFactory:
         mat: bpy.types.Material, cutout: bool, ratio: float, has_texture: bool
     ) -> None:
         """The viewport blend mode, which differs between Blender versions"""
+        # EEVEE sorts a blended material per object, never per triangle. With these two on (Blender's default) the
+        # triangles of one mesh show through each other and the holes move as the camera orbits. Off, the surface
+        # writes depth, which is what X-Plane's z-buffer does. Cycles ignores both
+        if hasattr(mat, "show_transparent_back"):
+            mat.show_transparent_back = False
+        if hasattr(mat, "use_transparency_overlap"):
+            mat.use_transparency_overlap = False
         if hasattr(mat, "surface_render_method"):  # Blender 4.2 and later
             mat.surface_render_method = (
                 "DITHERED" if (cutout or not has_texture) else "BLENDED"

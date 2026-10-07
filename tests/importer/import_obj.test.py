@@ -140,6 +140,14 @@ class TestImportObj(XPlaneTestCase):
         self.assertEqual(len(math_nodes), 1)
         self.assertAlmostEqual(math_nodes[0].inputs[1].default_value, 0.3, places=4)
 
+    def test_blended_materials_write_depth_in_eevee(self) -> None:
+        # With either on, EEVEE sorts per object only and the triangles of one mesh show through each other
+        built = self.do_import(obj_text("TRIS 0 3\n", header="TEXTURE tex.png\n", tris=None))
+        material = self.meshes(built)[0].data.materials[0]
+        self.assertFalse(material.show_transparent_back)
+        if hasattr(material, "use_transparency_overlap"):
+            self.assertFalse(material.use_transparency_overlap)
+
     def test_other_material_attributes(self) -> None:
         body = "ATTR_poly_os 2\nATTR_solid_camera\nATTR_no_shadow\nATTR_hard concrete\nTRIS 0 3\n"
         built = self.do_import(obj_text(body, tris=None))
