@@ -6,7 +6,7 @@ import bpy
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests import test_creation_helpers
 from io_xplane2blender.xplane_constants import EXPORT_TYPE_AIRCRAFT
-from io_xplane2blender.xplane_ops import XPLANE_OT_bake_wiper_gradient_texture
+from io_xplane2blender.xplane_ops_wiper import XPLANE_OT_bake_wiper_gradient_texture
 
 __dirname__ = os.path.dirname(__file__)
 

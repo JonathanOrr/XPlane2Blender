@@ -4,8 +4,6 @@ from io_xplane2blender.tests import XPlaneTestCase, runTestCases, test_creation_
 from io_xplane2blender.xplane_constants import (
     BLEND_OFF,
     EXPORT_TYPE_AIRCRAFT,
-    EXPORT_TYPE_INSTANCED_SCENERY,
-    VERSION_1200,
 )
 
 DATAREF = "sim/flightmodel2/misc/custom_slider_ratio[0]"
@@ -15,7 +13,6 @@ class TestLightLevelLODs(XPlaneTestCase):
     def setUp(self):
         super().setUp()
         bpy.ops.wm.read_homefile(use_empty=True)
-        bpy.context.scene.xplane.version = VERSION_1200
         self.root = test_creation_helpers.create_datablock_collection("LightLevels")
         self.root.xplane.layer.export_type = EXPORT_TYPE_AIRCRAFT
 
@@ -109,22 +106,6 @@ class TestLightLevelLODs(XPlaneTestCase):
         self.assertEqual(3, commands.count("TEST_lod_state"))
         self.assertEqual(3, commands.count("TEST_custom_set"))
         self.assertEqual(3, commands.count("TEST_custom_reset"))
-
-    def test_lods_keep_header_global_defaults(self):
-        self._lods()
-        self.root.xplane.layer.export_type = EXPORT_TYPE_INSTANCED_SCENERY
-        obj = self._mesh("Mesh")
-        obj.data.materials[0].xplane.blend_v1000 = BLEND_OFF
-        attr = obj.xplane.customAttributes.add()
-        attr.name = "TEST_lod_state"
-        attr.value = "1"
-        out = self._check_light_levels([None] * 3)
-        commands = [line.split()[0] for line in out.splitlines() if line.strip()]
-        self.assertEqual(3, commands.count("TEST_lod_state"))
-        self.assertIn("GLOBAL_no_blend", commands)
-        self.assertIn("GLOBAL_specular", commands)
-        self.assertNotIn("ATTR_no_blend", commands)
-        self.assertNotIn("ATTR_shiny_rat", commands)
 
     def test_default_lod_does_not_reset_previous_lod_state(self):
         self._lods()

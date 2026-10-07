@@ -7,7 +7,6 @@ import mathutils
 from io_xplane2blender.xplane_config import getDebug
 from io_xplane2blender.xplane_constants import *
 from io_xplane2blender.xplane_helpers import *
-from io_xplane2blender.xplane_props import XPlaneCondition
 from io_xplane2blender.xplane_types import xplane_bone
 from io_xplane2blender.xplane_types.xplane_attribute import XPlaneAttribute, XPlaneAttributeName
 from io_xplane2blender.xplane_types.xplane_attributes import XPlaneAttributes
@@ -38,7 +37,6 @@ class XPlaneObject:
         self.attributes = XPlaneAttributes()
         self.cockpitAttributes = XPlaneAttributes()
         self.animAttributes = XPlaneAttributes()
-        self.conditions: List[XPlaneCondition] = []
 
         # This represents all specializations of lods, on this subject,
         # including it's parents. Set in XPlaneBone's constructor
@@ -92,9 +90,6 @@ class XPlaneObject:
         # add anim attributes from datarefs and custom anim attributes
         self.collectAnimAttributes()
 
-        # add conditions
-        self.collectConditions()
-
         self.attributes.order()
         self.animAttributes.order()
         self.cockpitAttributes.order()
@@ -146,10 +141,6 @@ class XPlaneObject:
                 if dataref.loop > 0:
                     self.animAttributes.add(XPlaneAttribute(XPlaneAttributeName("ANIM_keyframe_loop", dataref_index + 1), dataref.loop))
                     
-    def collectConditions(self):
-        if self.blenderObject.xplane.conditions:
-            self.conditions = self.blenderObject.xplane.conditions
-
     # Returns OBJ code for this object
     def write(self) -> str:
         """

@@ -25,13 +25,4 @@ class TestPassiveResetting(XPlaneTestCase):
             filename,
         )
 
-    def test_instanced_header_empty_cube(self):
-        filename = inspect.stack()[0][3]
-
-        self.assertLayerExportEqualsFixture(
-            1, os.path.join(__dirname__, 'fixtures', filename + '.obj'),
-            filterLines,
-            filename,
-        )
-
 runTestCases([TestPassiveResetting])

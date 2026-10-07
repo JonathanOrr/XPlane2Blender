@@ -54,28 +54,4 @@ class TestDragRotateWheel(XPlaneTestCase):
         out = self._build_drag_rotate(0.0)
         self.assertEqual([], _wheel_lines(out), out)
 
-    def test_wheel_below_1050_not_exported(self):
-        create_initial_test_setup()
-        set_xplane_layer(0, {"export_type": "cockpit"})
-        bpy.data.collections[0].xplane.is_exportable_collection = True
-
-        A = create_datablock_mesh(
-            DatablockInfo("MESH", name="bone_t", collection="Layer 1")
-        )
-        set_manipulator_settings(A, MANIP_DRAG_AXIS, manip_props={"wheel_delta": 0.5})
-        set_animation_data(A, T_2_FRAMES_1_X)
-        bpy.context.scene.xplane.version = VERSION_1040
-
-        out = self.exportLayer(0)
-        self.assertLoggerErrors(0)
-        self.assertTrue(
-            any(
-                line.split()[:1] == ["ATTR_manip_drag_axis"]
-                for line in out.splitlines()
-            ),
-            out,
-        )
-        self.assertEqual([], _wheel_lines(out), out)
-
-
 runTestCases([TestDragRotateWheel])

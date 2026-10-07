@@ -169,7 +169,6 @@ IDX	141
 IDX	142
 IDX	143
 
-VLIGHT	0	0	-0	1	1	1
 
 # 0 Empty: HiddenInViewport
 # EMPTY: HiddenInViewport	weight: 0
@@ -200,7 +199,7 @@ VLIGHT	0	0	-0	1	1	1
 		ANIM_trans_end
 			# 3 Light: Point_default_visible_child_affected
 			# LIGHT: Point_default_visible_child_affected	weight: 0
-			LIGHTS	0 1
+			LIGHT_CUSTOM	0 0 -0 1 1 1 10 1 0 0 1 1 
 		ANIM_end
 	# 1 Light: Spot_named_hidden_animation_only
 	ANIM_begin

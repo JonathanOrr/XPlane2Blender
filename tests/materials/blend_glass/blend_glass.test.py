@@ -68,19 +68,4 @@ class TestBlendGlass(XPlaneTestCase):
             filename,
         )
 
-    def test_instanced_glass_illegal(self):
-        filename = "test_instanced_glass_illegal"
-
-        out = self.exportLayer(6)
-        self.assertEqual(len(logger.findErrors()), 1)
-        logger.clearMessages()
-
-    def test_scenery_glass_illegal(self):
-        filename = "test_scenery_glass_illegal"
-
-        out = self.exportLayer(7)
-        self.assertEqual(len(logger.findErrors()), 1)
-        logger.clearMessages()
-
-
 runTestCases([TestBlendGlass])

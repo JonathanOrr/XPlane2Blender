@@ -13,7 +13,7 @@ __dirname__ = os.path.dirname(__file__)
 class TestPre4_0_0_alpha_6PropsUpdated(XPlaneTestCase):
     def test_autodetectTexturesFalse(self)->None:
         for has_layer in bpy.data.collections[:] + bpy.data.objects[:]:
-            self.assertFalse(has_layer.xplane.layer.autodetectTextures, f"{has_layer.name}'s autodetectTextures value isn't False")
+            self.assertNotIn("autodetectTextures", has_layer.xplane.layer, f"{has_layer.name}'s autodetectTextures wasn't deleted")
 
     def test_exportMode_deleted(self)->None:
         for scene in bpy.data.scenes:

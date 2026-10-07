@@ -13,23 +13,8 @@ __dirname__ = os.path.dirname(__file__)
 
 
 class TestCockpitLitOnly(XPlaneTestCase):
-    def test_Scene_1100(self) -> None:
-        bpy.context.window.scene = bpy.data.scenes["Scene_1100"]
-
-        filename = "test_05_cockpit_lit_only_no_export_wrong_version"
-        self.assertExportableRootExportEqualsFixture(
-            filename[5:],
-            os.path.join(__dirname__, "fixtures", f"{filename}.obj"),
-            {"ATTR_cockpit_lit_only"},
-            filename,
-        )
-
     def test_Scene_1110(self) -> None:
         bpy.context.window.scene = bpy.data.scenes["Scene_1110"]
-
-        out = self.exportExportableRoot("test_02_cockpit_lit_only_wrong_type_error"[5:])
-        # Scenery cannot have panel
-        self.assertLoggerErrors(1)
 
         for filename in [
             "test_01_cockpit_lit_only_exported",

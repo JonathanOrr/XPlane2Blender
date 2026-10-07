@@ -420,7 +420,6 @@ IDX10	350	351	352	353	354	355	356	357	358	359
 	# MATERIAL: cockpit_panel
 	ATTR_light_level_reset
 	ATTR_cockpit
-	ATTR_cockpit_region	0
 	TRIS	72 36
 	# 1 Mesh: conditions
 	IF GLOBAL_LIGHTING

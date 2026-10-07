@@ -22,20 +22,6 @@ class TestMaterials(XPlaneTestCase):
             filename,
         )
 
-    def test_conditions_export(self):
-        def filterLines(line):
-            return isinstance(line[0], str) and \
-                   (line[0].find('IF') == 0 or \
-                   line[0] == 'ENDIF' or \
-                   line[0] == 'TRIS')
-
-        filename = 'test_conditions'
-        self.assertLayerExportEqualsFixture(
-            2, os.path.join(__dirname__, 'fixtures', filename + '.obj'),
-            filterLines,
-            filename,
-        )
-
     def test_optimize_export(self):
         def filterLines(line):
             return isinstance(line[0], str) and \

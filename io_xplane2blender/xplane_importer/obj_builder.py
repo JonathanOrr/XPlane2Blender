@@ -9,7 +9,7 @@ import bpy
 import mathutils
 import numpy as np
 
-from io_xplane2blender import xplane_constants, xplane_helpers, xplane_xp12
+from io_xplane2blender import xplane_constants, xplane_helpers, xplane_props
 
 from . import lights
 from . import transforms as T
@@ -540,7 +540,7 @@ class ObjBuilder:
     def _apply_manipulator(self, blender_obj, manip, extras, detents) -> None:
         kind = manip[0]
         m = blender_obj.xplane.manip
-        valid_types = {item[0] for item in m.get_manip_types_for_this_version(None)}
+        valid_types = {item[0] for item in xplane_props.MANIP_TYPE_ITEMS}
         if kind == "none" or kind not in _MANIP_ARGS:
             self.report.warn(f"{self.stem}: manipulator type '{kind}' is not supported")
             return
@@ -663,22 +663,13 @@ class ObjBuilder:
                 x.uv = nums[5:9]
                 x.dataref = light.args[9] if len(light.args) > 9 else ""
             elif light.kind == "vlight":
-                # X-Plane 9 lights: the color says what kind, the exporter writes it back the same way
+                # X-Plane 9 lights have no X-Plane 12 equivalent. With no light chosen it is listed as
+                # unfinished work, keeping its color; 9.7 to 9.9 meant traffic, strobe and pulsing
+                x.type = xplane_constants.LIGHT_AUTOMATIC
+                x.name = ""
                 rgb = [_number(a) for a in light.args[:3]]
-                special = {
-                    9.9: xplane_constants.LIGHT_PULSING,
-                    9.8: xplane_constants.LIGHT_STROBE,
-                    9.7: xplane_constants.LIGHT_TRAFFIC,
-                }
-                kind = next((k for v, k in special.items() if all(abs(c - v) < 1e-3 for c in rgb)), None)
-                if kind:
-                    x.type = kind
-                elif rgb[0] < 0:
-                    x.type = xplane_constants.LIGHT_FLASHING
-                    blender_light.color = [min(max(c, 0.0), 1.0) for c in (-rgb[0], rgb[1], rgb[2])]
-                else:
-                    x.type = xplane_constants.LIGHT_DEFAULT
-                    blender_light.color = [min(max(c, 0.0), 1.0) for c in rgb]
+                if all(c < 9.0 for c in rgb):
+                    blender_light.color = [min(max(abs(c), 0.0), 1.0) for c in rgb]
             elif light.kind == "spill_custom":
                 # r g b a size dx dy dz width dataref, the exporter always writes an alpha of 1
                 x.type = xplane_constants.LIGHT_SPILL_CUSTOM
@@ -793,8 +784,6 @@ class ObjBuilder:
                     setattr(layer, attribute, found)
         if obj.has_normal_metalness:
             layer.normal_metalness = True
-        if "GLOBAL_cockpit_lit" in obj.globals and hasattr(layer, "cockpit_lit"):
-            layer.cockpit_lit = True
         if "BLEND_GLASS" in obj.globals:
             layer.blend_glass = True
         for directive, entries in obj.globals.items():
@@ -829,5 +818,3 @@ class ObjBuilder:
         scene = bpy.context.scene
         # The OBJs share their vertices, the exporter only does that when it is told to
         scene.xplane.optimize = True
-        # Whatever X-Plane version the OBJ was made for, it is exported for X-Plane 12
-        scene.xplane.version = xplane_xp12.LATEST_VERSION
