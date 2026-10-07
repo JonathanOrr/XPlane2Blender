@@ -257,6 +257,10 @@ def _freeze(state: Dict[str, Any]) -> FrozenState:
 _NUMBER_PREFIX = re.compile(r"[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?")
 
 
+# Numbers that had stray text after them and were read anyway, the parse loop turns them into warnings
+_repaired: List[Tuple[str, float]] = []
+
+
 def _float(text: str) -> float:
     """float(), but like X-Plane's C parsing it takes the number at the start of a token with stray text after it.
     Laminar's own Cessna 172 has 'ANIM_rotate_key -2.5.000000 -18', which X-Plane reads as -2.5"""
@@ -266,7 +270,8 @@ def _float(text: str) -> float:
         found = _NUMBER_PREFIX.match(text)
         if not found:
             raise
-        return float(found.group())
+        _repaired.append((text, float(found.group())))
+        return _repaired[-1][1]
 
 
 def _floats(tokens: List[str]) -> Tuple[float, ...]:
@@ -329,7 +334,19 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
     vertex_lines: List[str] = []
     index_lines: List[str] = []
 
+    def note_repairs(line_number: int) -> None:
+        if _repaired:
+            shown = ", ".join(f"'{text}' as {value:g}" for text, value in _repaired)
+            obj.warnings.append(
+                f"line {line_number}: read {shown}, the way X-Plane does, but the file has a typo"
+            )
+            _repaired.clear()
+
+    _repaired.clear()
+    last_line = 0
     for line_number, line in enumerate(lines[index:], start=index + 1):
+        note_repairs(last_line)
+        last_line = line_number
         stripped = line.strip()
         if not stripped:
             continue
@@ -542,6 +559,7 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 f"line {line_number}: could not read '{stripped[:60]}' ({e.__class__.__name__})"
             )
 
+    note_repairs(last_line)
     if len(stack) > 1:
         obj.warnings.append(f"{len(stack) - 1} ANIM_begin blocks were never closed")
 

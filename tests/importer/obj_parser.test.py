@@ -163,8 +163,12 @@ class TestObjParser(XPlaneTestCase):
         # Laminar's Cessna 172 (vor1_gs_ag.obj) has this, X-Plane reads -2.5
         body = "ANIM_begin\nANIM_rotate_begin 0 0 1 sim/x\nANIM_rotate_key -2.5.000000 -18\nANIM_rotate_key 1e1x 5\nANIM_rotate_end\nANIM_end\n"
         obj = parse_obj(obj_text(body, tris=None))
-        self.assertEqual(obj.warnings, [])
         self.assertEqual(obj.root.children[0].ops[0].keys, [(-2.5, (-18.0,)), (10.0, (5.0,))])
+        # It is still reported, with the line, so a typo in a file is never silent
+        self.assertEqual(len(obj.warnings), 2)
+        self.assertIn("-2.5.000000", obj.warnings[0])
+        self.assertIn("as -2.5", obj.warnings[0])
+        self.assertIn("line", obj.warnings[1])
 
     def test_bad_vertex_table_is_repaired(self) -> None:
         obj = parse_obj(obj_text("", vertices="VT 1 2 3 0 1 0 0 0\nVT 1 2\nVT 4 5 6 0 1 0 0 0\n", indices="IDX10 0 1 2\n"))
