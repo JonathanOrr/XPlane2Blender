@@ -12,6 +12,7 @@ from io_xplane2blender import xplane_constants, xplane_helpers
 
 from . import transforms as T
 from .common import ImportOptions, ImportReport
+from .decals import apply_decals
 from .defaults import nearest_key_index, show_hide_visible
 from .materials import MaterialFactory
 from .textures import TextureResolver
@@ -415,6 +416,7 @@ class ObjBuilder(PartsBuilder):
             layer.normal_metalness = True
         if "BLEND_GLASS" in obj.globals:
             layer.blend_glass = True
+        decals = apply_decals(layer, obj, lambda path: self.resolver.resolve(path) or path)
         for directive, entries in obj.globals.items():
             if directive in (
                 "GLOBAL_cockpit_lit",
@@ -426,6 +428,8 @@ class ObjBuilder(PartsBuilder):
             ):
                 continue
             for args in entries:
+                if (directive, tuple(args)) in decals:
+                    continue
                 attribute = layer.customAttributes.add()
                 attribute.name = directive
                 attribute.value = " ".join(args)
