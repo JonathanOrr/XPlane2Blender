@@ -50,3 +50,7 @@ def decals_layout(layout, layer) -> None:
             _scale_row(box, layer, f"normal_decal{i}")
             _keys_column(box, layer, f"normal_decal{i}", "Keyed By")
     layout.prop(layer, "texture_modulator", text="Modulator")
+    if any(getattr(layer, f"file_{kind}{i}") for kind in ("decal", "normal_decal") for i in (1, 2)):
+        row = layout.row(align=True)
+        row.operator("xplane.detail_preview", text="Preview In Viewport", icon="SHADING_TEXTURE").remove = False
+        row.operator("xplane.detail_preview", text="", icon="X").remove = True

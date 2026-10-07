@@ -39,7 +39,7 @@ class FakeLayout:
     def _child(self, *args, **kwargs) -> "FakeLayout":
         return FakeLayout(self.drawn)
 
-    row = column = box = split = grid_flow = column_flow = _child
+    row = column = box = split = grid_flow = column_flow = menu_pie = _child
 
     def __setattr__(self, key, value):
         assert key in {

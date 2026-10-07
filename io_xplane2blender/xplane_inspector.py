@@ -98,16 +98,36 @@ def move_into_new_file(
 
 
 # ---- Textures ---------------------------------------------------------------------------------------------------
-def _linked_image(node_input) -> Optional[bpy.types.Image]:
-    """The image feeding a shader input, through a normal map node if there is one"""
-    if node_input is None or not node_input.is_linked:
+# The detail texture preview's shader nodes, and where its last node remembers what fed the shader before it
+PREVIEW_PREFIX = "XP2B Detail"
+PREVIEW_FROM_NODE, PREVIEW_FROM_SOCKET = "xplane_from_node", "xplane_from_socket"
+
+
+def preview_original(node) -> Optional["bpy.types.NodeSocket"]:
+    """For the detail texture preview's last node: the socket that fed the shader before the preview, or None"""
+    from_node = node.id_data.nodes.get(node.get(PREVIEW_FROM_NODE, ""))
+    if from_node is None:
         return None
-    node = node_input.links[0].from_node
+    return next((s for s in from_node.outputs if s.identifier == node.get(PREVIEW_FROM_SOCKET)), None)
+
+
+def _image_from(socket) -> Optional[bpy.types.Image]:
+    node = socket.node
+    if node.name.startswith(PREVIEW_PREFIX):
+        original = preview_original(node)
+        return _image_from(original) if original is not None else None
     if node.type == "NORMAL_MAP":
         return _linked_image(node.inputs.get("Color"))
     if node.type == "TEX_IMAGE":
         return node.image
     return None
+
+
+def _linked_image(node_input) -> Optional[bpy.types.Image]:
+    """The image feeding a shader input, through a normal map node or the detail texture preview"""
+    if node_input is None or not node_input.is_linked:
+        return None
+    return _image_from(node_input.links[0].from_socket)
 
 
 def material_images(material: bpy.types.Material) -> Dict[str, bpy.types.Image]:

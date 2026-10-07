@@ -7,7 +7,7 @@ import traceback
 
 import bpy
 
-from . import lever, overlay, overlay_more, settings
+from . import detail_preview, lever, overlay, overlay_more, pie, settings, tool, workspace
 from .settings import view_settings
 
 _handlers = []
@@ -52,7 +52,7 @@ def _post_pixel():
         _safely(overlay_more.draw_unfinished_labels, context)
 
 
-classes = (*lever.classes,)
+classes = (*lever.classes, *pie.classes, *tool.classes, *workspace.classes, *detail_preview.classes)
 
 
 def register():
@@ -62,9 +62,15 @@ def register():
     _handlers.append(bpy.types.SpaceView3D.draw_handler_add(_post_view, (), "WINDOW", "POST_VIEW"))
     _handlers.append(bpy.types.SpaceView3D.draw_handler_add(_post_pixel, (), "WINDOW", "POST_PIXEL"))
     bpy.types.VIEW3D_PT_overlay.append(overlay.overlay_popover)
+    bpy.types.TOPBAR_MT_workspace_menu.append(workspace.workspace_menu_entry)
+    tool.register_tool()
+    pie.register_keymap()
 
 
 def unregister():
+    pie.unregister_keymap()
+    tool.unregister_tool()
+    bpy.types.TOPBAR_MT_workspace_menu.remove(workspace.workspace_menu_entry)
     bpy.types.VIEW3D_PT_overlay.remove(overlay.overlay_popover)
     for handler in _handlers:
         bpy.types.SpaceView3D.draw_handler_remove(handler, "WINDOW")

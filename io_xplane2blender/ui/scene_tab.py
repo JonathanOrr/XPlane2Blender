@@ -168,6 +168,7 @@ class XPLANE_PT_tools(_SceneTab, bpy.types.Panel):
         layout.operator(
             xplane_light_tools.XPLANE_OT_lights_preview.bl_idname, text="Preview Every Light As In X-Plane", icon="LIGHT"
         ).selected_only = False
+        layout.operator("xplane.workspace", text="Open The X-Plane Workspace", icon="WORKSPACE")
 
 
 class XPLANE_PT_collection(Properties, bpy.types.Panel):
