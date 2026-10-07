@@ -3,7 +3,8 @@ Detail texture preview: shows a file's detail textures (decals) on its materials
 approximately as X-Plane draws them. A color detail is tiled at its scale and multiplied in at twice its brightness
 (mid grey changes nothing) as strongly as its keys say; a normal detail (X and Y in red and green, as X-Plane
 stores them) is tiled and added to the surface's normal.
-Keys read the base color texture's channels.
+Keys read the base color texture's channels, and the modulator texture's red channel for the first decal of each
+kind and its green channel for the second.
 
 The preview is shader nodes named "XP2B Detail ...", in a frame, between the Principled BSDF and what fed it.
 Removing it puts the links back as they were. The exporter never reads shader nodes, and From Materials looks
@@ -156,14 +157,18 @@ def _channels(b: _Builder, base_socket, layer):
             if alpha_input is not None and alpha_input.is_linked
             else None
         )
-    modulator = None
+    base = [split.outputs[0], split.outputs[1], split.outputs[2], alpha]
     image = _load(layer.texture_modulator, []) if layer.texture_modulator else None
-    if image is not None:
-        texture = b.new("ShaderNodeTexImage", "Modulator")
-        texture.image = image
-        b.link(b.coords().outputs["UV"], texture.inputs["Vector"])
-        modulator = texture.outputs["Color"]
-    return [split.outputs[0], split.outputs[1], split.outputs[2], alpha, modulator]
+    if image is None:
+        return {1: base + [None], 2: base + [None]}
+    texture = b.new("ShaderNodeTexImage", "Modulator")
+    texture.image = image
+    image.colorspace_settings.name = "Non-Color"
+    b.link(b.coords().outputs["UV"], texture.inputs["Vector"])
+    modulator = b.new("ShaderNodeSeparateColor", "Modulator Channels")
+    b.link(texture.outputs["Color"], modulator.inputs[0])
+    # The modulator's red channel is decal 1's, its green channel decal 2's
+    return {1: base + [modulator.outputs[0]], 2: base + [modulator.outputs[1]]}
 
 
 def _base_color(b: _Builder):
@@ -215,7 +220,7 @@ def add_preview(material: bpy.types.Material, layer, report: List[str]) -> bool:
         mix.data_type, mix.blend_type = "RGBA", "MULTIPLY"
         b.link(
             b.strength(
-                channels, tuple(getattr(layer, f"rgb_decal{i}_{k}") for k in KEYS)
+                channels[i], tuple(getattr(layer, f"rgb_decal{i}_{k}") for k in KEYS)
             ),
             mix.inputs[0],
         )
@@ -235,7 +240,7 @@ def add_preview(material: bpy.types.Material, layer, report: List[str]) -> bool:
         b.link(b.normal_color(texture), normal_map.inputs["Color"])
         b.link(
             b.strength(
-                channels, tuple(getattr(layer, f"normal_decal{i}_{k}") for k in KEYS)
+                channels[i], tuple(getattr(layer, f"normal_decal{i}_{k}") for k in KEYS)
             ),
             normal_map.inputs["Strength"],
         )

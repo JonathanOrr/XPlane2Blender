@@ -127,6 +127,26 @@ class TestViewportTools(XPlaneTestCase):
             any(detail_preview.is_preview(n) for n in material.node_tree.nodes)
         )
 
+    def test_each_decal_reads_its_own_modulator_channel(self) -> None:
+        material, bsdf, _ = textured_material("panel")
+        self.obj.data.materials.append(material)
+        # Like Laminar's A330 cockpit: leather then plastic, both keyed by the modulator
+        self.layer.texture_modulator = save_image("control")
+        for i, name in ((1, "leather"), (2, "plastic")):
+            setattr(self.layer, f"file_normal_decal{i}", save_image(name))
+            setattr(self.layer, f"normal_decal{i}_modulator", 1.0)
+        self.assertTrue(detail_preview.add_preview(material, self.layer, []))
+        nodes = material.node_tree.nodes
+
+        def modulator_channel(i):
+            strength = nodes[f"XP2B Detail Normal {i}"].inputs["Strength"].links[0].from_node
+            key = strength.inputs[0].links[0].from_node
+            return key.inputs[0].links[0].from_socket
+
+        channels = nodes["XP2B Detail Modulator Channels"].outputs
+        self.assertEqual(channels[0], modulator_channel(1))
+        self.assertEqual(channels[1], modulator_channel(2))
+
     def test_detail_preview_skips_what_it_cannot_show(self) -> None:
         material, bsdf, _ = textured_material("plain")
         self.obj.data.materials.append(material)
