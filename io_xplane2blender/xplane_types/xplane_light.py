@@ -219,8 +219,10 @@ class XPlaneLight(xplane_object.XPlaneObject):
 
             self.record_completed = parsed_light.best_overload()
             for i, (pformal, pactual) in enumerate(zip(params_formal, params_actual)):
+                # X-Plane 12 intensities are written with a unit, like 500cd
+                number = pactual[:-2] if pactual.endswith("cd") else pactual
                 try:
-                    float(pactual)
+                    float(number)
                 except ValueError:  # pactual not a float
                     logger.error(
                         f"Parameter {i} ({pactual}) of {self.blenderObject.name} is not a number"
@@ -229,7 +231,7 @@ class XPlaneLight(xplane_object.XPlaneObject):
                 else:
                     try:
                         self.record_completed.replace_parameterization_argument(
-                            pformal, float(pactual)
+                            pformal, float(number)
                         )
                     except ValueError:
                         continue
