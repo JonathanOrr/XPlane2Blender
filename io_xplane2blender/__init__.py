@@ -38,6 +38,7 @@ if "" not in locals():
     from . import xplane_export
     from . import xplane_ops
     from . import xplane_ops_dev
+    from . import xplane_bulk_edit
     from . import xplane_config
     from . import xplane_updater
     from .xplane_importer import ops as xplane_import_ops
@@ -50,6 +51,7 @@ else:
     xplane_export  = importlib.reload(xplane_export)
     xplane_ops     = importlib.reload(xplane_ops)
     xplane_ops_dev = importlib.reload(xplane_ops_dev)
+    xplane_bulk_edit = importlib.reload(xplane_bulk_edit)
     xplane_config  = importlib.reload(xplane_config)
     xplane_updater = importlib.reload(xplane_updater)
     xplane_import_ops = importlib.reload(xplane_import_ops)
@@ -77,6 +79,7 @@ def register():
     xplane_ops.register()
     xplane_ops_dev.register()
     xplane_ui.register()
+    xplane_bulk_edit.register()
     xplane_import_ops.register()
     bpy.types.TOPBAR_MT_file_export.append(menu_func)
 
@@ -86,6 +89,7 @@ def register():
 def unregister():
     xplane_export.unregister()
     xplane_import_ops.unregister()
+    xplane_bulk_edit.unregister()
     xplane_ui.unregister()
     xplane_ops.unregister()
     xplane_ops_dev.unregister()
