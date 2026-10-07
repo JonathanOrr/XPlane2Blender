@@ -13,7 +13,8 @@ from io_xplane2blender import xplane_constants, xplane_helpers
 from . import transforms as T
 from .common import ImportOptions, ImportReport
 from .defaults import nearest_key_index, show_hide_visible
-from .materials import MaterialFactory, TextureResolver
+from .materials import MaterialFactory
+from .textures import TextureResolver
 from .mesh_builder import build_mesh
 from .obj_builder_parts import PartsBuilder
 from .obj_parser import AnimNode, AnimOp, Extra, Light, ObjFile, TrisRun
