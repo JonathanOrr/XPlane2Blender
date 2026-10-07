@@ -19,12 +19,12 @@ import bpy
 
 # Contains informations for Blender to recognize and categorize the addon.
 bl_info = {
-    "name": "XPlane2Blender Export for X-Plane OBJs",
-    "description": "Export X-Plane objects/planes (.obj format)",
-    "author": "Ted Greene, Ben Supnik, Amy Parent, Maya F. Eroğlu",
-    "version": (4, 5, 0),
+    "name": "X-Plane 12 Aircraft Tools",
+    "description": "Build, import and export X-Plane 12 aircraft and cockpit objects (.obj). A fork of XPlane2Blender",
+    "author": "Jonathan Orr; XPlane2Blender by Ted Greene, Ben Supnik, Amy Parent, Maya F. Eroğlu",
+    "version": (5, 0, 0),
     "blender": (3, 6, 0),
-    "location": "File > Import/Export > X-Plane",
+    "location": "3D Viewport > Sidebar > X-Plane, File > Import/Export > X-Plane",
     "warning": "",
     "doc_url": "https://xp2b-docs.gitbook.io/xplane2blender-docs",
     "tracker_url": "https://github.com/JonathanOrr/XPlane2Blender/issues",

@@ -9,7 +9,7 @@ import bpy
 import mathutils
 import numpy as np
 
-from io_xplane2blender import xplane_constants, xplane_helpers
+from io_xplane2blender import xplane_constants, xplane_helpers, xplane_xp12
 
 from . import lights
 from . import transforms as T
@@ -122,42 +122,6 @@ _MANIP_ARGS: Dict[str, Tuple[str, ...]] = {
 def _number(text: str) -> float:
     """float() that also reads a decimal comma, which some hand edited OBJ files have"""
     return float(text.replace(",", "."))
-
-
-def required_xplane_version(obj: ObjFile) -> int:
-    """The oldest X-Plane version setting that lets the add-on write everything this OBJ uses"""
-    version = 1100
-    if (
-        obj.texture_maps
-        or "GLOBAL_luminance" in obj.globals
-        or "TEXTURE_MAP" in obj.globals
-    ):
-        version = max(version, 1200)
-    for run in obj.iter_tris():
-        state = dict(run.state)
-        manip = state.get("manip")
-        if manip and manip[0] in (
-            "drag_rotate",
-            "drag_axis_detent",
-            "command_knob2",
-            "command_switch_up_down2",
-            "command_switch_left_right2",
-            "drag_rotate_detent",
-        ):
-            version = max(version, 1110)
-        if "cockpit" in state or "cockpit_lit_only" in state:
-            version = max(version, 1110)
-    stack = [obj.root]
-    while stack:
-        node = stack.pop()
-        for child in node.children:
-            if isinstance(child, AnimNode):
-                stack.append(child)
-            elif isinstance(child, Extra) and child.kind in ("EMITTER", "MAGNET"):
-                version = max(version, 1130)
-            elif isinstance(child, Light) and any(a.endswith("cd") for a in child.args):
-                version = max(version, 1200)
-    return version
 
 
 @dataclass
@@ -848,9 +812,5 @@ class ObjBuilder:
         scene = bpy.context.scene
         # The OBJs share their vertices, the exporter only does that when it is told to
         scene.xplane.optimize = True
-        wanted = str(required_xplane_version(self.obj))
-        try:
-            if int(scene.xplane.version) < int(wanted):
-                scene.xplane.version = wanted
-        except (TypeError, ValueError):
-            pass
+        # Whatever X-Plane version the OBJ was made for, it is exported for X-Plane 12
+        scene.xplane.version = xplane_xp12.LATEST_VERSION

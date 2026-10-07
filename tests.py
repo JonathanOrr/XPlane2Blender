@@ -202,6 +202,9 @@ def main(argv=None) -> int:
         **os.environ,
         "BLENDER_USER_SCRIPTS": REPO_DIR,
         "BLENDER_USER_CONFIG": os.path.join(TMP_DIR, "blender_config"),
+        # The export tests check the exporter at the X-Plane version saved in each test file,
+        # so opening them must not convert them to X-Plane 12 (see xplane_xp12.py)
+        "XPLANE2BLENDER_KEEP_OLD_SETTINGS": "1",
     }
 
     def run_test_file(pyFile: str) -> str:
