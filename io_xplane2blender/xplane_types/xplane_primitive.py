@@ -11,12 +11,12 @@ from io_xplane2blender.xplane_constants import (
     MANIP_DRAG_AXIS_DETENT,
     MANIP_DRAG_ROTATE_DETENT,
 )
-from io_xplane2blender.xplane_types import xplane_manipulator
 
 from ..xplane_config import getDebug
 from ..xplane_constants import *
 from ..xplane_helpers import logger, unfinished
 from .xplane_attribute import XPlaneAttribute
+from .xplane_manip_bone_checks import check_bone_is_leaf
 from .xplane_manipulator import XPlaneManipulator
 from .xplane_material import XPlaneMaterial
 from .xplane_object import XPlaneObject
@@ -135,7 +135,7 @@ class XPlanePrimitive(XPlaneObject):
                     or manip.type == MANIP_DRAG_ROTATE
                     or manip.type == MANIP_DRAG_ROTATE_DETENT
                 ):
-                    if not xplane_manipulator.check_bone_is_leaf(
+                    if not check_bone_is_leaf(
                         self.xplaneBone, True, self.manipulator
                     ):
                         return ""

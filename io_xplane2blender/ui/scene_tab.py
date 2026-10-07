@@ -9,6 +9,7 @@ from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_helpers
 from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender import xplane_light_tools
+from io_xplane2blender.viewport.settings import view_settings
 
 from .common import Properties, wrapped
 from .ops_file import (
@@ -159,12 +160,15 @@ class XPLANE_PT_tools(_SceneTab, bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        row = layout.row(align=True)
-        row.prop(state(context), "show_click_zones", toggle=True, icon="RESTRICT_SELECT_OFF")
-        row.prop(state(context), "click_labels", text="")
+        view = view_settings(context)
+        if view is not None:
+            row = layout.row(align=True)
+            row.prop(view, "show_click_zones", toggle=True, icon="RESTRICT_SELECT_OFF")
+            row.prop(view, "click_labels", text="")
         layout.operator(
             xplane_light_tools.XPLANE_OT_lights_preview.bl_idname, text="Preview Every Light As In X-Plane", icon="LIGHT"
         ).selected_only = False
+        layout.operator("xplane.workspace", text="Open The X-Plane Workspace", icon="WORKSPACE")
 
 
 class XPLANE_PT_collection(Properties, bpy.types.Panel):

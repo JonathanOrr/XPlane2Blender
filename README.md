@@ -75,13 +75,35 @@ wipers, detail textures and more. **Options** has the debug output and, for peop
 **Scene tab > X-Plane Unfinished Work** lists what is not filled in yet in the export files, with a button to select
 each object.
 
-**Scene tab > X-Plane Tools** has **Find and Replace**, **Table**, the click zone overlay and the light preview for
-every light.
+**Scene tab > X-Plane Tools** has **Find and Replace**, **Table**, the click zone overlay, the light preview for
+every light and **Open The X-Plane Workspace**.
 
-Also: **Shift+A > X-Plane** adds an invisible click zone, a light or an attachment point at the 3D cursor; the
-viewport's right-click menu has **X-Plane > Make Clickable As**, the animation presets and **Move To File**; and the
-viewport's **Overlays** popover can outline everything clickable (orange runs commands, blue sets datarefs, green is
-dragged) and label it with what a click does.
+Also: **Shift+A > X-Plane** adds an invisible click zone, a light or an attachment point at the 3D cursor, and the
+viewport's right-click menu has **X-Plane > Make Clickable As**, the animation presets and **Move To File**.
+
+## In The 3D View
+- **Overlays popover > X-Plane** (saved per workspace, like Blender's own overlays):
+  - **Click Zones** outlines everything clickable (orange runs commands, blue sets datarefs, green is dragged), with
+    an arrow for a typed drag direction, and labels say what a click does, for the selected zones or all of them.
+  - **Motion** draws the path the selected animated objects travel between their first and last keyframes, with a
+    tick and the dataref value at each keyframe, the hinge line of turning parts, and `dataref = value` on the active
+    one.
+  - **Lever Handle** puts a gizmo on the active animated object: a dial around the hinge of a knob, lever or door, an
+    arrow along the slide of a throttle or seat. Drag it to move the part through its animation as it moves in X-Plane
+    and read the dataref value. It only changes the scene frame, nothing is keyed.
+  - **Lights** rings every X-Plane light in its color (red when no light is chosen yet) and names the selected ones.
+  - **Unfinished** outlines in red what the last Check listed, and says what is missing on the selected ones.
+- **Shift+Q** opens the X-Plane pie menu: Make Clickable As, Animate As, Add, Key This Pose, Move To File, Check
+  (which also turns on the Unfinished overlay), Export, and the overlay switches. Change the key in Preferences >
+  Keymap > Object Mode.
+- **X-Plane Copy** in the toolbar (the stamp): make a finished button, light or attachment active, then click every
+  other one to give it the same settings. The tool settings choose what is copied: Click, Glow, Shows / Hides, Light,
+  Attachment.
+- **The X-Plane workspace** (the workspace tabs' right-click menu, or Scene tab > X-Plane Tools) is a copy of Layout
+  with those overlays and the lever handle on, textures shown in Solid shading and Properties on the Object tab.
+- **Preview In Viewport**, under a file's Detail Textures, shows its detail textures on its materials in Material
+  Preview, approximately as X-Plane draws them: tiled at their scale, as strong as their keys say. The preview is a
+  set of shader nodes in a frame that the X button takes out again; exports never read shader nodes.
 
 ### A coffee cup in the cup holder
 1. Model or append the cup, give it a material with an image texture
