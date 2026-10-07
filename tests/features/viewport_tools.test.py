@@ -111,6 +111,8 @@ class TestViewportTools(XPlaneTestCase):
         self.assertTrue(
             detail_preview.is_preview(bsdf.inputs["Normal"].links[0].from_node)
         )
+        # X-Plane normal maps keep only X and Y, Z is rebuilt
+        self.assertTrue(any(n.name.startswith("XP2B Detail Normal Z") for n in material.node_tree.nodes))
         # From Materials still finds the base texture behind the preview
         self.assertEqual(base.image, I.material_images(material)["texture"])
         # Showing it again replaces it

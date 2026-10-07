@@ -1,7 +1,8 @@
 """
 Detail texture preview: shows a file's detail textures (decals) on its materials in Material Preview and renders,
 approximately as X-Plane draws them. A color detail is tiled at its scale and multiplied in at twice its brightness
-(mid grey changes nothing) as strongly as its keys say; a normal detail is tiled and added to the surface's normal.
+(mid grey changes nothing) as strongly as its keys say; a normal detail (X and Y in red and green, as X-Plane
+stores them) is tiled and added to the surface's normal.
 Keys read the base color texture's channels.
 
 The preview is shader nodes named "XP2B Detail ...", in a frame, between the Principled BSDF and what fed it.
@@ -16,6 +17,7 @@ import bpy
 
 from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender.xplane_helpers import is_path_decal_lib, material_nodes
+from io_xplane2blender.xplane_importer.material_nodes import reconstruct_normal
 
 PREFIX = I.PREVIEW_PREFIX
 FROM_NODE, FROM_SOCKET = I.PREVIEW_FROM_NODE, I.PREVIEW_FROM_SOCKET
@@ -94,6 +96,17 @@ class _Builder:
         image.colorspace_settings.name = colorspace
         self.link(mapping.outputs["Vector"], texture.inputs["Vector"])
         return texture
+
+    def normal_color(self, texture):
+        """X-Plane normal maps keep only X and Y (red, green): Z is rebuilt, as the importer does"""
+        before = set(self.tree.nodes)
+        color = reconstruct_normal(self.tree, texture)
+        for node in set(self.tree.nodes) - before:
+            node.name = node.label = f"{PREFIX} Normal Z"
+            node.parent = self.frame
+            node.location = (self.x - 300, self.y)
+            self.y -= 40
+        return color
 
     def strength(self, channels: List, keys: Tuple[float, ...]):
         """constant + the sum of each key times its channel, clamped to 0 to 1"""
@@ -219,7 +232,7 @@ def add_preview(material: bpy.types.Material, layer, report: List[str]) -> bool:
     for i, image in normal_images:
         texture = b.tiled_image(image, layer, f"normal_decal{i}", "Non-Color")
         normal_map = b.new("ShaderNodeNormalMap", f"Normal {i}")
-        b.link(texture.outputs["Color"], normal_map.inputs["Color"])
+        b.link(b.normal_color(texture), normal_map.inputs["Color"])
         b.link(
             b.strength(
                 channels, tuple(getattr(layer, f"normal_decal{i}_{k}") for k in KEYS)
