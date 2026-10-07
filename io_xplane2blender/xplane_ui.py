@@ -10,6 +10,7 @@ import bpy
 from bpy.types import Object, UILayout
 
 from io_xplane2blender import xplane_constants, xplane_props, xplane_types, xplane_utils
+from io_xplane2blender import xplane_light_tools
 
 from .xplane_constants import *
 from .xplane_helpers import get_active_export_root, is_path_decal_lib
@@ -1055,6 +1056,19 @@ def mesh_layout(layout: bpy.types.UILayout, obj: bpy.types.Object) -> None:
     pass
 
 
+def light_name_rows(layout: bpy.types.UILayout, light_data: bpy.types.Light) -> None:
+    """The lights.txt name with a search button, and what that light is"""
+    row = layout.row(align=True)
+    row.prop(light_data.xplane, "name")
+    row.operator("xplane.light_pick_name", text="", icon="VIEWZOOM")
+    name = light_data.xplane.name.strip()
+    if name:
+        layout.row().label(
+            text=xplane_light_tools.describe(name, with_params=False),
+            icon="INFO" if xplane_light_tools.is_known(name) else "ERROR",
+        )
+
+
 def light_layout(layout: bpy.types.UILayout, obj: bpy.types.Object) -> None:
     light_data = obj.data
 
@@ -1091,7 +1105,7 @@ def light_layout(layout: bpy.types.UILayout, obj: bpy.types.Object) -> None:
         "POINT",
         "SPOT",
     }:
-        layout.row().prop(light_data.xplane, "name")
+        light_name_rows(layout, light_data)
 
         def draw_automatic_ui():
             try:
@@ -1246,10 +1260,17 @@ def light_layout(layout: bpy.types.UILayout, obj: bpy.types.Object) -> None:
             )
         debug_box.row().label(text=f"Width: {WIDTH_val}")
     elif light_data.xplane.type == LIGHT_NAMED:
-        layout.row().prop(light_data.xplane, "name")
+        light_name_rows(layout, light_data)
     elif light_data.xplane.type == LIGHT_PARAM:
-        layout.row().prop(light_data.xplane, "name")
+        light_name_rows(layout, light_data)
         layout.row().prop(light_data.xplane, "params")
+        wanted, problem = xplane_light_tools.param_check(
+            light_data.xplane.name, light_data.xplane.params
+        )
+        if wanted:
+            layout.row().label(text="In order: " + " ".join(wanted))
+        if problem:
+            layout.row().label(text=problem, icon="ERROR")
     elif light_data.xplane.type == LIGHT_CUSTOM:
         layout.row().prop(light_data.xplane, "size")
         layout.row().label(text="Texture Coordinates:")
@@ -1261,7 +1282,11 @@ def light_layout(layout: bpy.types.UILayout, obj: bpy.types.Object) -> None:
         layout.row().prop(light_data.xplane, "enable_rgb_override")
         if light_data.xplane.enable_rgb_override:
             layout.row().prop(light_data.xplane, "rgb_override_values")
-    layout.row().operator("scene.dev_create_lights_txt_summary")
+    layout.row().operator(
+        "xplane.lights_preview", text="Preview As In X-Plane", icon="LIGHT"
+    ).selected_only = True
+    if bpy.context.scene.xplane.plugin_development:
+        layout.row().operator("scene.dev_create_lights_txt_summary")
 
 
 # Function: material_layout
