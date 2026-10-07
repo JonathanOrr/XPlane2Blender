@@ -159,6 +159,13 @@ class TestObjParser(XPlaneTestCase):
         self.assertEqual(len(obj.warnings), 1)
         self.assertIn("ANIM_rotate_key", obj.warnings[0])
 
+    def test_numbers_with_stray_text_read_like_x_plane(self) -> None:
+        # Laminar's Cessna 172 (vor1_gs_ag.obj) has this, X-Plane reads -2.5
+        body = "ANIM_begin\nANIM_rotate_begin 0 0 1 sim/x\nANIM_rotate_key -2.5.000000 -18\nANIM_rotate_key 1e1x 5\nANIM_rotate_end\nANIM_end\n"
+        obj = parse_obj(obj_text(body, tris=None))
+        self.assertEqual(obj.warnings, [])
+        self.assertEqual(obj.root.children[0].ops[0].keys, [(-2.5, (-18.0,)), (10.0, (5.0,))])
+
     def test_bad_vertex_table_is_repaired(self) -> None:
         obj = parse_obj(obj_text("", vertices="VT 1 2 3 0 1 0 0 0\nVT 1 2\nVT 4 5 6 0 1 0 0 0\n", indices="IDX10 0 1 2\n"))
         self.assertEqual(obj.vertices.shape, (3, 8))

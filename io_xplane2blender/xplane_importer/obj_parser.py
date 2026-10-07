@@ -8,6 +8,7 @@ Anything it does not understand is kept in ObjFile.unknown, never silently dropp
 """
 
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -253,8 +254,23 @@ def _freeze(state: Dict[str, Any]) -> FrozenState:
     return tuple(sorted(state.items(), key=lambda kv: kv[0]))
 
 
+_NUMBER_PREFIX = re.compile(r"[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?")
+
+
+def _float(text: str) -> float:
+    """float(), but like X-Plane's C parsing it takes the number at the start of a token with stray text after it.
+    Laminar's own Cessna 172 has 'ANIM_rotate_key -2.5.000000 -18', which X-Plane reads as -2.5"""
+    try:
+        return float(text)
+    except ValueError:
+        found = _NUMBER_PREFIX.match(text)
+        if not found:
+            raise
+        return float(found.group())
+
+
 def _floats(tokens: List[str]) -> Tuple[float, ...]:
-    return tuple(float(t) for t in tokens)
+    return tuple(_float(t) for t in tokens)
 
 
 def parse_obj_file(path: str) -> ObjFile:
@@ -371,20 +387,20 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 if len(args) >= 9:
                     dataref = args[8]
                     keys = [
-                        (float(args[6]), values[0:3]),
-                        (float(args[7]), values[3:6]),
+                        (_float(args[6]), values[0:3]),
+                        (_float(args[7]), values[3:6]),
                     ]
                 else:
                     keys = [(0.0, values[0:3])]
                 stack[-1].ops.append(AnimOp("trans", dataref, keys=keys))
             elif name == "ANIM_rotate":
                 axis = _floats(args[:3])
-                a1, a2 = float(args[3]), float(args[4])
+                a1, a2 = _float(args[3]), _float(args[4])
                 dataref = ""
                 keys = []
                 if len(args) >= 8:
                     dataref = args[7]
-                    keys = [(float(args[5]), (a1,)), (float(args[6]), (a2,))]
+                    keys = [(_float(args[5]), (a1,)), (_float(args[6]), (a2,))]
                 else:
                     keys = [(0.0, (a1,))]
                 stack[-1].ops.append(AnimOp("rotate", dataref, axis, keys))
@@ -398,28 +414,28 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 stack[-1].ops.append(op)
             elif name == "ANIM_trans_key":
                 if op is not None:
-                    op.keys.append((float(args[0]), _floats(args[1:4])))
+                    op.keys.append((_float(args[0]), _floats(args[1:4])))
             elif name == "ANIM_rotate_key":
                 if op is not None:
-                    op.keys.append((float(args[0]), (float(args[1]),)))
+                    op.keys.append((_float(args[0]), (_float(args[1]),)))
             elif name in ("ANIM_trans_end", "ANIM_rotate_end"):
                 op = None
             elif name == "ANIM_keyframe_loop":
                 # Applies to the op that was just ended
                 ops = stack[-1].ops
                 if ops:
-                    ops[-1].loop = float(args[0])
+                    ops[-1].loop = _float(args[0])
             elif name in ("ANIM_show", "ANIM_hide"):
                 stack[-1].visibility.append(
                     Visibility(
                         name[5:],
-                        float(args[0]),
-                        float(args[1]),
+                        _float(args[0]),
+                        _float(args[1]),
                         args[2] if len(args) > 2 else "",
                     )
                 )
             elif name == "ATTR_LOD":
-                lod = (float(args[0]), float(args[1]))
+                lod = (_float(args[0]), _float(args[1]))
                 if lod not in obj.lods:
                     obj.lods.append(lod)
                 # State is fully independent for LODs
@@ -455,7 +471,7 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                     state[key] = ("region", *args)
                 elif name == "ATTR_cockpit_device":
                     state[key] = ("device", *args)
-                elif name == "ATTR_poly_os" and args and float(args[0]) == 0:
+                elif name == "ATTR_poly_os" and args and _float(args[0]) == 0:
                     state.pop(key, None)
                 elif name == "ATTR_shiny_rat" and not args:
                     state.pop(key, None)
@@ -544,7 +560,7 @@ def _to_vertex_array(vertex_lines: List[str], obj: ObjFile) -> np.ndarray:
         rows = []
         for number, text in enumerate(vertex_lines):
             try:
-                values = [float(t) for t in text.split()[:8]]
+                values = [_float(t) for t in text.split()[:8]]
             except ValueError:
                 values = []
             if len(values) < 8:
