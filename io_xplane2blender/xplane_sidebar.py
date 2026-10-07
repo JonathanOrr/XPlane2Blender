@@ -1296,7 +1296,9 @@ class XPLANE_UL_files(bpy.types.UIList):
         needle = self.filter_name.lower()
         flags = []
         for c in collections:
-            shown = c.name in in_scene and (show_all or c.xplane.is_exportable_collection)
+            # Collections with export settings, such as imported OBJs, are listed unticked: one click exports them
+            set_up = c.xplane.is_exportable_collection or bool(c.xplane.layer.name.strip())
+            shown = c.name in in_scene and (show_all or set_up)
             if shown and needle:
                 shown = needle in c.name.lower() or needle in c.xplane.layer.name.lower()
             flags.append(self.bitflag_filter_item if shown else 0)

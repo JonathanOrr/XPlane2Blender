@@ -86,6 +86,20 @@ class TestInspector(XPlaneTestCase):
         self.assertEqual("//kept_NML.png", layer.texture_normal)
         self.assertEqual({"texture", "texture_lit"}, set(filled))
 
+    def test_coffee_cup_from_nothing_to_obj(self) -> None:
+        # The newcomer's path: a textured mesh, New File From Selection, Export
+        cup = mesh("coffee cup", "Spare")
+        cup.data.materials.clear()
+        cup.data.materials.append(textured_material("cup", "//cup.png"))
+
+        new = I.move_into_new_file([cup], "coffee_cup", bpy.context.scene)
+        out = self.exportExportableRoot(new.name)
+
+        self.assertLoggerErrors(0)
+        lines = [line.split() for line in out.splitlines() if line.strip()]
+        self.assertIn(["TEXTURE", "cup.png"], lines)
+        self.assertTrue(any(line[0] == "TRIS" for line in lines))
+
     def test_unfinished_work(self) -> None:
         button = mesh("button", "Cockpit")
         button.xplane.manip.enabled = True

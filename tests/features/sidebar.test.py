@@ -158,6 +158,11 @@ class TestSidebar(XPlaneTestCase):
         flags, _ = S.XPLANE_UL_files.filter_items(ul, bpy.context, bpy.data, "collections")
         shown = [c.name for c, f in zip(bpy.data.collections, flags) if f]
         self.assertEqual(["Panel"], shown)
+        # Imported OBJs have their settings filled in but are not ticked: they are listed, ready to tick
+        bpy.data.collections["Not a file"].xplane.layer.name = "imported_part"
+        flags, _ = S.XPLANE_UL_files.filter_items(ul, bpy.context, bpy.data, "collections")
+        self.assertEqual(2, sum(1 for f in flags if f))
+        bpy.data.collections["Not a file"].xplane.layer.name = ""
         bpy.context.window_manager.xplane_sidebar.show_all_collections = True
         flags, _ = S.XPLANE_UL_files.filter_items(ul, bpy.context, bpy.data, "collections")
         self.assertEqual(2, sum(1 for f in flags if f))
