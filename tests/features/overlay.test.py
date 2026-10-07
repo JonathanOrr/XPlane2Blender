@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import bpy
 
 from io_xplane2blender import xplane_constants as C
-from io_xplane2blender import xplane_overlay
+from io_xplane2blender.viewport import overlay as xplane_overlay
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests import test_creation_helpers
 from io_xplane2blender.tests.fake_layout import FakeLayout
@@ -44,6 +44,10 @@ class TestOverlay(XPlaneTestCase):
         self.assertTrue(all(p.x > 5 for p in points))
 
     def test_overlay_popover_draws(self) -> None:
+        layout = FakeLayout()
+        xplane_overlay.overlay_popover(SimpleNamespace(layout=layout), SimpleNamespace(screen=bpy.data.screens[0]))
+        self.assertIn("show_lever", layout.props())
+        # Without a screen (background mode) there is nothing to draw
         xplane_overlay.overlay_popover(SimpleNamespace(layout=FakeLayout()), bpy.context)
 
 

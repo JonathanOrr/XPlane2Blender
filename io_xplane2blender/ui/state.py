@@ -22,21 +22,6 @@ class XPlanePanelState(bpy.types.PropertyGroup):
         description="List every collection, so any of them can be made an export file",
         default=False,
     )
-    show_click_zones: bpy.props.BoolProperty(
-        name="Click Zones",
-        description="Outline what can be clicked in X-Plane: orange runs commands, blue sets datarefs, green is dragged",
-        default=False,
-    )
-    click_labels: bpy.props.EnumProperty(
-        name="Click Labels",
-        description="Say what clicking each object does",
-        items=(
-            ("OFF", "No Labels", "No labels"),
-            ("SELECTED", "Labels: Selected", "Label the selected clickable objects"),
-            ("ALL", "Labels: All", "Label every clickable object"),
-        ),
-        default="OFF",
-    )
     checked: bpy.props.BoolProperty(default=False)
     check_items: bpy.props.CollectionProperty(type=XPlaneCheckItem)
     check_index: bpy.props.IntProperty()
