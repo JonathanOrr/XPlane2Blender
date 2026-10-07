@@ -18,13 +18,6 @@ from .xplane_ops import *
 from .xplane_props import *
 
 
-def classic_panels(context) -> bool:
-    """The Properties editor panels only show when the add-on preference asks for them: the sidebar has it all"""
-    from io_xplane2blender import xplane_sidebar
-
-    return xplane_sidebar.classic_panels(context)
-
-
 class DATA_PT_xplane(bpy.types.Panel):
     """X-Plane Empty/Light Data Panel"""
 
@@ -32,10 +25,6 @@ class DATA_PT_xplane(bpy.types.Panel):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "data"
-
-    @classmethod
-    def poll(cls, context):
-        return classic_panels(context) and context.object is not None
 
     def draw(self, context):
         obj = context.object
@@ -60,7 +49,7 @@ class MATERIAL_PT_xplane(bpy.types.Panel):
     @classmethod
     def poll(self, context):
         if context.material:
-            return classic_panels(context)
+            return True
 
     def draw(self, context):
         obj = context.object
@@ -86,7 +75,7 @@ class RENDER_PT_xplane(bpy.types.Panel):
 
     @classmethod
     def poll(self, context):
-        return classic_panels(context) and int(context.scene.xplane.version) >= 1200
+        return int(context.scene.xplane.version) >= 1200
 
     def draw(self, context):
         def draw_bake_op(layout: bpy.types.UILayout):
@@ -125,7 +114,7 @@ class SCENE_PT_xplane(bpy.types.Panel):
 
     @classmethod
     def poll(self, context):
-        return classic_panels(context)
+        return True
 
     def draw(self, context):
         scene = context.scene
@@ -189,7 +178,7 @@ class OBJECT_PT_xplane(bpy.types.Panel):
         obj = context.object
 
         if obj.type in ("MESH", "EMPTY", "ARMATURE", "LIGHT"):
-            return classic_panels(context)
+            return True
         else:
             return False
 
@@ -2123,13 +2112,10 @@ class XPLANE_UL_DatarefSearchList(bpy.types.UIList):
         return flt_flags, flt_neworder
 
 
+# The Object, Data, Material, Scene and Render panels are replaced by xplane_panels.py, which still draws them
+# under "Every Setting (Classic)". Bones keep their panel
 _XPlaneUITypes = (
     BONE_PT_xplane,
-    DATA_PT_xplane,
-    MATERIAL_PT_xplane,
-    OBJECT_PT_xplane,
-    RENDER_PT_xplane,
-    SCENE_PT_xplane,
     XPLANE_UL_CommandSearchList,
     XPLANE_UL_DatarefSearchList,
 )

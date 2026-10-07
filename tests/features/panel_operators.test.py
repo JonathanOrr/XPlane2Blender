@@ -8,7 +8,7 @@ import bpy
 
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
-from io_xplane2blender import xplane_sidebar as S
+from io_xplane2blender import xplane_panels as S
 from io_xplane2blender import xplane_helpers, xplane_ui
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests import test_creation_helpers

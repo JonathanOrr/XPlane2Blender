@@ -342,7 +342,7 @@ class XPLANE_OT_anim_range(_Preset, bpy.types.Operator):
         return self.finish(done, skipped)
 
 
-# The presets are in the sidebar's Moves card and the viewport's right-click menu
+# The presets are in the Object tab's Moves card and the viewport's right-click menu
 _classes = (XPLANE_OT_anim_push_button, XPLANE_OT_anim_switch, XPLANE_OT_anim_range)
 
 

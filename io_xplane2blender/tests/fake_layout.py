@@ -112,9 +112,23 @@ class FakeLayout:
         return [what for kind, what in self.drawn if kind == "operator"]
 
 
+class PropertiesContext:
+    """bpy.context as a Properties editor's panels see it: with the material and collection it shows"""
+
+    def __getattr__(self, name):
+        if name == "material":
+            obj = bpy.context.object
+            return obj.active_material if obj is not None else None
+        if name == "collection":
+            return bpy.context.view_layer.active_layer_collection.collection
+        if name == "space_data":
+            return None
+        return getattr(bpy.context, name)
+
+
 def draw_panel(panel_class, context=None, header: bool = True) -> FakeLayout:
     """Runs a panel's draw functions the way Blender does, if its poll lets it show. Returns the layout"""
-    context = context or bpy.context
+    context = context or PropertiesContext()
     layout = FakeLayout()
     fake = SimpleNamespace(layout=layout)
     # Blender only draws a sub-panel when its parents show

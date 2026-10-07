@@ -24,7 +24,7 @@ _handlers = []
 
 
 def settings(context):
-    return context.window_manager.xplane_sidebar
+    return context.window_manager.xplane_panels
 
 
 def clickable(context) -> List[bpy.types.Object]:

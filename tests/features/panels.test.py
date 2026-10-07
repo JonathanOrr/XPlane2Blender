@@ -1,5 +1,5 @@
 """
-The X-Plane sidebar: every panel, card and menu draws for every kind of object without a wrong property,
+The X-Plane panels of the Properties editor: every panel, card and menu draws for every kind of object without a wrong property,
 operator or icon, the Clickable card shows what the classic panel showed, and its operators do what they say
 """
 
@@ -9,7 +9,7 @@ import bpy
 
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
-from io_xplane2blender import xplane_sidebar as S
+from io_xplane2blender import xplane_panels as S
 from io_xplane2blender import xplane_helpers, xplane_ui
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests import test_creation_helpers
@@ -61,8 +61,9 @@ class TestSidebar(XPlaneTestCase):
     def test_draws_with_nothing_selected(self) -> None:
         make_active()
         drawn = self.draw_everything()
-        self.assertIn("XPLANE_PT_selected", drawn)
+        self.assertNotIn("XPLANE_PT_object", drawn)
         self.assertNotIn("XPLANE_PT_click", drawn)
+        self.assertIn("XPLANE_PT_export", drawn)
 
     def test_every_kind_of_control_draws(self) -> None:
         obj = mesh("knob")
@@ -149,7 +150,7 @@ class TestSidebar(XPlaneTestCase):
         make_active(a, b)
         layout = draw_panel(S.XPLANE_PT_click)
         self.assertIn("xplane.copy_to_selected", layout.operators())
-        self.assertTrue(any("2 selected" in text for text in draw_panel(S.XPLANE_PT_selected).labels()))
+        self.assertTrue(any("2 selected" in text for text in draw_panel(S.XPLANE_PT_object).labels()))
 
     def test_files_list(self) -> None:
         mesh("in file")
@@ -163,23 +164,39 @@ class TestSidebar(XPlaneTestCase):
         flags, _ = S.XPLANE_UL_files.filter_items(ul, bpy.context, bpy.data, "collections")
         self.assertEqual(2, sum(1 for f in flags if f))
         bpy.data.collections["Not a file"].xplane.layer.name = ""
-        bpy.context.window_manager.xplane_sidebar.show_all_collections = True
+        bpy.context.window_manager.xplane_panels.show_all_collections = True
         flags, _ = S.XPLANE_UL_files.filter_items(ul, bpy.context, bpy.data, "collections")
         self.assertEqual(2, sum(1 for f in flags if f))
         for collection in bpy.data.collections:
             S.XPLANE_UL_files.draw_item(ul, bpy.context, FakeLayout(), bpy.data, collection, 0, None, "", 0)
 
-    def test_classic_panels_only_when_asked(self) -> None:
-        make_active(mesh("thing"))
-        self.assertFalse(xplane_ui.OBJECT_PT_xplane.poll(bpy.context))
-        if S.preferences() is None:
-            # The test runner loads the add-on without listing it in the preferences
-            return
-        S.preferences().classic_panels = True
-        try:
-            self.assertTrue(xplane_ui.OBJECT_PT_xplane.poll(bpy.context))
-        finally:
-            S.preferences().classic_panels = False
+    def test_each_panel_is_in_its_tab(self) -> None:
+        tabs = {
+            "XPLANE_PT_object": "object",
+            "XPLANE_PT_click": "object",
+            "XPLANE_PT_light": "object",
+            "XPLANE_PT_surface": "material",
+            "XPLANE_PT_collection": "collection",
+            "XPLANE_PT_export": "scene",
+            "XPLANE_PT_file": "scene",
+            "XPLANE_PT_check": "scene",
+            "XPLANE_PT_tools": "scene",
+            "VIEW3D_PT_xplane_bulk_edit": "scene",
+            "VIEW3D_PT_xplane_table": "scene",
+        }
+        for name, tab in tabs.items():
+            panel = getattr(bpy.types, name)
+            self.assertEqual(("PROPERTIES", tab), (panel.bl_space_type, panel.bl_context), name)
+        # The earlier panels are drawn inside "Every Setting (Classic)" instead of on their own
+        for name in ("OBJECT_PT_xplane", "MATERIAL_PT_xplane", "DATA_PT_xplane", "SCENE_PT_xplane", "RENDER_PT_xplane"):
+            self.assertFalse(hasattr(bpy.types, name), name)
+
+    def test_collection_tab(self) -> None:
+        panel_layer = bpy.context.view_layer.layer_collection.children["Panel"]
+        bpy.context.view_layer.active_layer_collection = panel_layer
+        layout = draw_panel(S.XPLANE_PT_collection)
+        self.assertIn("xplane.show_file", layout.operators())
+        self.assertIn("name", layout.props())
 
 
 runTestCases([TestSidebar])
