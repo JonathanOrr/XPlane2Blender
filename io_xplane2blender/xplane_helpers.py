@@ -3,7 +3,7 @@ import itertools
 import os
 import re
 from datetime import timezone
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 from pathlib import Path
 
 import bpy
@@ -695,6 +695,10 @@ class XPlaneLogger:
     def hasErrors(self):
         return self.hasOfType("error")
 
+    def errorCount(self) -> int:
+        """Lets a step check for errors of its own, ignoring earlier files in the same export"""
+        return len(self.findErrors())
+
     def findWarnings(self):
         return self.findOfType("warning")
 
@@ -745,3 +749,34 @@ class XPlaneLogger:
 
 
 logger = XPlaneLogger()
+
+
+class UnfinishedWork:
+    """
+    Settings an author has started but not filled in yet, such as a light level without a dataref.
+    Exporting work in progress is normal, so they are left out of the OBJ and counted for the export summary
+    instead of being errors that stop the export
+    """
+
+    def __init__(self):
+        self.items = {}  # type: Dict[str, List[str]]
+
+    def clear(self) -> None:
+        self.items.clear()
+
+    def add(self, what: str, name: str) -> None:
+        """what is plural, as the summary shows it after the count: 'light levels without a dataref'"""
+        names = self.items.setdefault(what, [])
+        if name not in names:
+            names.append(name)
+
+    def summary(self) -> str:
+        return ", ".join(f"{len(names)} {what}" for what, names in self.items.items())
+
+    def details(self) -> List[str]:
+        return [
+            f"{what}: {', '.join(sorted(names))}" for what, names in self.items.items()
+        ]
+
+
+unfinished = UnfinishedWork()

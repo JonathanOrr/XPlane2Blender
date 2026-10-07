@@ -10,7 +10,9 @@ __dirname__ = os.path.dirname(__file__)
 
 class TestNoMaterial(XPlaneTestCase):
     def test_no_material(self):
+        # A mesh without a material is work in progress, not an error: it exports with the default material state
         out = self.exportLayer(0)
-        self.assertLoggerErrors(1)
+        self.assertLoggerErrors(0)
+        self.assertIn("TRIS", out)
 
 runTestCases([TestNoMaterial])

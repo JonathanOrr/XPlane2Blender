@@ -76,6 +76,9 @@ def createFilesFromBlenderRootObjects(
         except NotExportableRootError as e:
             pass
         else:
+            xplane_file.collection_errors = (
+                logger.errorCount() - xplane_file.errors_at_start
+            )
             xplane_files.append(xplane_file)
 
     # Without this the cache never gets cleared
@@ -100,6 +103,8 @@ def createFileFromBlenderRootObject(
     """
     if not xplane_helpers.is_exportable_root(potential_root, view_layer):
         raise NotExportableRootError(f"{potential_root.name} is not a root")
+    # Errors logged from here on belong to this file; an earlier file's errors must not stop this one
+    errors_at_start = logger.errorCount()
     nested_roots: Set[PotentialRoot] = set()
 
     def find_nested_roots(potential_roots: List[PotentialRoot]):
@@ -129,6 +134,7 @@ def createFileFromBlenderRootObject(
     filename = layer_props.name if layer_props.name else exportable_root.name
 
     xplane_file = XPlaneFile(filename, layer_props)
+    xplane_file.errors_at_start = errors_at_start
     xplane_file.create_xplane_bone_hiearchy(exportable_root)
     bpy.context.scene.frame_set(1)
     assert xplane_file.rootBone, "Root Bone was not assigned during __init__ function"
@@ -230,6 +236,10 @@ class XPlaneFile:
         self.commands = XPlaneCommands(self)
         self.filename = filename
         self.options = options
+        # How many errors the logger had before this file was collected, and how many collecting it added.
+        # Only this file's own errors stop it, so one file with a problem never stops the others
+        self.errors_at_start = logger.errorCount()
+        self.collection_errors = 0
 
         self.lights = XPlaneVLights()
         self.mesh = XPlaneMesh()
@@ -671,7 +681,8 @@ class XPlaneFile:
                         )
                     )
 
-        if logger.hasErrors():
+        # Only this file's errors count, an earlier file's errors must not stop this one
+        if logger.errorCount() > self.errors_at_start:
             return False
 
         return True
@@ -686,7 +697,8 @@ class XPlaneFile:
         if self.options.texture_map_material_gloss and self.options.texture_map_gloss:
             logger.error(f'"Material / Gloss" and "Gloss" provided in "{self.options.name}", use only one.')
 
-        if logger.hasErrors():
+        # Only this file's errors count, an earlier file's errors must not stop this one
+        if logger.errorCount() > self.errors_at_start:
             return False
 
         return True
@@ -743,7 +755,8 @@ class XPlaneFile:
                                 )
                             )
 
-        if logger.hasErrors():
+        # Only this file's errors count, an earlier file's errors must not stop this one
+        if logger.errorCount() > self.errors_at_start:
             return False
 
         return True

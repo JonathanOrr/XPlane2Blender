@@ -3,7 +3,7 @@
 import os
 import os.path
 import sys
-from typing import IO, Any, Optional
+from typing import IO, Any, List, Optional
 
 import bpy
 import mathutils
@@ -12,7 +12,7 @@ import io_xplane2blender
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from .xplane_config import getDebug
-from .xplane_helpers import XPlaneLogger, logger
+from .xplane_helpers import XPlaneLogger, logger, unfinished
 from .xplane_types import xplane_file
 
 
@@ -98,36 +98,28 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
         bpy.context.scene.frame_set(frame=1)
         bpy.context.view_layer.update()
 
+        unfinished.clear()
         xplaneFiles = xplane_file.createFilesFromBlenderRootObjects(
-            bpy.context.scene, 
+            bpy.context.scene,
             bpy.context.view_layer,
-            self.only_selected_roots            
+            self.only_selected_roots
         )
+        # A file with errors is not written, but the others still are:
+        # one panel with a problem must not stop the rest of the aircraft from exporting
+        written, failed = [], []
         for xplaneFile in xplaneFiles:
-            if not self._writeXPlaneFile(xplaneFile, export_directory):
-                if logger.hasErrors():
-                    self._endLogging()
-                    showLogDialog()
-
-                if (
-                    bpy.context.scene.xplane.plugin_development
-                    and bpy.context.scene.xplane.dev_continue_export_on_error
-                ):
-                    logger.info(
-                        "Continuing export despite error in %s" % xplaneFile.filename
-                    )
-                    logger.clearMessages()
-                    continue
-                else:
-                    return {"CANCELLED"}
+            if xplaneFile.collection_errors:
+                failed.append(xplaneFile.filename)
+                continue
+            result = self._writeXPlaneFile(xplaneFile, export_directory)
+            if result == "written":
+                written.append(xplaneFile.filename)
+            elif result == "failed":
+                failed.append(xplaneFile.filename)
 
         # return to stored frame
         bpy.context.scene.frame_set(frame=currentFrame)
         bpy.context.view_layer.update()
-
-        # TODO: enable when log dialog box is working
-        # if logger.hasErrors() or logger.hasWarnings():
-        #     showLogDialog()
 
         if not xplaneFiles:
             logger.error(
@@ -135,13 +127,34 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
             )
             self._endLogging()
             return {"CANCELLED"}
-        elif logger.hasErrors():
-            self._endLogging()
+
+        self._reportSummary(written, failed)
+        self._endLogging()
+        if failed:
+            showLogDialog()
+        if failed and not written:
             return {"CANCELLED"}
-        elif not logger.hasErrors() and xplaneFiles:
+        if not failed:
             logger.success("Export finished without errors")
-            self._endLogging()
-            return {"FINISHED"}
+        return {"FINISHED"}
+
+    def _reportSummary(self, written: List[str], failed: List[str]) -> None:
+        """One line in the status bar, never a popup: exporting work in progress is normal"""
+        parts = [f"Exported {len(written)} file(s)"]
+        if failed:
+            parts.append(
+                f"{len(failed)} not written because of errors ({', '.join(failed)}), see XPlane2Blender.log"
+            )
+        if unfinished.items:
+            parts.append("left out as unfinished: " + unfinished.summary())
+            for line in unfinished.details():
+                logger.info("Left out as unfinished, " + line)
+        summary = "; ".join(parts)
+        logger.info(summary)
+        try:
+            self.report({"WARNING"} if failed else {"INFO"}, summary)
+        except Exception:  # noqa: BLE001 - a status line must never break an export
+            pass
 
     def _startLogging(self):
         debug = getDebug()
@@ -179,16 +192,17 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
 
     def _writeXPlaneFile(
         self, xplaneFile: xplane_file.XPlaneFile, directory: str
-    ) -> bool:
+    ) -> str:
         """
         Finally, at the end of it all, attempts to write an XPlaneFile.
-        Returns False if there was a problem, else True
+        Returns "written", "empty" when the root has nothing to export, or "failed" when this file had errors
         """
         debug = getDebug()
+        errors_before = logger.errorCount()
 
         # only write layers that contain objects
         if not xplaneFile.get_xplane_objects():
-            return False
+            return "empty"
 
         if xplaneFile.filename.find("//") == 0:
             xplaneFile.filename = xplaneFile.filename.replace("//", "", 1)
@@ -201,7 +215,7 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
                 "Bad export path %s: File paths must be relative to the .blend file"
                 % (xplaneFile.filename)
             )
-            return False
+            return "failed"
 
         # Get the relative path
         # Append .obj if needed
@@ -216,8 +230,8 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
         )
         out = xplaneFile.write()
 
-        if logger.hasErrors():
-            return False
+        if logger.errorCount() > errors_before:
+            return "failed"
 
         plugin_development = bpy.context.scene.xplane.plugin_development
         dry_run = bpy.context.scene.xplane.dev_export_as_dry_run
@@ -226,6 +240,7 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
                 os.makedirs(os.path.dirname(fullpath), exist_ok=True)
             except OSError as e:
                 logger.error(e)
+                return "failed"
             else:
                 with open(fullpath, "w") as objFile:
                     logger.info("Writing %s" % fullpath)
@@ -234,7 +249,7 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
         else:
             logger.info('Skipped writing %s due to "Dry Run"' % (fullpath))
 
-        return True
+        return "written"
 
     def invoke(self, context, event):
         """

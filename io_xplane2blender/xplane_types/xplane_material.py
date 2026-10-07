@@ -12,6 +12,7 @@ from ..xplane_helpers import (
     effective_normal_metalness_draped,
     floatToStr,
     logger,
+    unfinished,
 )
 from .xplane_attribute import XPlaneAttribute
 from .xplane_attributes import XPlaneAttributes
@@ -197,7 +198,11 @@ class XPlaneMaterial:
             self.collectCustomAttributes(mat)
 
         else:
-            logger.error("%s: No Material found." % self.blenderObject.name)
+            # A part that has no material yet still exports, with X-Plane's default material state
+            unfinished.add(
+                "meshes without a material (default material used)",
+                self.blenderObject.name,
+            )
 
         self.attributes.order()
 
@@ -295,6 +300,13 @@ class XPlaneMaterial:
     def collectLightLevelAttributes(self, mat: bpy.types.Material) -> None:
         xplane_version = int(bpy.context.scene.xplane.version)
         if (
+            mat.xplane.lightLevel
+            and not self.xplaneObject.blenderObject.xplane.lightLevel
+            and not mat.xplane.lightLevel_dataref.strip()
+        ):
+            # Not filled in yet. Without a dataref the line would be invalid, so leave it out
+            unfinished.add("light levels without a dataref", f"material {mat.name}")
+        elif (
             mat.xplane.lightLevel
             and not self.xplaneObject.blenderObject.xplane.lightLevel
         ):

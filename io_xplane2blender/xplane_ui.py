@@ -420,7 +420,7 @@ def scene_dev_layout(layout: bpy.types.UILayout, scene: bpy.types.Scene):
     if scene.xplane.plugin_development:
         dev_box_column = dev_box.column()
         dev_box_column.prop(scene.xplane, "dev_enable_breakpoints")
-        dev_box_column.prop(scene.xplane, "dev_continue_export_on_error")
+        # dev_continue_export_on_error is the normal behaviour now: a file with errors never stops the others
         dev_box_column.prop(scene.xplane, "dev_export_as_dry_run")
         # Exact same operator, more convient place
         dev_box_column.operator("scene.export_to_relative_dir", icon="EXPORT")
