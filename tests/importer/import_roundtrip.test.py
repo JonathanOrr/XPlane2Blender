@@ -303,4 +303,34 @@ class TestImportRoundTrip(XPlaneTestCase):
         self.assertIn(["ATTR_light_level", "0", "1", "sim/lit"], lines)
 
 
+    def test_detail_textures_become_settings_and_export_again(self) -> None:
+        for name in ("leather_decal.png", "grain.png", "panel_mod.png"):
+            write_png(self.folder.join(name))
+        header = (
+            "TEXTURE tex.png\nTEXTURE_MODULATOR panel_mod.png\n"
+            "DECAL_PARAMS 4 0 0.5 0 0 0 0 1 0 0 0 0 0 0 grain.png\n"
+            "NORMAL_DECAL_PARAMS 6 0 0 0 0 1 0 leather_decal.png 0.74\n"
+            "DECAL_PARAMS 2 0.5 0 0 0 0 0 1 0 0 0 0 0 0 grain.png\n"
+        )
+        text = obj_text("", header=header, vertices=HOUSE_VT, indices=HOUSE_IDX, tris="TRIS 0 6\n")
+        built = import_obj_file(write_file(self.folder.join("seat.obj"), text), ImportOptions(make_exportable=True), ImportReport())
+        layer = built.collection.xplane.layer
+        self.assertEqual("leather_decal.png", os.path.basename(layer.file_normal_decal1))
+        self.assertEqual((6.0, 1.0), (layer.normal_decal1_scale, layer.normal_decal1_modulator))
+        self.assertEqual((4.0, 0.5, 1.0), (layer.decal1_scale, layer.rgb_decal1_red_key, layer.rgb_decal1_constant))
+        self.assertEqual("panel_mod.png", os.path.basename(layer.texture_modulator))
+        # A dither the settings can't hold stays an extra line, written back as it was
+        self.assertEqual("", layer.file_decal2)
+        self.assertEqual(["DECAL_PARAMS"], [a.name for a in layer.customAttributes])
+
+        exported = self.exportExportableRoot(built.collection)
+        self.assertLoggerErrors(0)
+        lines = [line.split() for line in exported.splitlines()]
+        normal = next(line for line in lines if line[:1] == ["NORMAL_DECAL_PARAMS"])
+        self.assertEqual(["6", "0", "0", "0", "0", "1", "0"], [f"{float(v):g}" for v in normal[1:8]])
+        self.assertTrue(normal[8].endswith("leather_decal.png"))
+        decals = [line for line in lines if line[:1] == ["DECAL_PARAMS"]]
+        self.assertEqual(2, len(decals))
+        self.assertTrue(any(line[:1] == ["TEXTURE_MODULATOR"] and line[1].endswith("panel_mod.png") for line in lines))
+
 runTestCases([TestImportRoundTrip])
