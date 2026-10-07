@@ -224,6 +224,15 @@ def vec_x_to_b(v) -> mathutils.Vector:
     return mathutils.Vector((v[0], -v[2], v[1]))
 
 
+def material_nodes(material: Optional[bpy.types.Material]) -> Optional[bpy.types.NodeTree]:
+    """The material's shader nodes when it uses them. Blender 5 always does, and deprecates use_nodes"""
+    if material is None or material.node_tree is None:
+        return None
+    if bpy.app.version < (5, 0, 0) and not material.use_nodes:
+        return None
+    return material.node_tree
+
+
 def get_action_fcurves(id_data: bpy.types.ID) -> List[bpy.types.FCurve]:
     """
     Returns the FCurves animating id_data through its assigned Action,

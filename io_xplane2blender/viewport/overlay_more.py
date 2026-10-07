@@ -90,7 +90,7 @@ def draw_motion_labels(context) -> None:
             text.at(keys[i], f"{motion.values[i]:g}", MOTION_COLOR)
         if obj == context.object:
             now = motion.value_at_frame(frame)
-            text.at(draw.box_center(obj), f"{short_name(motion.dataref)} = {now:.3g}", (1, 1, 1, 1), dy=10)
+            text.at(draw.box_center(obj), f"{short_name(motion.dataref)} = {now:.3g}", (1, 1, 1, 1), dy=-22)
     text.done()
 
 

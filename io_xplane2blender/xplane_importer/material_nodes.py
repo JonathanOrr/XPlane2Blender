@@ -10,7 +10,8 @@ class MaterialNodes:
     """The shader node half of MaterialFactory"""
 
     def _build_nodes(self, mat: bpy.types.Material, state: dict) -> None:
-        mat.use_nodes = True
+        if bpy.app.version < (5, 0, 0):
+            mat.use_nodes = True
         tree = mat.node_tree
         tree.nodes.clear()
         out = tree.nodes.new("ShaderNodeOutputMaterial")

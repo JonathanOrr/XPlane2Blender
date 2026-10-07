@@ -12,7 +12,7 @@ from typing import Dict, Iterable, List, Optional, Tuple, Union
 import bpy
 
 from io_xplane2blender import xplane_constants as C
-from io_xplane2blender.xplane_helpers import get_action_fcurves, get_collections_in_scene
+from io_xplane2blender.xplane_helpers import get_action_fcurves, get_collections_in_scene, material_nodes
 
 FileOwner = Union[bpy.types.Collection, bpy.types.Object]
 
@@ -133,9 +133,10 @@ def _linked_image(node_input) -> Optional[bpy.types.Image]:
 def material_images(material: bpy.types.Material) -> Dict[str, bpy.types.Image]:
     """Day, night and normal images of a material set up like the importer does (Principled BSDF)"""
     found = {}
-    if not material or not material.use_nodes or not material.node_tree:
+    tree = material_nodes(material)
+    if tree is None:
         return found
-    for node in material.node_tree.nodes:
+    for node in tree.nodes:
         if node.type != "BSDF_PRINCIPLED":
             continue
         for key, input_names in (

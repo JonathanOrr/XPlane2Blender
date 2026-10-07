@@ -96,7 +96,8 @@ class TestViewportMotion(XPlaneTestCase):
         self.assertEqual(2, len(hinge))
         matrix, radius = lever.turn_matrix(obj, motion)
         self.assertAlmostEqual(1.0, radius, places=4)
-        self.assertLess((matrix.col[0].xyz - Vector((1, 0, 0))).length, 1e-4)
+        # The dial counts from its Y axis, which points at the part at the first keyframe
+        self.assertLess((matrix.col[1].xyz - Vector((1, 0, 0))).length, 1e-4)
 
     def test_lever_handle_shows_only_when_asked_for_an_animated_part(self) -> None:
         obj = animated("flap", ((1, 0.0, (0, 0, 0)), (2, 1.0, (0, math.radians(30), 0))))

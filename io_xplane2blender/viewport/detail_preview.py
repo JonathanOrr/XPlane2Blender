@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 import bpy
 
 from io_xplane2blender import xplane_inspector as I
-from io_xplane2blender.xplane_helpers import is_path_decal_lib
+from io_xplane2blender.xplane_helpers import is_path_decal_lib, material_nodes
 
 PREFIX = I.PREVIEW_PREFIX
 FROM_NODE, FROM_SOCKET = I.PREVIEW_FROM_NODE, I.PREVIEW_FROM_SOCKET
@@ -28,9 +28,10 @@ def is_preview(node) -> bool:
 
 
 def _bsdf(material: bpy.types.Material):
-    if not material or not material.use_nodes or not material.node_tree:
+    tree = material_nodes(material)
+    if tree is None:
         return None
-    return next((n for n in material.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
+    return next((n for n in tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
 
 
 def _socket(sockets, name: str, kind: Optional[str] = None):
