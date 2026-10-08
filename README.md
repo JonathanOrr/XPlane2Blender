@@ -165,7 +165,7 @@ The options are in the side panel of the file browser:
 |---|---|
 | Livery | Uses the textures of one of the aircraft's liveries instead of the default ones |
 | Textures and Materials | Loads the images and builds shader nodes (albedo, normal map, gloss, metalness, alpha cutoff, the `_LIT` texture) |
-| Animations | Creates the dataref animations (Empties with keyframes) and show/hide settings |
+| Animations | Creates the dataref animations (keyframes on the parts) and show/hide settings |
 | Manipulators | Sets up the clickable manipulators, with their commands, datarefs and tooltips |
 | Lights | Creates lights with their XPlane2Blender settings. See "How lights come in" below |
 | All LODs | Imports every level of detail instead of only the first |
@@ -176,7 +176,8 @@ The options are in the side panel of the file browser:
 | Damage / Part Attached / Not Drawn Objects | Also brings in objects that are normally left out (they only show when a part breaks, move with a wing or gear part, or are drawn nowhere) |
 
 What you get:
-- Each OBJ becomes a collection, grouped under the aircraft's collection. Animated parts sit under Empties named after their datarefs, with the scene opening in the parked pose (landing gear down, flaps in, and so on)
+- Each OBJ becomes a collection, grouped under the aircraft's collection, with the scene opening in the parked pose (landing gear down, flaps in, and so on)
+- **The parts carry their own animations**, the way you would build them: the pivot is the part's origin and the dataref and keys are on the part, so a knob is one object that you select and click. A part pushed in and turned by the same dataref is one object, and so is a part turned about up to three axes by one dataref. A show / hide that holds a single part is on the part. Where several parts share an animation the biggest one carries it and the others hang on it. An Empty is only made where one is needed: the outer animations of a part under animations of different datarefs, or a static turn that a panel's parts share (a ` frame` Empty, which holds the tilt of the panel, so the keys of every button in it are along the panel's own axes). The imported A330 went from 5,694 Empties to 654 (of 9,079 objects, now 4,039), and the exported A321XLR cockpit OBJs from 802 to 24. Animations with nothing in them (no part, no light) are left out and counted in the import report
 - Animations are keyframed so that **frame 1 is the parked pose**, with linear interpolation like X-Plane
 - Meshes with different manipulators, light levels or materials are separate objects, so everything can be edited and exported again
 - Anything the add-on has no setting for is kept as a custom attribute, or reported as a warning, never silently dropped

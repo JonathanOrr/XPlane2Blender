@@ -1,6 +1,5 @@
 """Builds the Blender data for one parsed OBJ"""
 
-import math
 import os
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
@@ -8,17 +7,19 @@ from typing import Dict, List, Optional, Tuple
 import bpy
 import mathutils
 
-from io_xplane2blender import xplane_constants, xplane_display_sizes, xplane_helpers
+from io_xplane2blender import xplane_constants, xplane_display_sizes
 
+from . import motion as motions
 from . import transforms as T
 from .common import ImportOptions, ImportReport
 from .decals import apply_decals
-from .defaults import nearest_key_index, show_hide_visible
+from .defaults import show_hide_visible
 from .materials import MaterialFactory
-from .textures import TextureResolver
 from .mesh_builder import build_mesh
+from .motion_pass import MotionPass, key_motions
 from .obj_builder_parts import PartsBuilder
 from .obj_parser import AnimNode, AnimOp, Extra, Light, ObjFile, TrisRun
+from .textures import TextureResolver
 
 # State keys that belong to the Blender object, the rest belong to the material
 _OBJECT_STATE_KEYS = {"manip", "manip_extras", "manip_detents", "light_level"}
@@ -84,6 +85,13 @@ class ObjBuilder(PartsBuilder):
         self._groups: Dict[tuple, _Group] = {}
         self._first_lod = obj.lods[0] if obj.lods else None
         self._hidden = set()  # names of objects X-Plane would not draw by default
+        self._motions: Dict[bpy.types.Object, motions.Motion] = {}
+        self._frames: Dict[tuple, bpy.types.Object] = {}
+        self._holders: List[bpy.types.Object] = []  # the Empties of show and hide lines
+        # What a part is called for its animation, and where each object is, as the numbers it was made from
+        self._names: Dict[bpy.types.Object, str] = {}
+        self._unnamed = set()  # meshes that nothing in the file names
+        self._exact: Dict[bpy.types.Object, mathutils.Matrix] = {}
         self._light_count = 0
 
     # ------------------------------------------------------------------------------------
@@ -95,6 +103,7 @@ class ObjBuilder(PartsBuilder):
 
         self._walk(self.obj.root, None, self.base_matrix, self.stem)
         self._flush_groups()
+        self._carry_animations()
         self._fit_empties()
         self._setup_layer()
         self.report.files_imported += 1
@@ -151,9 +160,35 @@ class ObjBuilder(PartsBuilder):
                 if self._wanted_lod(child.lod):
                     self._add_extra(child, parent, static)
 
+    def _carry_animations(self) -> None:
+        """The parts carry their own animations where they can, then every animation is keyed"""
+        if self.options.import_animations:
+            carrying = MotionPass(
+                self.objects,
+                self._motions,
+                self._holders,
+                list(self._frames.values()),
+                self._names,
+                self._exact,
+                self._unnamed,
+            )
+            self.report.objects_imported -= carrying.run()
+            if carrying.pruned:
+                self.report.info(
+                    f"{self.stem}: {carrying.pruned} animation(s) with nothing in them were left out"
+                )
+        key_motions(
+            self._motions,
+            lambda obj, path, loop: self._add_dataref(
+                obj, path, "transform", loop=loop
+            ),
+        )
+
     def _fit_empties(self) -> None:
         """An aircraft has thousands of empties, so each is drawn at the size of the parts hanging on it"""
-        sizes = xplane_display_sizes.part_sizes(o for o in self.objects if o.type == "MESH")
+        sizes = xplane_display_sizes.part_sizes(
+            o for o in self.objects if o.type == "MESH"
+        )
         xplane_display_sizes.fit_empty_sizes(
             (o for o in self.objects if o.type == "EMPTY"), sizes, self.options.scale
         )
@@ -168,7 +203,9 @@ class ObjBuilder(PartsBuilder):
 
         if shows:
             # Visibility covers everything in the block, so it goes on the outermost Empty
+            parent, pending = self._framed(parent, pending, label)
             holder = self._make_empty(label + " visibility", parent, pending)
+            self._holders.append(holder)
             for vis in shows:
                 self._add_dataref(
                     holder,
@@ -209,7 +246,8 @@ class ObjBuilder(PartsBuilder):
         empty.empty_display_size = xplane_display_sizes.MAX_SIZE * self.options.scale
         self.collection.objects.link(empty)
         empty.parent = parent
-        empty.matrix_basis = T.matrix_to_blender(matrix_xp)
+        self._exact[empty] = T.matrix_to_blender(matrix_xp)
+        empty.matrix_basis = self._exact[empty]
         if parent is not None and parent.name in self._hidden:
             self._hide(empty)
         self.objects.append(empty)
@@ -219,86 +257,43 @@ class ObjBuilder(PartsBuilder):
     def _make_dynamic_empty(
         self, op: AnimOp, parent, pending: mathutils.Matrix, label: str
     ) -> bpy.types.Object:
+        """The Empty of an animation. It is keyed once it is known which object carries the animation"""
         name = f"{label} {op.dataref.split('/')[-1]}"
+        parent, pending = self._framed(parent, pending, label)
         pending_bl = T.matrix_to_blender(pending)
-        keys = sorted(op.keys, key=lambda k: k[0])
-        # The key nearest the dataref's default value goes on frame 1, so the scene opens in the parked pose
-        first_frame = 1 - nearest_key_index([k[0] for k in keys], op.dataref)
         if op.kind == "trans":
-            # Rotation in the static part goes on a parent, translation is folded into the keys
-            if T.has_rotation(pending_bl):
-                parent = self._make_empty(name + " base", parent, pending)
-                offset = mathutils.Vector((0, 0, 0))
-            else:
-                offset = pending_bl.to_translation()
-            empty = self._make_empty(name, parent, mathutils.Matrix.Identity(4))
-            for i, (value, vec) in enumerate(keys):
-                empty.location = offset + T.vec_to_blender(vec) * self.options.scale
-                self._key(empty, "location", first_frame + i, op, value)
-        else:
-            if T.has_rotation(pending_bl):
-                parent = self._make_empty(name + " base", parent, pending)
-                location_xp = mathutils.Matrix.Identity(4)
-            else:
-                location_xp = pending
-            empty = self._make_empty(name, parent, location_xp)
-            index, sign = T.principal_axis(op.axis)
-            axis_bl = (
-                T.vec_to_blender(op.axis).normalized()
-                if mathutils.Vector(op.axis).length
-                else mathutils.Vector((0, 0, 1))
+            # The place of the part is folded into the keys
+            motion = motions.from_translation(
+                op, pending_bl.to_translation(), self.options.scale
             )
-            if index < 0:
-                empty.rotation_mode = "AXIS_ANGLE"
-            for i, (value, (angle,)) in enumerate(keys):
-                if index >= 0:
-                    empty.rotation_euler = (0, 0, 0)
-                    empty.rotation_euler[index] = sign * math.radians(angle)
-                    self._key(
-                        empty,
-                        "rotation_euler",
-                        first_frame + i,
-                        op,
-                        value,
-                        array_index=index,
-                    )
-                else:
-                    empty.rotation_axis_angle = (math.radians(angle), *axis_bl)
-                    self._key(empty, "rotation_axis_angle", first_frame + i, op, value)
-        self._finish_animation(empty)
+            empty = self._make_empty(name, parent, mathutils.Matrix.Identity(4))
+        else:
+            motion = motions.from_rotation(op)
+            empty = self._make_empty(name, parent, pending)
+        self._motions[empty] = motion
+        if label == self.stem:
+            # Nothing in the file names the part, so its dataref does
+            self._names[empty] = empty.name
         self.report.animations_imported += 1
         return empty
 
-    def _key(
-        self,
-        empty,
-        data_path: str,
-        frame: int,
-        op: AnimOp,
-        value: float,
-        array_index: int = -1,
-    ) -> None:
-        if not empty.xplane.datarefs:
-            self._add_dataref(empty, op.dataref, "transform", loop=op.loop)
-        dataref = empty.xplane.datarefs[0]
-        dataref.value = value
-        dataref.keyframe_insert(data_path="value", frame=frame)
-        if array_index >= 0:
-            empty.keyframe_insert(data_path=data_path, index=array_index, frame=frame)
-        else:
-            empty.keyframe_insert(data_path=data_path, frame=frame)
-
-    @staticmethod
-    def _finish_animation(empty: bpy.types.Object) -> None:
-        """X-Plane interpolates linearly between keys"""
-        try:
-            fcurves = xplane_helpers.get_action_fcurves(empty)
-        except Exception:
-            fcurves = []
-        for fcurve in fcurves:
-            for point in fcurve.keyframe_points:
-                point.interpolation = "LINEAR"
-            fcurve.update()
+    def _framed(self, parent, pending: mathutils.Matrix, label: str):
+        """
+        A static turn before an animation is the frame the part moves in, an Empty that the parts of a panel share.
+        Returns the frame (or the parent) and where the part is in it
+        """
+        if not T.has_rotation(T.matrix_to_blender(pending)):
+            return parent, pending
+        turn = pending.to_3x3().to_4x4()
+        key = (
+            id(parent),
+            tuple(round(turn[i][j], 5) for i in range(3) for j in range(3)),
+        )
+        frame = self._frames.get(key)
+        if frame is None:
+            frame = self._make_empty(label + " frame", parent, turn)
+            self._frames[key] = frame
+        return frame, turn.inverted() @ pending
 
     def _hide(self, obj: bpy.types.Object) -> None:
         """Hides what X-Plane does not draw with the datarefs at their default values"""
@@ -314,7 +309,7 @@ class ObjBuilder(PartsBuilder):
         v1: float = 0.0,
         v2: float = 0.0,
         loop: float = 0.0,
-    ) -> None:
+    ):
         dataref = obj.xplane.datarefs.add()
         dataref.path = path
         dataref.anim_type = {
@@ -326,6 +321,7 @@ class ObjBuilder(PartsBuilder):
             dataref.show_hide_v1 = v1
             dataref.show_hide_v2 = v2
         dataref.loop = max(0.0, loop)
+        return dataref
 
     # ---- triangles -----------------------------------------------------------------------
     def _add_run(
@@ -368,9 +364,12 @@ class ObjBuilder(PartsBuilder):
                 mesh.materials.append(material)
             obj_name = self._object_name(group)
             blender_obj = bpy.data.objects.new(obj_name, mesh)
+            if obj_name == self._clean(self.stem):
+                self._unnamed.add(blender_obj)
             self.collection.objects.link(blender_obj)
             blender_obj.parent = group.parent
-            blender_obj.matrix_basis = T.matrix_to_blender(group.matrix_xp)
+            self._exact[blender_obj] = T.matrix_to_blender(group.matrix_xp)
+            blender_obj.matrix_basis = self._exact[blender_obj]
             if group.parent is not None and group.parent.name in self._hidden:
                 self._hide(blender_obj)
             self._flag_lod(blender_obj, group.lod)
@@ -425,7 +424,9 @@ class ObjBuilder(PartsBuilder):
             layer.normal_metalness = True
         if "BLEND_GLASS" in obj.globals:
             layer.blend_glass = True
-        decals = apply_decals(layer, obj, lambda path: self.resolver.resolve(path) or path)
+        decals = apply_decals(
+            layer, obj, lambda path: self.resolver.resolve(path) or path
+        )
         for directive, entries in obj.globals.items():
             if directive in (
                 "GLOBAL_cockpit_lit",

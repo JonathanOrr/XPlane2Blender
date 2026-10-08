@@ -33,6 +33,8 @@ def all_datarefs(obj):
         for op in node.ops:
             if not op.is_static:
                 keys.setdefault(op.dataref, set()).update(k[0] for k in op.keys)
+        for line in node.visibility:
+            keys.setdefault(line.dataref, set()).update((line.v1, line.v2))
         for child in node.children:
             if isinstance(child, AnimNode):
                 visit(child)
@@ -256,6 +258,140 @@ class TestImportRoundTrip(XPlaneTestCase):
     def test_show_and_hide_survive(self) -> None:
         self.assert_round_trip(
             "ANIM_begin\nANIM_show 0.5 1.5 sim/vis\nTRIS 0 6\nANIM_end\nANIM_begin\nANIM_hide 0.5 1.5 sim/vis\nTRIS 6 6\nANIM_end\n"
+        )
+
+    # The parts carry their own animations, in a frame where a static turn comes first, and one object does
+    # what one dataref does to a part. All of it must still be the same for X-Plane
+    @staticmethod
+    def rotate(axis: str, dataref: str, keys=((0, 0), (1, 70))) -> str:
+        lines = "".join(f"ANIM_rotate_key {v} {a}\n" for v, a in keys)
+        return f"ANIM_rotate_begin {axis} {dataref}\n{lines}ANIM_rotate_end\n"
+
+    @staticmethod
+    def translate(dataref: str, keys=((0, (0, 0, 0)), (1, (0.5, 1, 2)))) -> str:
+        lines = "".join(f"ANIM_trans_key {v} {x} {y} {z}\n" for v, (x, y, z) in keys)
+        return f"ANIM_trans_begin {dataref}\n{lines}ANIM_trans_end\n"
+
+    def test_a_static_turn_then_a_rotation(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 1 2 -1 1 2 -1\nANIM_rotate 0 1 0 30 30\nANIM_rotate 1 0 0 -20 -20\n"
+            + self.rotate("0 0 1", "sim/a")
+            + "TRIS 0 6\nTRIS 6 6\nANIM_end\n"
+        )
+
+    def test_a_static_turn_then_a_rotation_about_an_arbitrary_axis(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 1 2 -1 1 2 -1\nANIM_rotate 0 1 0 30 30\n"
+            + self.rotate("1 1 0", "sim/a")
+            + "TRIS 0 6\nANIM_end\n"
+        )
+
+    def test_a_static_turn_then_a_translation(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 1 2 -1 1 2 -1\nANIM_rotate 0 1 0 30 30\nANIM_rotate 1 0 0 -20 -20\n"
+            + self.translate("sim/a")
+            + "TRIS 0 6\nTRIS 6 6\nANIM_end\n"
+        )
+
+    def test_parts_in_one_frame(self) -> None:
+        part = "ANIM_begin\nANIM_trans %s 0 -1 %s 0 -1\nANIM_rotate 0 1 0 45 45\n" + "%s" + "TRIS %s 6\nANIM_end\n"
+        self.assert_round_trip(
+            part % (1, 1, self.translate("sim/a"), 0) + part % (2, 2, self.rotate("0 0 1", "sim/b"), 6)
+        )
+
+    def test_a_move_and_a_turn_of_one_dataref_are_one_object(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 1 0 -1 1 0 -1\n"
+            + self.translate("sim/a")
+            + self.rotate("0 1 0", "sim/a", ((0, 0), (0.5, 20), (1, 70)))
+            + "TRIS 0 6\nTRIS 6 6\nANIM_end\n"
+        )
+
+    def test_a_move_and_a_turn_of_one_dataref_with_different_keys(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\n"
+            + self.translate("sim/a", ((0, (0, 0, 0)), (0.3, (1, 0, 0)), (1, (1, 1, 0))))
+            + self.rotate("0 0 1", "sim/a", ((-1, -50), (0.6, 20), (1, 70)))
+            + "TRIS 0 6\nANIM_end\n"
+        )
+
+    def test_a_move_and_a_turn_of_two_datarefs(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\n" + self.translate("sim/a") + self.rotate("0 1 0", "sim/b") + "TRIS 0 6\nANIM_end\n"
+        )
+
+    def test_turns_about_three_axes_of_one_dataref(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 1 0 0 1 0 0\n"
+            + self.rotate("0 1 0", "sim/a", ((0, 0), (1, 40)))
+            + self.rotate("1 0 0", "sim/a", ((0, 0), (1, 30)))
+            + self.rotate("0 0 1", "sim/a", ((0, 0), (1, -25)))
+            + "TRIS 0 6\nTRIS 6 6\nANIM_end\n"
+        )
+
+    def test_turns_about_two_axes_of_one_dataref_in_nested_blocks(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\n" + self.rotate("0 0 1", "sim/a") + "ANIM_begin\n" + self.rotate("1 0 0", "sim/a", ((0, 0), (1, -35)))
+            + "TRIS 0 6\nANIM_end\nANIM_end\n"
+        )
+
+    def test_two_turns_about_the_same_axis_and_dataref(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\n" + self.rotate("0 1 0", "sim/a") + self.rotate("0 1 0", "sim/a", ((0, 0), (1, 10))) + "TRIS 0 6\nANIM_end\n"
+        )
+
+    def test_a_turn_about_another_pivot_of_the_same_dataref(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\n" + self.rotate("0 1 0", "sim/a") + "ANIM_trans 1 0 0 1 0 0\n" + self.rotate("0 0 1", "sim/a", ((0, 0), (1, 45)))
+            + "TRIS 0 6\nANIM_end\n"
+        )
+
+    def test_a_part_with_something_static_after_its_animation(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\n" + self.rotate("0 1 0", "sim/a") + "ANIM_trans 1 0 -1 1 0 -1\nANIM_rotate 0 0 1 20 20\nTRIS 0 6\nANIM_end\n"
+        )
+        self.assert_round_trip(
+            "ANIM_begin\n" + self.translate("sim/a") + "ANIM_trans 1 0 -1 1 0 -1\nANIM_rotate 0 0 1 20 20\nTRIS 0 6\nANIM_end\n"
+        )
+
+    def test_show_and_hide_on_a_part_that_moves(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 1 0 0 1 0 0\nANIM_show 0.5 1.5 sim/vis\n"
+            + self.rotate("0 1 0", "sim/a")
+            + "TRIS 0 6\nANIM_end\n"
+        )
+
+    def test_show_and_hide_in_a_frame(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 1 0 0 1 0 0\nANIM_rotate 0 0 1 90 90\nANIM_hide 0.5 1.5 sim/vis\nTRIS 0 6\nANIM_end\n"
+        )
+
+    def test_a_gear_leg_turns_down_and_back(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 0 -2.3596799 6.5805802 0 -2.3596799 6.5805802\nANIM_rotate 0 0 -1 90.00021 90.00021\n"
+            "ANIM_rotate 1 0 0 90.00021 90.00021\n"
+            "ANIM_rotate_begin 0 0 -1 sim/gear[0]\nANIM_rotate_key 1 -0\nANIM_rotate_key 0.9 -0\nANIM_rotate_key 0.1 112.99988\nANIM_rotate_key 0 112.99988\nANIM_rotate_end\n"
+            "TRIS 0 6\nTRIS 6 6\nANIM_end\n"
+        )
+
+    def test_a_throttle_with_a_hidden_part_and_another_part(self) -> None:
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 0 1 -2 0 1 -2\nANIM_rotate 1 0 0 90 90\n"
+            + self.rotate("1 0 0", "sim/d", ((-1, 0), (0, 0), (1, -54)))
+            + "ANIM_begin\nANIM_hide -1 -0.0001 sim/d\nTRIS 0 6\nANIM_end\n"
+            + "ANIM_begin\nANIM_trans 0 1 0 0 1 0\nANIM_rotate 0 1 0 90 90\nTRIS 6 6\nANIM_end\n"
+            + "ANIM_end\n"
+        )
+
+    def test_a_knob_with_two_parts_that_show_and_hide(self) -> None:
+        # Hiding a part must not hide the ones beside it, which one of them carrying the animation would do
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 0 1 -2 0 1 -2\n"
+            + self.rotate("0 1 0", "sim/push", ((-1, -20), (0, 0), (1, 30)))
+            + "ANIM_begin\nANIM_hide 0 0.5 sim/mode\nANIM_trans 2 0 0 2 0 0\nTRIS 0 6\nANIM_end\n"
+            + "TRIS 6 6\n"
+            + "ANIM_begin\nANIM_hide 0.5 1 sim/mode\nANIM_trans 0 3 0 0 3 0\nTRIS 0 6\nTRIS 6 6\nANIM_end\n"
+            + "ANIM_end\n"
         )
 
     def test_lods_survive(self) -> None:
