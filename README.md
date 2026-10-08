@@ -32,8 +32,12 @@ How it differs from XPlane2Blender:
 Always keep backups of your .blend files: a file opened and saved with this add-on has been converted to X-Plane 12.
 
 ## The X-Plane Panels
-Everything is in the Properties editor, in the tab it belongs to. Blender lists add-on panels after its own, so the
-**X-Plane** panel is near the bottom of a tab; drag it to the top by its ⠿ grip once and Blender keeps it there.
+Everything is in the Properties editor, in the tab it belongs to. Blender lists an add-on's panels after its own (panel
+order numbers cannot be negative and all of Blender's own panels use 0, so an add-on cannot go first), which puts the
+**X-Plane** panel under Transform, Relations and the rest. To bring it up, click its header to close it, then
+**Ctrl+click** the header: it opens and all of Blender's own panels in that tab collapse (Ctrl+click on a panel that is
+already open only folds its sub-panels). Or drag the panel to the top by its ⠿ grip. Blender keeps either in the .blend
+file, once for each tab.
 
 **Object tab > X-Plane** shows the active object: what it is in plain words (for example
 `Knob, two commands · Moves · Glow`), which OBJ file it exports in, or that it is not in any file and so is not
