@@ -163,6 +163,10 @@ class PartsBuilder:
             self.report.warn(
                 f"{self.stem}: a wheel or detent setting could not be read as a number"
             )
+        if kind == xplane_constants.MANIP_DRAG_ROTATE and m.axis_detent_ranges:
+            # A drag rotate with detent lines is the rotation with a lift (translation) child, which the exporter
+            # only accepts as the drag rotate with detents type
+            m.type = xplane_constants.MANIP_DRAG_ROTATE_DETENT
         self.has_manipulators = True
         self.report.manipulators_imported += 1
 
