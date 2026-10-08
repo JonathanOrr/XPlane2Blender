@@ -24,7 +24,6 @@ from .rows import (  # noqa: F401
 )
 from .view import (  # noqa: F401
     XPlaneTableSettings,
-    scene_changed,
     table_count,
     table_objects,
     table_settings,
@@ -37,12 +36,9 @@ def register():
     bpy.types.WindowManager.xplane_table = bpy.props.PointerProperty(
         type=view.XPlaneTableSettings
     )
-    bpy.app.handlers.depsgraph_update_post.append(view.scene_changed)
 
 
 def unregister():
-    if view.scene_changed in bpy.app.handlers.depsgraph_update_post:
-        bpy.app.handlers.depsgraph_update_post.remove(view.scene_changed)
     del bpy.types.WindowManager.xplane_table
     for cls in reversed(view.classes):
         bpy.utils.unregister_class(cls)

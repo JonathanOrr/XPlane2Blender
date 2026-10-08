@@ -7,15 +7,15 @@ What was found is kept until the scene changes, or for a second.
 """
 
 import csv
-import time
 from typing import List, Tuple
 
 import bpy
-from bpy.app.handlers import persistent
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from io_xplane2blender import xplane_constants as C
+from io_xplane2blender import xplane_scene_changes as changes
 from io_xplane2blender.xplane_properties_panel import Properties, compact_row
+from io_xplane2blender.xplane_scene_changes import Remembered
 
 from .rows import (
     TABLES,
@@ -27,44 +27,38 @@ from .rows import (
     write_csv,
 )
 
-CACHE_SECONDS = 1.0
 LIGHT_NAMED_TYPES = (C.LIGHT_NAMED, C.LIGHT_AUTOMATIC, C.LIGHT_PARAM)
-_changes = [0]
+
+_found = Remembered()
+_listed = Remembered()
+# The positions the list showed the last time it looked, for Select Listed
+_last_listed: List[int] = []
 
 
-@persistent
-def scene_changed(*_args) -> None:
-    """Whatever the scene changes, what the table found is stale. This only counts, the work is done when drawing"""
-    _changes[0] += 1
+_positions = Remembered()
 
 
-class _Remembered:
-    """The last result of one calculation: kept while the key is the same, for a second at most"""
-
-    def __init__(self):
-        self.key = None
-        self.value = None
-        self.when = 0.0
-        self.version = 0
-
-    def get(self, key, make):
-        now = time.monotonic()
-        if key != self.key or now - self.when > CACHE_SECONDS:
-            self.key, self.value, self.when = key, make(), now
-            self.version += 1
-        return self.value
+def _position_of(context, obj: bpy.types.Object) -> int:
+    """Where an object is in the scene's objects, or -1 when the table does not list it"""
+    entries = _found_entries(context, context.scene.objects)
+    positions = _positions.get((_found.version,), lambda: {o: i for i, o in entries})
+    return positions.get(obj, -1)
 
 
-_found = _Remembered()
-_listed = _Remembered()
+def _active_row(self) -> int:
+    """The list marks the row of the active object, so it shows which of the objects the viewport has picked"""
+    context = bpy.context
+    active = context.view_layer.objects.active if context.view_layer else None
+    return -1 if active is None else _position_of(context, active)
 
 
-def _select_from_table(self, context):
+def _select_row(self, row: int) -> None:
     """Clicking a row selects that object, so the table doubles as a way to find a control in the cockpit"""
+    context = bpy.context
     objects = context.scene.objects
-    if not 0 <= self.index < len(objects):
+    if not 0 <= row < len(objects):
         return
-    obj = objects[self.index]
+    obj = objects[row]
     if context.view_layer.objects.get(obj.name) is None:
         return
     for other in context.selected_objects:
@@ -80,7 +74,7 @@ class XPlaneTableSettings(bpy.types.PropertyGroup):
         description="List only the selected objects",
         default=False,
     )
-    index: bpy.props.IntProperty(update=_select_from_table)
+    index: bpy.props.IntProperty(get=_active_row, set=_select_row)
 
 
 def table_settings(context) -> XPlaneTableSettings:
@@ -95,7 +89,7 @@ def _found_entries(context, objects) -> List[Tuple[int, bpy.types.Object]]:
         s.selected_only,
         context.scene.as_pointer(),
         len(objects),
-        _changes[0],
+        changes.count(),
     )
 
     def make():
@@ -140,11 +134,21 @@ def _listed_positions(context, entries, text: str, invert: bool) -> List[int]:
 
 def filter_and_order(context, objects, text: str, invert: bool, bit: int):
     """What UIList.filter_items returns: a flag for each of the scene's objects and the order of them"""
+    try:
+        return _filter_and_order(context, objects, text, invert, bit)
+    except ReferenceError:
+        # An undo took away the objects that were found: look again
+        _found.key = _listed.key = None
+        return _filter_and_order(context, objects, text, invert, bit)
+
+
+def _filter_and_order(context, objects, text: str, invert: bool, bit: int):
     entries = _found_entries(context, objects)
     key = (_found.version, text, invert, bit, len(objects))
 
     def make():
         positions = _listed_positions(context, entries, text, invert)
+        _last_listed[:] = positions
         flags = [0] * len(objects)
         order = [0] * len(objects)
         for place, i in enumerate(positions):
@@ -158,6 +162,12 @@ def filter_and_order(context, objects, text: str, invert: bool, bit: int):
         return flags, order
 
     return _listed.get(key, make)
+
+
+def listed_objects(context) -> List[bpy.types.Object]:
+    """The objects the list showed the last time it was drawn, the search box applied, in the order they are shown"""
+    objects = context.scene.objects
+    return [objects[i] for i in _last_listed if i < len(objects)]
 
 
 # ---- Blender UI -----------------------------------------------------------------------------------------------
@@ -248,6 +258,39 @@ class XPLANE_UL_object_table(bpy.types.UIList):
         )
 
 
+class XPLANE_OT_table_select_listed(bpy.types.Operator):
+    """Select every object the list shows, the search box applied, to work on them together: copy settings,
+    find and replace, hide or move them"""
+
+    bl_idname = "xplane.table_select_listed"
+    bl_label = "Select Listed"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "OBJECT"
+
+    def execute(self, context):
+        listed = listed_objects(context)
+        for other in context.selected_objects:
+            other.select_set(False)
+        selected = []
+        for obj in listed:
+            try:
+                obj.select_set(True)
+            except RuntimeError:  # Hidden, or not in the view layer
+                continue
+            selected.append(obj)
+        if selected:
+            context.view_layer.objects.active = selected[0]
+        left = len(listed) - len(selected)
+        self.report(
+            {"INFO"},
+            f"Selected {len(selected)} object(s)" + (f", {left} hidden ones could not be" if left else ""),
+        )
+        return {"FINISHED"}
+
+
 class XPLANE_OT_table_export_csv(bpy.types.Operator, ExportHelper):
     """Save the table as a CSV file for a spreadsheet"""
 
@@ -303,6 +346,7 @@ class XPLANE_PT_table(Properties, bpy.types.Panel):
         row = compact_row(layout, align=False)
         row.prop(s, "selected_only")
         row.label(text=f"{table_count(context)} object(s)")
+        row.operator(XPLANE_OT_table_select_listed.bl_idname, icon="RESTRICT_SELECT_OFF")
         layout.template_list(
             "XPLANE_UL_object_table", "", context.scene, "objects", s, "index", rows=12
         )
@@ -314,6 +358,7 @@ class XPLANE_PT_table(Properties, bpy.types.Panel):
 classes = (
     XPlaneTableSettings,
     XPLANE_UL_object_table,
+    XPLANE_OT_table_select_listed,
     XPLANE_OT_table_export_csv,
     XPLANE_OT_table_import_csv,
     XPLANE_PT_table,

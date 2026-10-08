@@ -39,6 +39,7 @@ if "" not in locals():
     from . import xplane_ops_wiper
     from . import xplane_ops_dev
     from . import xplane_bulk_edit
+    from . import xplane_scene_changes
     from . import xplane_table
     from . import xplane_light_tools
     from . import xplane_anim_presets
@@ -57,6 +58,7 @@ else:
     xplane_ops_wiper = importlib.reload(xplane_ops_wiper)
     xplane_ops_dev = importlib.reload(xplane_ops_dev)
     xplane_bulk_edit = importlib.reload(xplane_bulk_edit)
+    xplane_scene_changes = importlib.reload(xplane_scene_changes)
     xplane_table = importlib.reload(xplane_table)
     xplane_light_tools = importlib.reload(xplane_light_tools)
     xplane_anim_presets = importlib.reload(xplane_anim_presets)
@@ -89,6 +91,7 @@ def register():
     xplane_ops.register()
     xplane_ops_wiper.register()
     xplane_ops_dev.register()
+    xplane_scene_changes.register()
     ui.register()
     viewport.register()
     xplane_bulk_edit.register()
@@ -110,6 +113,7 @@ def unregister():
     xplane_bulk_edit.unregister()
     viewport.unregister()
     ui.unregister()
+    xplane_scene_changes.unregister()
     xplane_ops_wiper.unregister()
     xplane_ops.unregister()
     xplane_ops_dev.unregister()

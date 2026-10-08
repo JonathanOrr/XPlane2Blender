@@ -7,6 +7,7 @@ import bpy
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_helpers
 from io_xplane2blender import xplane_inspector as I
+from io_xplane2blender import xplane_light_tools
 from io_xplane2blender.xplane_ops import getDatarefValuePath, removeDatarefFCurve
 
 from .state import selected_or_active
@@ -226,6 +227,7 @@ class XPLANE_OT_set_light_kind(bpy.types.Operator):
         lights = [o for o in selected_or_active(context) if o.type == "LIGHT"]
         for obj in lights:
             obj.data.xplane.type = self.kind
+            xplane_light_tools.seed_params(obj.data.xplane)
             if self.kind in (C.LIGHT_SPILL_CUSTOM, C.LIGHT_AUTOMATIC) and obj.data.type not in ("POINT", "SPOT"):
                 obj.data.type = "SPOT"
         return {"FINISHED"} if lights else {"CANCELLED"}

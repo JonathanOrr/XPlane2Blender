@@ -113,6 +113,17 @@ class TestLightParams(XPlaneTestCase):
         bpy.ops.xplane.light_pick_name("EXEC_DEFAULT", light="airplane_taxi_bb")
         self.assertEqual("0.3 0.3 0.3 1 500cd 0 0 -1 0.5", data.xplane.params)
 
+    def test_choosing_the_kind_starts_the_parameters_too(self) -> None:
+        data = lamp(params="")
+        data.xplane.type = C.LIGHT_NAMED
+        bpy.ops.xplane.set_light_kind(kind=C.LIGHT_PARAM)
+        self.assertEqual("1 1 1 0 20000cd 0 0 0 1", data.xplane.params)
+        # Lines that fit are not touched
+        data.xplane.params = "0.2 0.2 0.2 1 100cd 0 0 -1 0.5"
+        bpy.ops.xplane.set_light_kind(kind=C.LIGHT_AUTOMATIC)
+        bpy.ops.xplane.set_light_kind(kind=C.LIGHT_PARAM)
+        self.assertEqual("0.2 0.2 0.2 1 100cd 0 0 -1 0.5", data.xplane.params)
+
     def test_picking_a_light_leaves_other_kinds_of_light_alone(self) -> None:
         data = lamp(params="")
         data.xplane.type = C.LIGHT_AUTOMATIC

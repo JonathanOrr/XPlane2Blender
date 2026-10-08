@@ -169,6 +169,22 @@ class TestPanels(XPlaneTestCase):
         for collection in bpy.data.collections:
             scene_tab.XPLANE_UL_files.draw_item(ul, bpy.context, FakeLayout(), bpy.data, collection, 0, None, "", 0)
 
+    def test_every_panel_draws_in_blenders_split_layout(self) -> None:
+        from io_xplane2blender import xplane_bulk_edit, xplane_table
+
+        mesh("knob")
+        make_active(bpy.data.objects["knob"])
+        panels = PANELS + [xplane_table.view.XPLANE_PT_table, xplane_bulk_edit.XPLANE_PT_bulk_edit]
+        drawn = 0
+        for panel in panels:
+            layout = draw_panel(panel)
+            if layout is None:
+                continue
+            drawn += 1
+            self.assertTrue(getattr(layout, "use_property_split", False), panel.__name__)
+            self.assertFalse(getattr(layout, "use_property_decorate", True), panel.__name__)
+        self.assertGreater(drawn, 10)
+
     def test_each_panel_is_in_its_tab(self) -> None:
         tabs = {
             "XPLANE_PT_object": "object",

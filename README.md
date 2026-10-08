@@ -36,14 +36,14 @@ Everything is in the Properties editor, in the tab it belongs to. Blender lists 
 **X-Plane** panel is near the bottom of a tab; drag it to the top by its ⠿ grip once and Blender keeps it there.
 
 **Object tab > X-Plane** shows the active object: what it is in plain words (for example
-`Knob, two commands · Moves · Glows`), which OBJ file it exports in, or that it is not in any file and so is not
+`Knob, two commands · Moves · Glow`), which OBJ file it exports in, or that it is not in any file and so is not
 exported (with **New File** and **Move To File** right there), and what is not filled in yet. Below it, a card for
 each thing the object can do:
 
 | Card | For |
 |---|---|
 | **Clickable** | Make it clickable in the cockpit. **Make Clickable As...** lists the kinds of control by what they do (runs commands, sets a dataref, dragged), and the card then shows only the settings that kind uses, with the help in one line. The search button next to a command or dataref searches X-Plane's own lists and the custom names this file already uses |
-| **Light** | For lights: a library light from lights.txt (with a search tagged spill / glow), a spill that lights its surroundings, a glow sprite, or not exported. **Preview As In X-Plane** makes the viewport show it the way X-Plane does |
+| **Light** | For lights: a library light from lights.txt (with a search tagged spill / glow, by name, taking its color and cone from the Blender light, or with its parameters set by hand), a spill that lights its surroundings, a glow sprite, or not exported. **Preview As In X-Plane** makes the viewport show it the way X-Plane does |
 | **Attachment Point** | For empties: a wheel, a VR tablet mount or a particle emitter |
 | **Moves** | The **Button**, **Switch** and **Knob / Lever** presets key a whole control on every selected object in one step. An animated object lists its datarefs and its keys as buttons (click one to go to it); to key by hand, pose the object, type the dataref value and click **Key Pose** |
 | **Shows / Hides** | Show or hide it while a dataref is in a range |
@@ -55,11 +55,11 @@ to the others.
 
 **Material tab > X-Plane** is the material's surface, shared by every object using it: visible or invisible
 (invisible click zones), transparency, shadows, camera collision, a screen (the 2D panel or an avionics device with
-its power buses) and the material's glow. **More** below it has the hard surface, deck, polygon offset and extra OBJ
-lines.
+its power buses) and the material's glow. **Advanced** below it has the hard surface, deck, polygon offset and extra
+OBJ lines.
 
-**Bone tab > X-Plane Moves**: the datarefs that move or show and hide an armature's bone, keyed the same way as an
-object's.
+**Bone tab > X-Plane** has the same **Moves**, **Shows / Hides** and **Advanced** cards for an armature's bone,
+keyed the same way as an object's.
 
 **Collection tab > X-Plane**: tick it to export the collection as an OBJ file, with its name and kind (aircraft part
 or cockpit). **File Settings And Export** opens the file in the Scene tab.
@@ -69,7 +69,7 @@ or cockpit). **File Settings And Export** opens the file in the Scene tab.
 **New File From Selection** puts the selected objects (with their children) in a new file, taking them out of the
 files they were in, and fills in its textures from their materials. Under the list are the chosen file's settings:
 textures (with **From Materials**), look, cockpit panel, levels of detail, X-Plane 12 texture maps, rain, defrost and
-wipers, detail textures and more. **Options** has the debug output and, for people working on the add-on itself,
+wipers, detail textures and **Advanced**. **Options** has the debug output and, for people working on the add-on itself,
 **Developer Tools**.
 
 **Scene tab > X-Plane Unfinished Work** lists what is not filled in yet in the export files, with a button to select
@@ -94,13 +94,15 @@ viewport's right-click menu has **X-Plane > Make Clickable As**, the animation p
   - **Lights** rings every X-Plane light in its color (red when no light is chosen yet) and names the selected ones.
   - **Unfinished** outlines in red what the last Check listed, and says what is missing on the selected ones.
 - **Shift+Q** opens the X-Plane pie menu: Make Clickable As, Animate As, Add, Key This Pose, Move To File, Check
-  (which also turns on the Unfinished overlay), Export, and the overlay switches. Change the key in Preferences >
-  Keymap > Object Mode.
+  (which also turns on the Unfinished overlay), Export, the overlay switches, **Tidy Empties And Cones** and a shortcut
+  to Blender's Selectability & Visibility popover (to hide or lock all empties or all lights). Change the key in
+  Preferences > Keymap > Object Mode.
 - **X-Plane Copy** in the toolbar (the stamp): make a finished button, light or attachment active, then click every
   other one to give it the same settings. The tool settings choose what is copied: Click, Glow, Shows / Hides, Light,
   Attachment.
 - **The X-Plane workspace** (the workspace tabs' right-click menu, or Scene tab > X-Plane Tools) is a copy of Layout
-  with those overlays and the lever handle on, textures shown in Solid shading and Properties on the Object tab.
+  with those overlays and the lever handle on, textures shown in Solid shading, the dashed parent lines off and
+  Properties on the Object tab.
 - **Preview In Viewport**, under a file's Detail Textures, shows its detail textures on its materials in Material
   Preview, approximately as X-Plane draws them: tiled at their scale, as strong as their keys say. The preview is a
   set of shader nodes in a frame that the X button takes out again; exports never read shader nodes.
@@ -123,7 +125,7 @@ For the many controls that differ only by side or number. **Scene tab > X-Plane 
 - Both are normal Blender operations: Ctrl+Z undoes them and the Adjust Last Operation panel works.
 
 ## Tables And CSV
-**Scene tab > X-Plane Tables** lists the objects of one table in one place: **Clickable** (every manipulator), **Glow** (every light level), **Datarefs** (the datarefs that move, show or hide objects) and **Lights** (every light, which X-Plane light it becomes and its parameters). Click a row to select that object in the viewport, type in the search box to filter by name, command, dataref or light, and widen the Properties editor to edit the settings in place (a narrow one shows the end of each command, where `key/A` and `key/B` differ). It stays quick on an aircraft with thousands of objects. **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the Datarefs table holds the dataref paths and show/hide values.
+**Scene tab > X-Plane Tables** lists the objects of one table in one place: **Clickable** (every manipulator), **Glow** (every light level), **Datarefs** (the datarefs that move, show or hide objects) and **Lights** (every light, which X-Plane light it becomes and its parameters). Click a row to select that object in the viewport (the active object's row is marked), type in the search box to filter by name, command, dataref or light, **Select Listed** selects everything the list shows, for the other tools to work on together, and widen the Properties editor to edit the settings in place (a narrow one shows the end of each command, where `key/A` and `key/B` differ). It stays quick on an aircraft with thousands of objects. **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the Datarefs table holds the dataref paths and show/hide values.
 
 ## Animation Presets
 In the **Moves** card (and the viewport's right-click menu), on every selected object:

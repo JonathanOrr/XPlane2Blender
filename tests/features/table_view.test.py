@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import bpy
 
 from io_xplane2blender import xplane_constants as C
+from io_xplane2blender import xplane_scene_changes as scene_changes
 from io_xplane2blender import xplane_table
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests import test_creation_helpers
@@ -50,7 +51,7 @@ class TestTableView(XPlaneTestCase):
         test_creation_helpers.delete_everything()
         view.table_settings(bpy.context).selected_only = False
         view.table_settings(bpy.context).table = "MANIPULATORS"
-        view.scene_changed()
+        scene_changes.scene_changed()
 
     def test_lists_what_the_table_is_about_sorted_by_name(self) -> None:
         key("key_b", "a321/key/B")
@@ -125,7 +126,7 @@ class TestTableView(XPlaneTestCase):
         later = mesh("later")
         self.assertEqual(["key_A", "key_B"], listed())
         later.xplane.manip.enabled = True
-        view.scene_changed()
+        scene_changes.scene_changed()
         self.assertEqual(["key_A", "key_B", "later"], listed())
 
     def test_clicking_a_row_selects_the_object(self) -> None:
@@ -135,6 +136,35 @@ class TestTableView(XPlaneTestCase):
         view.table_settings(bpy.context).index = position
         self.assertTrue(wanted.select_get())
         self.assertIs(wanted, bpy.context.view_layer.objects.active)
+
+    def test_the_list_marks_the_row_of_the_active_object(self) -> None:
+        first = key("key_A", "a")
+        second = key("key_B", "b")
+        loose = mesh("not in the table")
+        settings = view.table_settings(bpy.context)
+        for obj in (first, second):
+            bpy.context.view_layer.objects.active = obj
+            scene_changes.scene_changed()
+            self.assertEqual(list(bpy.context.scene.objects).index(obj), settings.index)
+        bpy.context.view_layer.objects.active = loose
+        self.assertEqual(-1, settings.index)
+
+    def test_select_listed_selects_what_the_search_box_leaves_in(self) -> None:
+        a = key("key_A", "a321/mcdu/key/A")
+        b = key("key_B", "a321/mcdu/key/B")
+        other = key("other", "a321/fcu/other")
+        mesh("not in the table")
+        for obj in bpy.context.scene.objects:
+            obj.select_set(False)
+        listed("mcdu")
+        self.assertEqual({a.name, b.name}, {o.name for o in view.listed_objects(bpy.context)})
+        self.assertEqual({"FINISHED"}, bpy.ops.xplane.table_select_listed())
+        self.assertTrue(a.select_get() and b.select_get())
+        self.assertFalse(other.select_get())
+        # Hidden objects cannot be selected, and the rest still are
+        b.hide_set(True)
+        self.assertEqual({"FINISHED"}, bpy.ops.xplane.table_select_listed())
+        self.assertTrue(a.select_get())
 
     def test_every_kind_of_row_draws_at_every_width(self) -> None:
         key("key_A", "a")
