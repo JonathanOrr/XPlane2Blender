@@ -57,6 +57,8 @@ class _Remembered:
 
 _found = _Remembered()
 _listed = _Remembered()
+# The positions the list showed the last time it looked, for Select Listed
+_last_listed: List[int] = []
 
 
 _positions = _Remembered()
@@ -163,6 +165,7 @@ def filter_and_order(context, objects, text: str, invert: bool, bit: int):
 
     def make():
         positions = _listed_positions(context, entries, text, invert)
+        _last_listed[:] = positions
         flags = [0] * len(objects)
         order = [0] * len(objects)
         for place, i in enumerate(positions):
@@ -176,6 +179,12 @@ def filter_and_order(context, objects, text: str, invert: bool, bit: int):
         return flags, order
 
     return _listed.get(key, make)
+
+
+def listed_objects(context) -> List[bpy.types.Object]:
+    """The objects the list showed the last time it was drawn, the search box applied, in the order they are shown"""
+    objects = context.scene.objects
+    return [objects[i] for i in _last_listed if i < len(objects)]
 
 
 # ---- Blender UI -----------------------------------------------------------------------------------------------
@@ -266,6 +275,39 @@ class XPLANE_UL_object_table(bpy.types.UIList):
         )
 
 
+class XPLANE_OT_table_select_listed(bpy.types.Operator):
+    """Select every object the list shows, the search box applied, to work on them together: copy settings,
+    find and replace, hide or move them"""
+
+    bl_idname = "xplane.table_select_listed"
+    bl_label = "Select Listed"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return context.mode == "OBJECT"
+
+    def execute(self, context):
+        listed = listed_objects(context)
+        for other in context.selected_objects:
+            other.select_set(False)
+        selected = []
+        for obj in listed:
+            try:
+                obj.select_set(True)
+            except RuntimeError:  # Hidden, or not in the view layer
+                continue
+            selected.append(obj)
+        if selected:
+            context.view_layer.objects.active = selected[0]
+        left = len(listed) - len(selected)
+        self.report(
+            {"INFO"},
+            f"Selected {len(selected)} object(s)" + (f", {left} hidden ones could not be" if left else ""),
+        )
+        return {"FINISHED"}
+
+
 class XPLANE_OT_table_export_csv(bpy.types.Operator, ExportHelper):
     """Save the table as a CSV file for a spreadsheet"""
 
@@ -321,6 +363,7 @@ class XPLANE_PT_table(Properties, bpy.types.Panel):
         row = compact_row(layout, align=False)
         row.prop(s, "selected_only")
         row.label(text=f"{table_count(context)} object(s)")
+        row.operator(XPLANE_OT_table_select_listed.bl_idname, icon="RESTRICT_SELECT_OFF")
         layout.template_list(
             "XPLANE_UL_object_table", "", context.scene, "objects", s, "index", rows=12
         )
@@ -332,6 +375,7 @@ class XPLANE_PT_table(Properties, bpy.types.Panel):
 classes = (
     XPlaneTableSettings,
     XPLANE_UL_object_table,
+    XPLANE_OT_table_select_listed,
     XPLANE_OT_table_export_csv,
     XPLANE_OT_table_import_csv,
     XPLANE_PT_table,

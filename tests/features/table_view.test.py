@@ -148,6 +148,23 @@ class TestTableView(XPlaneTestCase):
         bpy.context.view_layer.objects.active = loose
         self.assertEqual(-1, settings.index)
 
+    def test_select_listed_selects_what_the_search_box_leaves_in(self) -> None:
+        a = key("key_A", "a321/mcdu/key/A")
+        b = key("key_B", "a321/mcdu/key/B")
+        other = key("other", "a321/fcu/other")
+        mesh("not in the table")
+        for obj in bpy.context.scene.objects:
+            obj.select_set(False)
+        listed("mcdu")
+        self.assertEqual({a.name, b.name}, {o.name for o in view.listed_objects(bpy.context)})
+        self.assertEqual({"FINISHED"}, bpy.ops.xplane.table_select_listed())
+        self.assertTrue(a.select_get() and b.select_get())
+        self.assertFalse(other.select_get())
+        # Hidden objects cannot be selected, and the rest still are
+        b.hide_set(True)
+        self.assertEqual({"FINISHED"}, bpy.ops.xplane.table_select_listed())
+        self.assertTrue(a.select_get())
+
     def test_every_kind_of_row_draws_at_every_width(self) -> None:
         key("key_A", "a")
         glow = mesh("glow")
