@@ -394,6 +394,37 @@ class TestImportRoundTrip(XPlaneTestCase):
             + "ANIM_end\n"
         )
 
+    def drag_rotate_lines(self, body: str):
+        text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
+        built = import_obj_file(write_file(self.folder.join("part.obj"), text), ImportOptions(make_exportable=True), ImportReport())
+        exported = self.exportExportableRoot(built.collection)
+        self.assertLoggerErrors(0)
+        return built, [line.split() for line in exported.splitlines() if line.split()[:1] in (["ATTR_manip_drag_rotate"], ["ATTR_axis_detent_range"])]
+
+    def test_a_drag_rotate_without_a_second_dataref_keeps_its_none(self) -> None:
+        body = (
+            "ANIM_begin\nANIM_trans 0 1 0 0 1 0\n"
+            + self.rotate("0 0 1", "sim/r", ((0, 0), (1, 90)))
+            + "ATTR_manip_drag_rotate hand 0 1 0 0 0 1 0 90 0 0 1 0 0 sim/r none Turn\nTRIS 0 6\nANIM_end\n"
+        )
+        built, lines = self.drag_rotate_lines(body)
+        (line,) = lines
+        self.assertEqual(["sim/r", "none", "Turn"], line[-3:])
+
+    def test_a_drag_rotate_with_detents_is_the_detent_type_and_exports_again(self) -> None:
+        body = (
+            "ANIM_begin\nANIM_trans 0 1 0 0 1 0\n"
+            + self.rotate("0 0 1", "sim/r", ((0, 0), (1, 90)))
+            + "ANIM_begin\nANIM_trans_begin sim/lift\nANIM_trans_key 0 0 0 0\nANIM_trans_key 0.01 0 0 -0.01\nANIM_trans_end\n"
+            + "ATTR_manip_drag_rotate hand 0 1 0 0 0 1 0 90 0.01 0 1 0 0.01 sim/r sim/lift Flap\n"
+            + "ATTR_axis_detent_range 0 0 0\nATTR_axis_detent_range 0 0.5 0.01\nATTR_axis_detent_range 0.5 1 0.01\nTRIS 0 6\nANIM_end\nANIM_end\n"
+        )
+        built, lines = self.drag_rotate_lines(body)
+        (manip,) = [m for m in built.objects if m.xplane.manip.enabled]
+        self.assertEqual(xplane_constants.MANIP_DRAG_ROTATE_DETENT, manip.xplane.manip.type)
+        self.assertEqual(["sim/r", "sim/lift", "Flap"], lines[0][-3:])
+        self.assertEqual(4, len(lines))  # the manipulator and its three detent ranges
+
     def test_lods_survive(self) -> None:
         body = "ATTR_LOD 0 500\nTRIS 0 6\nATTR_LOD 500 2000\nTRIS 6 6\n"
         text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)

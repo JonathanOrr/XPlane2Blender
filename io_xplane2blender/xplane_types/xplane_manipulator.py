@@ -382,7 +382,8 @@ class XPlaneManipulator:
             0.0,  # v2_min
             lift_at_max,  # v2_max
             self.manip.dataref1,
-            self.manip.dataref2,
+            # An empty second dataref would leave out the word and shift the tooltip into its place
+            self.manip.dataref2.strip() or "none",
             self.manip.tooltip,
         )
         self._add("ATTR_manip_" + MANIP_DRAG_ROTATE, _formatted(value, DIRECTION))
