@@ -84,10 +84,16 @@ class PartsBuilder:
                 x.lightLevel_v1 = _number(light_level[0])
                 x.lightLevel_v2 = _number(light_level[1])
                 x.lightLevel_dataref = light_level[2] if len(light_level) > 2 else ""
+                # X-Plane 12 adds the brightness of the _LIT texture in nits
+                if len(light_level) > 3:
+                    x.lightLevel_photometric = True
+                    x.lightLevel_brightness = max(0, round(_number(light_level[3])))
             except (ValueError, IndexError):
                 self.report.warn(
                     f"{self.stem}: could not read ATTR_light_level {light_level}"
                 )
+        if "hud_glass" in state:
+            blender_obj.xplane.hud_glass = True
         manip = state.get("manip")
         if manip and self.options.import_manipulators:
             self._apply_manipulator(

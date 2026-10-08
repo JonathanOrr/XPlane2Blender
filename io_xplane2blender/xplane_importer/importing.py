@@ -6,6 +6,7 @@ from typing import Optional
 
 import bpy
 
+from . import frames
 from .common import ImportOptions, ImportReport
 from .obj_builder import BuiltObj, ObjBuilder
 from .obj_parser import ObjParseError, parse_obj_file
@@ -21,8 +22,12 @@ def import_obj_file(
     objects_root: str = "",
     base_matrix=None,
     update_view_layer: bool = True,
+    settle_frames: bool = True,
 ) -> Optional[BuiltObj]:
-    """Imports one OBJ. Failures are reported, not raised, so one bad file doesn't stop a whole aircraft"""
+    """
+    Imports one OBJ. Failures are reported, not raised, so one bad file doesn't stop a whole aircraft.
+    settle_frames False leaves the keys around frame 1, for a caller that imports several OBJs to settle them together
+    """
     options = options or ImportOptions()
     report = report or ImportReport()
     started = time.time()
@@ -52,6 +57,8 @@ def import_obj_file(
             f"{os.path.basename(path)}: import failed ({e.__class__.__name__}: {e})"
         )
         return None
+    if settle_frames:
+        frames.settle(built.objects, bpy.context.scene)
     if update_view_layer:
         bpy.context.view_layer.update()
     report.info(f"{os.path.basename(path)}: {time.time() - started:.1f}s")

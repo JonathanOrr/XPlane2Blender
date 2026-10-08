@@ -35,10 +35,12 @@ IDX	8
 		# 2 Mesh: B_hud_reset
 		# MESH: B_hud_reset	weight: 0
 		# MATERIAL: Material.002
+		ATTR_hud_reset
 		TRIS	3 3
 			# 3 Mesh: C_HUD
 			# MESH: C_HUD	weight: 0
 			# MATERIAL: Material.001
+			ATTR_hud_glass
 			TRIS	6 3
 
 # Build with Blender 2.80 (sub 75) (build b'f6cb5f54494e'). Exported with XPlane2Blender 4.1.0-beta.1+117.NO_BUILD_NUMBR

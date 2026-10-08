@@ -22,8 +22,8 @@ class XPlaneObject:
         # When true, keyframes and Custom Animation Properties
         # are included in OBJ
         # True for split parent feature or not visible
-        self.export_animation_only = (
-            blenderObject.hide_get() or blenderObject.hide_viewport
+        self.export_animation_only = blenderObject.hide_viewport or (
+            blenderObject.hide_get() and not previews_its_hide(blenderObject)
         )
         self.blenderObject = blenderObject
 

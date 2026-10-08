@@ -226,23 +226,18 @@ class XPlaneMaterial:
         # ---------------------------------------------------------------------
 
     def collectLightLevelAttributes(self, mat: bpy.types.Material) -> None:
+        # An empty dataref is written too: X-Plane loads it (Laminar's own aircraft have it)
         if (
-            mat.xplane.lightLevel
-            and not self.xplaneObject.blenderObject.xplane.lightLevel
-            and not mat.xplane.lightLevel_dataref.strip()
-        ):
-            # Not filled in yet. Without a dataref the line would be invalid, so leave it out
-            unfinished.add("light levels without a dataref", f"material {mat.name}")
-        elif (
             mat.xplane.lightLevel
             and not self.xplaneObject.blenderObject.xplane.lightLevel
         ):
             ll_values = [
                 mat.xplane.lightLevel_v1,
                 mat.xplane.lightLevel_v2,
-                mat.xplane.lightLevel_dataref,
+                mat.xplane.lightLevel_dataref.strip(),
             ]
-            if mat.xplane.lightLevel_photometric:
+            # After an empty dataref X-Plane would read the brightness as the dataref
+            if mat.xplane.lightLevel_photometric and ll_values[2]:
                 ll_values.append(mat.xplane.lightLevel_brightness)
             self.attributes["ATTR_light_level"].setValue(tuple(ll_values))
             self.attributes["ATTR_light_level_reset"].setValue(False)

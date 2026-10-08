@@ -8,6 +8,7 @@ from bpy_extras.io_utils import ImportHelper
 
 from io_xplane2blender.viewport.settings import view_settings
 
+from . import frames
 from .acf_parser import AcfParseError, parse_acf_file
 from .aircraft import import_aircraft
 from .common import ImportOptions, ImportReport
@@ -40,7 +41,7 @@ def _option_properties():
         "hide_default_hidden": bpy.props.BoolProperty(
             name="Hide What X-Plane Hides",
             description="Hide the show/hide objects that X-Plane would not draw with the datarefs at their default values. "
-            "Unhide them before exporting again, hidden objects are not exported",
+            "They are still exported. To leave one out, disable it in the viewports",
             default=True,
         ),
         "all_lods": bpy.props.BoolProperty(
@@ -227,9 +228,15 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
         ]
         wm = context.window_manager
         wm.progress_begin(0, max(1, len(paths)))
+        imported = []
         for number, path in enumerate(paths):
             wm.progress_update(number)
-            import_obj_file(path, options, report, update_view_layer=False)
+            built = import_obj_file(
+                path, options, report, update_view_layer=False, settle_frames=False
+            )
+            if built is not None:
+                imported.extend(built.objects)
+        frames.settle(imported, context.scene)
         wm.progress_end()
         context.view_layer.update()
         crowded = _is_crowded(report) and self.show_result
