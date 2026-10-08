@@ -39,9 +39,9 @@ def _option_properties():
             default=True,
         ),
         "hide_default_hidden": bpy.props.BoolProperty(
-            name="Hide What X-Plane Hides",
-            description="Hide the show/hide objects that X-Plane would not draw with the datarefs at their default values. "
-            "They are still exported. To leave one out, disable it in the viewports",
+            name="Mark What X-Plane Hides",
+            description="Draw a sphere around the show/hide parts that X-Plane would not draw with the datarefs at their "
+            "default values, and leave them out of renders. They stay visible and are exported like any part",
             default=True,
         ),
         "all_lods": bpy.props.BoolProperty(

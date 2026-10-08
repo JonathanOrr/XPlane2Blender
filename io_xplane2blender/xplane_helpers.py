@@ -184,35 +184,6 @@ def is_visible_in_viewport(
         return datablock.visible_get() or None
 
 
-# The importer hides (the eye) what X-Plane hides with the datarefs at their default values, a preview of the
-# show / hide. Those objects are still exported: Disable in Viewports leaves one out, as for any object
-PREVIEW_HIDDEN = "xplane_hidden_at_default"
-
-
-def previews_its_hide(obj: bpy.types.Object) -> bool:
-    """Whether the object is hidden only by the importer's preview of its show / hide"""
-    if not obj.get(PREVIEW_HIDDEN):
-        return False
-    try:
-        return obj.hide_get()
-    except RuntimeError:  # Not in the view layer
-        return False
-
-
-def is_visible_for_export(obj: bpy.types.Object) -> bool:
-    """visible_get(), except that an object hidden only to preview its show / hide is visible"""
-    if obj.visible_get():
-        return True
-    if obj.hide_viewport or not previews_its_hide(obj):
-        return False
-    shown = {
-        lc.collection.name
-        for lc in get_layer_collections_in_view_layer(bpy.context.view_layer)
-        if lc.is_visible
-    }
-    return any(c.name in shown for c in obj.users_collection)
-
-
 def is_exportable_root(
     potential_root: PotentialRoot, view_layer: bpy.types.ViewLayer
 ) -> bool:

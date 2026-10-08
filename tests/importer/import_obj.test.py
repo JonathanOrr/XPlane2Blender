@@ -4,7 +4,7 @@ import os
 import bpy
 from mathutils import Vector
 
-from io_xplane2blender import xplane_constants, xplane_display_sizes, xplane_helpers
+from io_xplane2blender import xplane_constants, xplane_display_sizes
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests.importer_helpers import (
     TempFolder,
@@ -435,15 +435,14 @@ class TestImportObj(XPlaneTestCase):
         hide, show_out, show_in = holders["sim/a"], holders["sim/b"], holders["sim/c"]
         self.assertEqual((hide.xplane.datarefs[0].anim_type, hide.xplane.datarefs[0].show_hide_v1, hide.xplane.datarefs[0].show_hide_v2), (xplane_constants.ANIM_TYPE_HIDE, 0.5, 1.5))
         # At the default value 0, "hide 0.5..1.5" and "show -0.5..0.5" are visible, "show 0.5..1.5" is not
-        self.assertFalse(hide.hide_get())
-        self.assertTrue(show_out.hide_get())
-        self.assertFalse(show_in.hide_get())
+        marked = [o for o in (hide, show_out, show_in) if o.show_bounds]
+        self.assertEqual(marked, [show_out])
+        self.assertEqual(show_out.display_bounds_type, "SPHERE")
+        self.assertEqual(show_out.display_type, "TEXTURED")  # drawn as normal
         self.assertTrue(show_out.hide_render)
-        # Hidden with the eye, not disabled, so Blender keeps moving it with its parents, and it is still exported
-        self.assertFalse(show_out.hide_viewport)
-        self.assertTrue(xplane_helpers.previews_its_hide(show_out))
-        self.assertTrue(xplane_helpers.is_visible_for_export(show_out))
-        self.assertFalse(xplane_helpers.previews_its_hide(show_in))
+        self.assertFalse(show_in.hide_render)
+        # Marked, not hidden: hidden objects are not exported
+        self.assertFalse(any(o.hide_get() or o.hide_viewport for o in (hide, show_out, show_in)))
 
     def test_show_and_hide_before_the_first_block_cover_the_whole_file(self) -> None:
         body = "ANIM_hide 0.5 1.5 sim/whole\nTRIS 0 3\nANIM_begin\nANIM_trans 1 0 0 1 0 0\nTRIS 0 3\nANIM_end\n"
@@ -495,9 +494,9 @@ class TestImportObj(XPlaneTestCase):
         self.assertAlmostEqual(manip.v1, 0.05, places=4)
         self.assertAlmostEqual(manip.wheel_delta, 0.5, places=4)
 
-    def test_hiding_can_be_turned_off(self) -> None:
+    def test_marking_can_be_turned_off(self) -> None:
         built = self.do_import(obj_text("ANIM_begin\nANIM_show 1 2 sim/b\nTRIS 0 3\nANIM_end\n", tris=None), hide_default_hidden=False)
-        self.assertFalse(any(o.hide_get() or o.hide_viewport for o in built.objects))
+        self.assertFalse(any(o.show_bounds or o.hide_render for o in built.objects))
 
     def test_animations_can_be_skipped(self) -> None:
         body = "ANIM_begin\nANIM_trans 1 0 0 1 0 0\nANIM_rotate_begin 1 0 0 sim/x\nANIM_rotate_key 0 0\nANIM_rotate_key 1 90\nANIM_rotate_end\nANIM_show 1 2 sim/y\nTRIS 0 3\nANIM_end\n"
@@ -622,7 +621,8 @@ class TestImportObj(XPlaneTestCase):
     def test_lights_in_hidden_blocks_are_hidden(self) -> None:
         built = self.do_import(obj_text("ANIM_begin\nANIM_show 1 2 sim/x\nLIGHT_NAMED beacon 1 2 3\nANIM_end\n", tris=None))
         (light,) = [o for o in built.objects if o.type == "LIGHT"]
-        self.assertTrue(light.hide_get())
+        self.assertTrue(light.hide_render)
+        self.assertFalse(light.hide_get() or light.hide_viewport)
 
     def test_emitters_and_magnets(self) -> None:
         body = "EMITTER my_smoke 1 2 3 10 20 30\nMAGNET knee xpad 1 2 3 0 0 0\n"
