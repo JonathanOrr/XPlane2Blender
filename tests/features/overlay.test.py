@@ -2,11 +2,14 @@
 The viewport overlay's labels and click zone outlines (drawing itself needs a window, so only the data is checked)
 """
 
+import math
 from types import SimpleNamespace
 
 import bpy
+from mathutils import Vector
 
 from io_xplane2blender import xplane_constants as C
+from io_xplane2blender.viewport import light_shapes
 from io_xplane2blender.viewport import overlay as xplane_overlay
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests import test_creation_helpers
@@ -42,6 +45,68 @@ class TestOverlay(XPlaneTestCase):
         points = xplane_overlay.zone_lines(obj)
         self.assertEqual(24, len(points))
         self.assertTrue(all(p.x > 5 for p in points))
+
+    def spot(self, name: str = "lamp", size: float = math.radians(60), rotation=(0, 0, 0)):
+        data = bpy.data.lights.new(name, "SPOT")
+        data.spot_size = size
+        obj = bpy.data.objects.new(name, data)
+        bpy.context.scene.collection.objects.link(obj)
+        obj.rotation_euler = rotation
+        bpy.context.view_layer.update()
+        return obj
+
+    def test_a_spot_points_along_its_minus_z(self) -> None:
+        down = self.spot()
+        self.assertLess((light_shapes.direction(down) - Vector((0, 0, -1))).length, 1e-6)
+        sideways = self.spot("sideways", rotation=(math.radians(90), 0, 0))
+        self.assertLess((light_shapes.direction(sideways) - Vector((0, 1, 0))).length, 1e-6)
+
+    def test_a_light_that_shines_all_around_has_no_direction_cone_or_tick(self) -> None:
+        point = bpy.data.objects.new("bulb", bpy.data.lights.new("bulb", "POINT"))
+        bpy.context.scene.collection.objects.link(point)
+        self.assertIsNone(light_shapes.direction(point))
+        self.assertEqual([], light_shapes.cone_lines(point))
+        self.assertEqual([], light_shapes.screen_tick(None, point, Vector((10, 10, 0))))
+        self.assertIsNone(light_shapes.direction(bpy.data.objects.new("empty", None)))
+
+    def test_the_cone_ends_on_a_sphere_around_the_light(self) -> None:
+        lamp = self.spot(size=math.radians(60))
+        lamp.location = (1, 2, 3)
+        bpy.context.view_layer.update()
+        points = light_shapes.cone_lines(lamp)
+        self.assertEqual(2 * light_shapes.EDGES + 2 * 24, len(points))
+        apex = lamp.matrix_world.translation
+        # Every edge goes from the light to a point of the circle, a slant length away
+        for apex_point, end in zip(points[0:8:2], points[1:8:2]):
+            self.assertLess((apex_point - apex).length, 1e-6)
+            self.assertAlmostEqual(light_shapes.SLANT, (end - apex).length, places=5)
+            self.assertLess(end.z, apex.z)
+        # The wider the cone the wider the circle, and 180 degrees ends in the light's own plane
+        wide = self.spot("wide", size=math.pi)
+        flat = light_shapes.cone_lines(wide)
+        self.assertAlmostEqual(0.0, max(abs(p.z - wide.matrix_world.translation.z) for p in flat), places=5)
+        self.assertAlmostEqual(light_shapes.SLANT, max((p - wide.matrix_world.translation).length for p in flat), places=5)
+
+    def test_the_tick_is_outside_the_ring_toward_where_the_spot_shines(self) -> None:
+        lamp = self.spot(rotation=(math.radians(90), 0, 0))
+        where = Vector((100.0, 100.0, 0.0))
+        # A viewer who sees +Y going up the screen
+        context = SimpleNamespace(region=object(), region_data=object())
+        original = light_shapes.draw.screen_point
+        light_shapes.draw.screen_point = lambda c, p: Vector((100.0, 100.0 + 50.0 * (p - lamp.matrix_world.translation).y))
+        try:
+            tick = light_shapes.screen_tick(context, lamp, where)
+            self.assertEqual(2, len(tick))
+            self.assertAlmostEqual(100.0, tick[0].x)
+            self.assertAlmostEqual(100.0 + light_shapes.TICK_FROM, tick[0].y)
+            self.assertAlmostEqual(100.0 + light_shapes.TICK_TO, tick[1].y)
+            # Seen from straight on there is no direction on screen
+            light_shapes.draw.screen_point = lambda c, p: Vector((100.0, 100.0))
+            self.assertEqual([], light_shapes.screen_tick(context, lamp, where))
+            light_shapes.draw.screen_point = lambda c, p: None
+            self.assertEqual([], light_shapes.screen_tick(context, lamp, where))
+        finally:
+            light_shapes.draw.screen_point = original
 
     def test_typed_drag_directions_get_an_arrow(self) -> None:
         obj = test_creation_helpers.create_datablock_mesh(

@@ -2,7 +2,9 @@
 More viewport overlays:
 - Motion: the path the selected animated objects travel from their first to their last keyframe, a tick and the
   dataref value at each keyframe, and the hinge line of turning parts
-- Lights: a ring in each X-Plane light's color, the selected ones named (red when no light is chosen yet)
+- Lights: a ring in each X-Plane light's color with a tick for the way a spot shines, the selected ones named and
+  with their cone (red when no light is chosen yet). It is what Blender's own light gizmos, hidden with Overlays >
+  Extras, are replaced by
 - Unfinished: red outlines around what the last Check listed, the selected ones saying what is missing
 """
 
@@ -13,7 +15,7 @@ from mathutils import Vector
 
 from io_xplane2blender import xplane_constants as C
 
-from . import draw
+from . import draw, light_shapes
 from .motion import TURN, Motion, motion_of
 
 MOTION_COLOR = (1.0, 0.8, 0.2, 0.95)
@@ -152,6 +154,7 @@ def draw_lights(context) -> None:
             Vector((where.x, where.y, 0)), Vector((0, 0, 1)), 6, segments=12
         )
         by_color.setdefault(color, []).extend(ring)
+        by_color[color].extend(light_shapes.screen_tick(context, obj, where))
         if obj.select_get():
             text.at(
                 obj.matrix_world.translation,
@@ -162,6 +165,18 @@ def draw_lights(context) -> None:
     for color, ring in by_color.items():
         draw.lines(ring, color, width=2.0)
     text.done()
+
+
+def draw_light_cones(context) -> None:
+    """The cone of each selected spot light, where Blender's own gizmos are turned off"""
+    by_color = {}
+    selected = [o for o in x_plane_lights(context) if o.select_get()]
+    for obj in selected[:MAX_MOTIONS]:
+        name = light_name(obj.data)
+        color = light_color(obj.data) if name is not None else PROBLEM_COLOR
+        by_color.setdefault(color, []).extend(light_shapes.cone_lines(obj))
+    for color, points in by_color.items():
+        draw.lines(points, color, width=2.0)
 
 
 def unfinished_objects(context):

@@ -76,6 +76,40 @@ class TestImportOperators(XPlaneTestCase):
             bpy.ops.import_scene.xplane_obj(filepath=bad)
         self.assertIn("not an OBJ8 file", str(raised.exception))
 
+    def test_many_lights_hide_blenders_light_gizmos_and_say_so(self) -> None:
+        from io_xplane2blender.xplane_importer import ops
+        from io_xplane2blender.xplane_importer.common import ImportReport
+
+        few = ImportReport(lights_imported=ops.CROWDED_LIGHTS - 1)
+        many = ImportReport(lights_imported=ops.CROWDED_LIGHTS)
+        self.assertFalse(ops._is_crowded(few))
+        self.assertTrue(ops._is_crowded(many))
+        self.assertEqual([], ops._crowded_notes(few, False))
+        self.assertEqual([], ops._crowded_notes(many, False))
+        (note,) = ops._crowded_notes(many, True)
+        self.assertIn(str(ops.CROWDED_LIGHTS), note)
+        self.assertIn("Extras", note)
+
+    def test_framing_a_crowded_import_turns_blenders_extras_off_and_the_x_plane_lights_on(self) -> None:
+        from types import SimpleNamespace
+
+        from io_xplane2blender.xplane_importer import ops
+
+        screen = bpy.data.screens[0]
+        spaces = [s for a in screen.areas for s in a.spaces if s.type == "VIEW_3D"]
+        if not spaces:
+            return  # No 3D View in a background run of this Blender
+        context = SimpleNamespace(screen=screen)
+        screen.xplane_view.show_lights = False
+        for space in spaces:
+            space.overlay.show_extras = True
+        ops._frame_everything(context, crowded=False)
+        self.assertFalse(screen.xplane_view.show_lights)
+        self.assertTrue(all(s.overlay.show_extras for s in spaces))
+        ops._frame_everything(context, crowded=True)
+        self.assertTrue(screen.xplane_view.show_lights)
+        self.assertFalse(any(s.overlay.show_extras for s in spaces))
+
     def test_import_aircraft_operator(self) -> None:
         path = write_file(self.folder.join("Plane.acf"), acf_with_one_object())
         result = bpy.ops.import_scene.xplane_aircraft(filepath=path)
