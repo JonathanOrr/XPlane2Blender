@@ -4,6 +4,8 @@ Scene tab, a file's Detail Textures: up to two albedo and two normal map decals,
 
 from io_xplane2blender.xplane_helpers import is_path_decal_lib
 
+from .common import compact_row
+
 KEYS = (
     ("red_key", "Red"),
     ("green_key", "Green"),
@@ -15,7 +17,7 @@ KEYS = (
 
 
 def _scale_row(layout, layer, prefix: str) -> None:
-    row = layout.row(align=True)
+    row = compact_row(layout)
     row.prop(layer, f"{prefix}_projected", text="Projected", toggle=True)
     if getattr(layer, f"{prefix}_projected"):
         row.prop(layer, f"{prefix}_x_scale", text="X Scale")
@@ -40,7 +42,7 @@ def decals_layout(layout, layer) -> None:
             box.label(text="A decal library file (.dcl) brings its own settings", icon="INFO")
         elif path:
             _scale_row(box, layer, f"decal{i}")
-            row = box.row()
+            row = compact_row(box, align=False)
             _keys_column(row, layer, f"rgb_decal{i}", "Color Keyed By")
             _keys_column(row, layer, f"alpha_decal{i}", "Alpha Keyed By")
     for i in (1, 2):

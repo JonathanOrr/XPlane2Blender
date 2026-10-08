@@ -13,6 +13,9 @@ import bpy
 # What gets output when.
 _printed = [0]
 
+# The text in the .blend that holds the log of the last export
+LOG_NAME = "X-Plane Export.log"
+
 """
 Logging Style Guide:
     - Put the name of object or source of error first, leave a trail to follow quickly
@@ -128,7 +131,7 @@ class XPlaneLogger:
         return "%s: %s" % (messageType.upper(), message)
 
     @staticmethod
-    def InternalTextTransport(name="XPlane2Blender.log"):
+    def InternalTextTransport(name=LOG_NAME):
         if bpy.data.texts.find(name) == -1:
             log = bpy.data.texts.new(name)
         else:

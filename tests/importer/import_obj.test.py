@@ -4,7 +4,7 @@ import os
 import bpy
 from mathutils import Vector
 
-from io_xplane2blender import xplane_constants
+from io_xplane2blender import xplane_constants, xplane_display_sizes
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests.importer_helpers import (
     TempFolder,
@@ -15,11 +15,15 @@ from io_xplane2blender.tests.importer_helpers import (
 from io_xplane2blender.tests.test_creation_helpers import create_initial_test_setup
 from io_xplane2blender.xplane_importer.common import ImportOptions, ImportReport
 from io_xplane2blender.xplane_importer.importing import import_obj_file
+from io_xplane2blender.xplane_importer.obj_builder_parts import PartsBuilder
 
 QUAD_VT = (
     "VT 0 0 0 0 1 0 0 0\nVT 0 0 -1 0 1 0 0 1\nVT 1 0 -1 0 1 0 1 1\nVT 1 0 0 0 1 0 1 0\n"
 )
 QUAD_IDX = "IDX10 0 1 2 0 2 3\n"
+# A triangle a tenth of a meter wide, like a small knob
+SMALL_VT = "VT\t0\t0\t0\t0\t1\t0\t0\t0\nVT\t0\t0\t-0.1\t0\t1\t0\t0\t1\nVT\t0.1\t0\t0\t0\t1\t0\t1\t0\n"
+NEEDLE = "ANIM_begin\nANIM_rotate_begin 1 0 0 sim/needle\nANIM_rotate_key 0 0\nANIM_rotate_key 1 90\nANIM_rotate_end\nTRIS 0 3\nANIM_end\n"
 
 
 def loop_normals(mesh):
@@ -505,6 +509,58 @@ class TestImportObj(XPlaneTestCase):
         magnet = by_type[xplane_constants.EMPTY_USAGE_MAGNET].xplane.special_empty_props
         self.assertEqual(magnet.magnet_props.debug_name, "knee")
         self.assertTrue(magnet.magnet_props.magnet_type_is_xpad)
+
+    # ---- how big things are drawn ----------------------------------------------------------------
+    def test_empties_are_drawn_at_a_fraction_of_the_part_on_them(self) -> None:
+        built = self.do_import(obj_text(NEEDLE, vertices=SMALL_VT, tris=None))
+        (empty,) = self.empties(built)
+        self.assertAlmostEqual(0.1 * xplane_display_sizes.FRACTION, empty.empty_display_size, places=5)
+
+    def test_empties_on_big_and_tiny_parts_stay_within_limits(self) -> None:
+        (big,) = self.empties(self.do_import(obj_text(NEEDLE, tris=None)))
+        self.assertAlmostEqual(xplane_display_sizes.MAX_SIZE, big.empty_display_size, places=5)
+        create_initial_test_setup()
+        tiny_vt = SMALL_VT.replace("0.1", "0.001")
+        (tiny,) = self.empties(self.do_import(obj_text(NEEDLE, vertices=tiny_vt, tris=None), "tiny.obj"))
+        self.assertAlmostEqual(xplane_display_sizes.MIN_SIZE, tiny.empty_display_size, places=5)
+
+    def test_every_empty_of_a_chain_is_sized_by_the_part_at_its_end(self) -> None:
+        body = "ANIM_begin\nANIM_trans 0 1 0 0 1 0\nANIM_rotate_begin 1 0 0 sim/a\nANIM_rotate_key 0 0\nANIM_rotate_key 1 90\nANIM_rotate_end\nANIM_rotate_begin 0 1 0 sim/b\nANIM_rotate_key 0 0\nANIM_rotate_key 1 90\nANIM_rotate_end\nTRIS 0 3\nANIM_end\n"
+        built = self.do_import(obj_text(body, vertices=SMALL_VT, tris=None))
+        self.assertGreaterEqual(len(self.empties(built)), 2)
+        for empty in self.empties(built):
+            self.assertAlmostEqual(0.1 * xplane_display_sizes.FRACTION, empty.empty_display_size, places=5)
+
+    def test_an_empty_with_nothing_visible_on_it_is_small(self) -> None:
+        body = "ANIM_begin\nANIM_show 1 2 sim/x\nLIGHT_NAMED beacon 1 2 3\nANIM_end\n"
+        (empty,) = self.empties(self.do_import(obj_text(body, tris=None)))
+        self.assertAlmostEqual(xplane_display_sizes.BARE_SIZE, empty.empty_display_size, places=5)
+
+    def test_magnets_and_emitters_keep_a_visible_size(self) -> None:
+        built = self.do_import(obj_text("EMITTER my_smoke 1 2 3 10 20 30\nMAGNET knee xpad 1 2 3 0 0 0\n", tris=None))
+        for empty in self.empties(built):
+            self.assertAlmostEqual(PartsBuilder.EXTRA_EMPTY_SIZE, empty.empty_display_size, places=5)
+
+    def test_the_scale_option_scales_the_sizes_too(self) -> None:
+        built = self.do_import(obj_text(NEEDLE, vertices=SMALL_VT, tris=None), scale=10.0)
+        (empty,) = self.empties(built)
+        self.assertAlmostEqual(1.0 * xplane_display_sizes.FRACTION, empty.empty_display_size, places=4)
+
+    def test_spot_cones_are_short(self) -> None:
+        light = self.light("LIGHT_PARAM airplane_generic_pm 1 2 3 1 0.5 0 18 25cd 0 -1 0 0.5\n")
+        self.assertEqual("SPOT", light.data.type)
+        self.assertTrue(light.data.use_custom_distance)
+        self.assertAlmostEqual(xplane_display_sizes.CONE_LENGTH, light.data.cutoff_distance, places=5)
+
+    def test_a_spill_light_with_a_size_in_meters_has_a_cone_of_that_length(self) -> None:
+        light = self.light("LIGHT_SPILL_CUSTOM 1 2 3 0.9 0.8 0.7 1 0.4 0 0 -1 0.5 my/dataref\n")
+        self.assertTrue(light.data.use_custom_distance)
+        self.assertAlmostEqual(0.4, light.data.cutoff_distance, places=5)
+
+    def test_point_lights_are_left_as_they_are(self) -> None:
+        light = self.light("LIGHT_SPILL_CUSTOM 0 0 0 1 1 1 1 2 0 0 0 1 none\n")
+        self.assertEqual("POINT", light.data.type)
+        self.assertFalse(light.data.use_custom_distance)
 
     # ---- LODs and failures ---------------------------------------------------------------------
     def test_only_the_first_lod_by_default(self) -> None:

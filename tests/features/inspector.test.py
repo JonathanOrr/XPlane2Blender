@@ -123,7 +123,7 @@ class TestInspector(XPlaneTestCase):
         button.xplane.manip.enabled = True
         button.xplane.manip.type = C.MANIP_COMMAND
         button.xplane.lightLevel = True
-        self.assertEqual(["Button", "Glows"], I.summary(button))
+        self.assertEqual(["Button", "Glow"], I.summary(button))
 
     def test_copying_click_settings_copies_detents_too(self) -> None:
         a, b = mesh("a", "Cockpit"), mesh("b", "Cockpit")

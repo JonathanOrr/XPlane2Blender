@@ -12,6 +12,7 @@ from io_xplane2blender.xplane_types.xplane_light import XPlaneLight
 from io_xplane2blender.xplane_utils import xplane_lights_txt_parser as lights_txt
 
 from .common import copy_button, custom_lines_layout, wrapped
+from .light_params import parameters_layout
 from .menus import XPLANE_MT_light_kind, light_kind_label
 from .object_tab import Card
 from .search import text_with_search
@@ -60,7 +61,7 @@ def _library_light_layout(layout, data) -> None:
     except KeyError:
         return
     if not lights_txt.is_automatic_light_compatible(parsed.name):
-        wrapped(layout, "This light cannot be a Library Light: use Library Light By Name or Typed Parameters.", "ERROR")
+        wrapped(layout, "This light cannot be a Library Light: use Library Light, By Name or Library Light, Manual.", "ERROR")
         return
     if data.type not in ("POINT", "SPOT"):
         layout.label(text="Use a Point or Spot light", icon="ERROR")
@@ -114,7 +115,11 @@ class XPLANE_PT_light(Card, bpy.types.Panel):
                 col.label(text="Use a Point or Spot light", icon="ERROR")
         elif x.type == C.LIGHT_CUSTOM:
             col.prop(x, "size")
-            col.prop(x, "uv", text="Texture Area")
+            col.label(text="Texture Area")
+            grid = col.grid_flow(row_major=True, columns=2, align=True)
+            grid.use_property_split = False
+            for i, side in enumerate(("Left", "Top", "Right", "Bottom")):
+                grid.prop(x, "uv", index=i, text=side)
             text_with_search(col, x, "dataref", "Dataref", "dataref", "light:xplane.dataref")
             col.prop(x, "enable_rgb_override", text="Type The Color")
             if x.enable_rgb_override:
@@ -126,10 +131,8 @@ class XPLANE_PT_light(Card, bpy.types.Panel):
             name_rows(col, data)
         elif x.type == C.LIGHT_PARAM:
             name_rows(col, data)
-            col.prop(x, "params")
-            wanted, problem = xplane_light_tools.param_check(x.name, x.params)
-            if wanted:
-                col.label(text="In order: " + " ".join(wanted))
+            parameters_layout(col, data)
+            problem = xplane_light_tools.param_check(x.name, x.params)[1]
             if problem:
                 col.label(text=problem, icon="ERROR")
         if x.type != C.LIGHT_NON_EXPORTING:

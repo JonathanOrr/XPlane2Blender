@@ -204,7 +204,7 @@ class SCENE_OT_export_to_relative_dir(bpy.types.Operator):
 
 class XPLANE_OT_XPlaneMessage(bpy.types.Operator):
     bl_idname = "xplane.msg"
-    bl_label = "XPlane2Blender Message"
+    bl_label = "X-Plane Message"
 
     msg_text: bpy.props.StringProperty()
     icon: bpy.props.StringProperty(default="ERROR")

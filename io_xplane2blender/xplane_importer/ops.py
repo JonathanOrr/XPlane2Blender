@@ -46,8 +46,8 @@ def _option_properties():
             default=False,
         ),
         "make_exportable": bpy.props.BoolProperty(
-            name="Make Export Roots",
-            description="Tick each imported OBJ's collection as an XPlane 2Blender root collection, so Export OBJs writes them again. "
+            name="Make Export Files",
+            description="Tick each imported OBJ's collection as an export file, so Export writes them again. "
             "Their texture and export settings are filled in either way, you can tick a single collection later",
             default=False,
         ),
@@ -69,7 +69,7 @@ def _option_properties():
         ),
         "show_result": bpy.props.BoolProperty(
             name="Show In Viewport",
-            description="Switch the 3D viewport to the textured Material Preview and frame everything",
+            description="Switch the 3D viewport to the textured Material Preview, hide the dashed parent lines and frame everything",
             default=True,
         ),
         "scale": bpy.props.FloatProperty(
@@ -111,6 +111,8 @@ def _frame_everything(context) -> None:
             if space.type == "VIEW_3D":
                 space.shading.type = "MATERIAL"
                 space.clip_end = max(space.clip_end, 5000.0)
+                # Every animated part hangs on an empty, and each would get a dashed line to its parent
+                space.overlay.show_relationship_lines = False
         region = next((r for r in area.regions if r.type == "WINDOW"), None)
         if region is not None:
             try:
@@ -165,7 +167,7 @@ def _show_report(operator, report: ImportReport) -> None:
             f"...and {len(report.warnings) - 8} more warnings, see the System Console",
         )
     for line in report.warnings + report.errors:
-        print("XPlane2Blender import:", line)
+        print("X-Plane import:", line)
     _show_popup(report)
 
 

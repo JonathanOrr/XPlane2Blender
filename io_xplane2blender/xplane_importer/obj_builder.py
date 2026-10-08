@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Tuple
 import bpy
 import mathutils
 
-from io_xplane2blender import xplane_constants, xplane_helpers
+from io_xplane2blender import xplane_constants, xplane_display_sizes, xplane_helpers
 
 from . import transforms as T
 from .common import ImportOptions, ImportReport
@@ -95,6 +95,7 @@ class ObjBuilder(PartsBuilder):
 
         self._walk(self.obj.root, None, self.base_matrix, self.stem)
         self._flush_groups()
+        self._fit_empties()
         self._setup_layer()
         self.report.files_imported += 1
         for message in self.obj.warnings[:20]:
@@ -150,6 +151,13 @@ class ObjBuilder(PartsBuilder):
                 if self._wanted_lod(child.lod):
                     self._add_extra(child, parent, static)
 
+    def _fit_empties(self) -> None:
+        """An aircraft has thousands of empties, so each is drawn at the size of the parts hanging on it"""
+        sizes = xplane_display_sizes.part_sizes(o for o in self.objects if o.type == "MESH")
+        xplane_display_sizes.fit_empty_sizes(
+            (o for o in self.objects if o.type == "EMPTY"), sizes, self.options.scale
+        )
+
     # ---- animation nodes -----------------------------------------------------------------
     def _apply_node_transforms(self, node, parent, static, name):
         """Creates the Empties an ANIM block needs. Returns the parent and the static matrix for its contents"""
@@ -197,7 +205,8 @@ class ObjBuilder(PartsBuilder):
     ) -> bpy.types.Object:
         empty = bpy.data.objects.new(self._clean(name), None)
         empty.empty_display_type = "PLAIN_AXES"
-        empty.empty_display_size = 0.02 * max(self.options.scale, 1e-6) * 10
+        # As large as one gets, _fit_empties makes it fit the parts on it
+        empty.empty_display_size = xplane_display_sizes.MAX_SIZE * self.options.scale
         self.collection.objects.link(empty)
         empty.parent = parent
         empty.matrix_basis = T.matrix_to_blender(matrix_xp)

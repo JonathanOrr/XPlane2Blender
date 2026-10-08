@@ -10,7 +10,16 @@ import bpy
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
 
-from .common import Properties, add_button, copy_button, custom_lines_layout, glow_layout, remove_button, wrapped
+from .common import (
+    Properties,
+    add_button,
+    compact_row,
+    copy_button,
+    custom_lines_layout,
+    glow_layout,
+    remove_button,
+    wrapped,
+)
 from .menus import XPLANE_MT_control_kind, XPLANE_MT_move_to_file
 from .motion import draw_order_layout, motion_layout, visibility_layout
 from .ops_file import XPLANE_OT_new_file, XPLANE_OT_show_file
@@ -178,19 +187,19 @@ class XPLANE_PT_attachment(Card, bpy.types.Panel):
         col = layout.column()
         if special.special_type == C.EMPTY_USAGE_EMITTER_PARTICLE:
             col.prop(special.emitter_props, "name", text="Emitter (from the .pss)")
-            row = col.row(align=True)
+            row = compact_row(col)
             row.prop(special.emitter_props, "index_enabled", text="")
             sub = row.row(align=True)
             sub.active = special.emitter_props.index_enabled
             sub.prop(special.emitter_props, "index", text="Array Index")
         elif special.special_type == C.EMPTY_USAGE_MAGNET:
             col.prop(special.magnet_props, "debug_name", text="Name")
-            row = col.row(align=True)
+            row = compact_row(col)
             row.label(text="Holds")
             row.prop(special.magnet_props, "magnet_type_is_xpad", text="Tablet", toggle=True)
             row.prop(special.magnet_props, "magnet_type_is_flashlight", text="Flashlight", toggle=True)
         elif special.special_type == C.EMPTY_USAGE_WHEEL:
-            row = col.row(align=True)
+            row = compact_row(col)
             row.prop(special.wheel_props, "gear_index", text="Gear")
             row.prop(special.wheel_props, "wheel_index", text="Wheel")
         else:
@@ -217,6 +226,7 @@ class XPLANE_PT_more(Card, bpy.types.Panel):
             col.prop(x, "override_lods", text="Only In Some Distances")
             if x.override_lods:
                 grid = col.grid_flow(row_major=True, columns=2, align=True)
+                grid.use_property_split = False
                 for i, bucket in enumerate(owners[0].xplane.layer.lod[:lods]):
                     grid.prop(x, "lod", index=i, text=f"{bucket.near}-{bucket.far} m", toggle=True)
         col.prop(x, "isExportableRoot", text="Its Own File, From Its Own Origin")

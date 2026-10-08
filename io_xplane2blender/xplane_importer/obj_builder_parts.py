@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Dict
 import bpy
 import mathutils
 
-from io_xplane2blender import xplane_constants, xplane_props
+from io_xplane2blender import xplane_constants, xplane_display_sizes, xplane_props
 from io_xplane2blender.xplane_constants import MANIP_DRAG_ROTATE
 from io_xplane2blender.xplane_types.xplane_manipulator import SETTINGS_WRITTEN
 
@@ -44,6 +44,8 @@ def _number(text: str) -> float:
 
 class PartsBuilder:
     """The settings half of ObjBuilder"""
+
+    EXTRA_EMPTY_SIZE = 0.05  # Meters, of the empties that are wheels, magnets or emitters
 
     def _object_name(self, group: "_Group") -> str:
         manip = group.object_state.get("manip")
@@ -177,6 +179,10 @@ class PartsBuilder:
         if look.kind == "SPOT":
             blender_light.spot_size = look.spot_size
             blender_light.spot_blend = 0.2
+            # Blender draws a spot's cone out to its custom distance: short, not a line across the cockpit
+            xplane_display_sizes.shorten_cone(
+                blender_light, look.reach, self.options.scale
+            )
         if look.illuminates:
             # Spill lights are dataref driven and off in the parked pose, "Light Strength" switches them on
             blender_light["xplane_watts_when_on"] = look.watts
@@ -290,6 +296,8 @@ class PartsBuilder:
     ) -> None:
         matrix = static @ T.translation_xp(position)
         empty = self._make_empty(name, parent, matrix)
+        # Meant to be seen and picked, so not as small as the empties that only move parts
+        empty.empty_display_size = self.EXTRA_EMPTY_SIZE * self.options.scale
         phi, theta, psi = angles
         # The reverse of what the exporter writes
         empty.rotation_euler = (

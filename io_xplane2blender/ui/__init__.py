@@ -17,6 +17,7 @@ from . import (
     common,
     file_panels,
     light_card,
+    light_params,
     material_tab,
     menus,
     motion,
@@ -37,6 +38,7 @@ _classes = (
     *ops_file.classes,
     *menus.classes,
     *object_tab.classes,
+    *light_params.classes,
     *light_card.classes,
     *motion.classes,
     *material_tab.classes,
@@ -49,6 +51,7 @@ def register():
     for cls in _classes:
         bpy.utils.register_class(cls)
     bpy.types.WindowManager.xplane_panels = bpy.props.PointerProperty(type=state.XPlanePanelState)
+    bpy.types.Light.xplane_params = bpy.props.PointerProperty(type=light_params.XPlaneLightParams)
     bpy.types.VIEW3D_MT_add.append(menus.add_menu_entry)
     bpy.types.VIEW3D_MT_object_context_menu.append(menus.context_menu_entry)
 
@@ -56,6 +59,7 @@ def register():
 def unregister():
     bpy.types.VIEW3D_MT_object_context_menu.remove(menus.context_menu_entry)
     bpy.types.VIEW3D_MT_add.remove(menus.add_menu_entry)
+    del bpy.types.Light.xplane_params
     del bpy.types.WindowManager.xplane_panels
     for cls in reversed(_classes):
         bpy.utils.unregister_class(cls)

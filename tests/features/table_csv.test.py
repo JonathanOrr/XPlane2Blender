@@ -29,6 +29,14 @@ def key(name: str, command: str) -> bpy.types.Object:
     return obj
 
 
+def light(name: str, lights_txt_name: str, params: str = "") -> bpy.types.Object:
+    obj = test_creation_helpers.create_datablock_light(test_creation_helpers.DatablockInfo("LIGHT", name), "SPOT")
+    obj.data.xplane.type = "param"
+    obj.data.xplane.name = lights_txt_name
+    obj.data.xplane.params = params
+    return obj
+
+
 def read(path: Path):
     with open(path, newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
@@ -131,6 +139,46 @@ class TestTableCsv(XPlaneTestCase):
             [d.path for d in obj.xplane.datarefs],
         )
         self.assertEqual("show", obj.xplane.datarefs[2].anim_type)
+
+    def test_lights_round_trip_with_their_lights_txt_name_and_parameters(self) -> None:
+        lamp = light("landing_left", "airplane_landing_pm", "1 1 1 0 20000cd 0 0 -1 0.9")
+        mesh("not_a_light")
+        path = self.tmp / "lights.csv"
+
+        count = xplane_table.write_csv(str(path), list(bpy.context.scene.objects), "LIGHTS")
+
+        rows = read(path)
+        self.assertEqual(1, count)
+        self.assertEqual("landing_left", rows[0]["object"])
+        self.assertEqual("param", rows[0]["type"])
+        self.assertEqual("airplane_landing_pm", rows[0]["name"])
+        self.assertEqual("1 1 1 0 20000cd 0 0 -1 0.9", rows[0]["params"])
+        rows[0]["name"] = "airplane_taxi_pm"
+        rows[0]["params"] = "1 1 1 0 8000cd 0 0 -1 0.9"
+        write(path, rows)
+
+        result = xplane_table.read_csv(str(path), "LIGHTS", bpy.context.scene)
+
+        self.assertEqual("airplane_taxi_pm", lamp.data.xplane.name)
+        self.assertEqual("1 1 1 0 8000cd 0 0 -1 0.9", lamp.data.xplane.params)
+        self.assertEqual(2, result.changed)
+        self.assertEqual([], result.problems)
+
+    def test_a_light_row_for_an_object_that_is_not_a_light_is_reported(self) -> None:
+        light("lamp", "airplane_beacon_bb")
+        mesh("cube")
+        path = self.tmp / "lights_wrong.csv"
+        xplane_table.write_csv(str(path), list(bpy.context.scene.objects), "LIGHTS")
+        rows = read(path)
+        rows.append(dict(rows[0], object="cube", name="airplane_taxi_pm"))
+        write(path, rows)
+
+        result = xplane_table.read_csv(str(path), "LIGHTS", bpy.context.scene)
+
+        self.assertEqual(0, result.changed)
+        self.assertEqual(1, len(result.problems), result.problems)
+        self.assertIn("cube is not a light", result.problems[0])
+        self.assertNotIn("__xplane_table_sample__", bpy.data.lights)
 
     def test_an_empty_table_still_has_its_columns(self) -> None:
         path = self.tmp / "empty.csv"

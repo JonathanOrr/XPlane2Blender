@@ -75,8 +75,8 @@ wipers, detail textures and more. **Options** has the debug output and, for peop
 **Scene tab > X-Plane Unfinished Work** lists what is not filled in yet in the export files, with a button to select
 each object.
 
-**Scene tab > X-Plane Tools** has **Find and Replace**, **Table**, the click zone overlay, the light preview for
-every light and **Open The X-Plane Workspace**.
+**Scene tab > X-Plane Tools** has the click zone overlay, the light preview for every light, **Tidy Empties And
+Light Cones** (see below) and **Open The X-Plane Workspace**.
 
 Also: **Shift+A > X-Plane** adds an invisible click zone, a light or an attachment point at the 3D cursor, and the
 viewport's right-click menu has **X-Plane > Make Clickable As**, the animation presets and **Move To File**.
@@ -112,18 +112,18 @@ viewport's right-click menu has **X-Plane > Make Clickable As**, the animation p
 4. Add `coffee_cup.obj` to the aircraft in Plane Maker (Standard > Objects)
 
 ## Exporting Work In Progress
-You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 61 light levels without a dataref`. The full list is in the `XPlane2Blender.log` text file. This covers light levels without a dataref (an empty one would write an invalid line), meshes without a material (they export with X-Plane's default material state) and library lights with no light chosen yet. A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
+You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 61 light levels without a dataref`. The full list is in the `X-Plane Export.log` text in the Text Editor. This covers light levels without a dataref (an empty one would write an invalid line), meshes without a material (they export with X-Plane's default material state) and library lights with no light chosen yet. A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
 
 ## Find And Replace, Duplicate And Replace
-For the many controls that differ only by side or number. **Scene tab > X-Plane Tools > Find and Replace**: add pairs such as `cockpit/mcdu/` → `cockpit/mcdu_2/` and `Captain` → `First Officer`, choose which settings to touch (commands, datarefs, light levels, tooltips, custom attributes) and which objects (selected, selected and their children, or the whole scene), and the panel previews every change before you apply it.
-- **Find and Replace** changes the objects in place.
-- **Duplicate and Replace** copies the selection, renames the settings on the copies only and lets you move them, like Shift+D. Copy the captain's MCDU once and the first officer's is done.
+For the many controls that differ only by side or number. **Scene tab > X-Plane Find And Replace**: add pairs such as `cockpit/mcdu/` → `cockpit/mcdu_2/` and `Captain` → `First Officer`, choose which settings to touch (commands, datarefs, light levels, tooltips, custom attributes) and which objects (selected, selected and their children, or the whole scene), and the panel previews every change before you apply it.
+- **Find And Replace** changes the objects in place.
+- **Duplicate And Replace** copies the selection, renames the settings on the copies only and lets you move them, like Shift+D. Copy the captain's MCDU once and the first officer's is done.
 - Pairs are applied in order, **Match Case** is on by default (X-Plane names are case sensitive) and **Regex** allows regular expressions with `\1` groups.
 - A material or light that objects outside the selection also use is left alone, so changing one side never changes the other. The panel says how many were skipped.
 - Both are normal Blender operations: Ctrl+Z undoes them and the Adjust Last Operation panel works.
 
 ## Tables And CSV
-**Scene tab > X-Plane Tools > Table** lists every object with a manipulator, a light level or animation datarefs in one place. Click a row to select that object in the viewport, type in the search box to filter by name, command or dataref, and widen the Properties editor to edit the type, command and tooltip in place (a narrow one shows the end of each command, where `key/A` and `key/B` differ). **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the animation table holds the dataref paths and show/hide values.
+**Scene tab > X-Plane Tables** lists the objects of one table in one place: **Clickable** (every manipulator), **Glow** (every light level), **Datarefs** (the datarefs that move, show or hide objects) and **Lights** (every light, which X-Plane light it becomes and its parameters). Click a row to select that object in the viewport, type in the search box to filter by name, command, dataref or light, and widen the Properties editor to edit the settings in place (a narrow one shows the end of each command, where `key/A` and `key/B` differ). It stays quick on an aircraft with thousands of objects. **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the Datarefs table holds the dataref paths and show/hide values.
 
 ## Animation Presets
 In the **Moves** card (and the viewport's right-click menu), on every selected object:
@@ -135,7 +135,7 @@ Movement is along or around the object's own axis, from where it stands. Keys ar
 
 ## Lights
 - The search button next to a light's **Name** lists every light in lights.txt, tagged **spill** (lights its surroundings), **glow** (a visible halo that lights nothing) or both. Under the name, the card says what the chosen light is, or that the name is not in lights.txt.
-- For **Library Light, Typed Parameters** the card lists the parameters in order and says when the typed values are too few or too many.
+- For **Library Light, Manual** the card has a setting for each parameter the light takes (a color, a direction, a size, an index) and the line they make as text, which can also be pasted or edited by hand, and says when it has too few or too many values.
 - **Preview As In X-Plane** makes lights look in the viewport the way X-Plane draws them: spill lights light their surroundings, custom spills only out to their reach in meters, and glow-only and custom lights light nothing. It only changes Blender settings the exporter never reads (power, except for glow sprites whose power is the exported alpha, cutoff distance and ray visibility), so the exported OBJ stays the same. Ctrl+Z undoes it.
 - Old X-Plane 9 lights (`VLIGHT` / `LIGHTS`) have no X-Plane 12 equivalent. Opened or imported, they keep their place
   and color and are listed as unfinished work until an X-Plane 12 light is picked; until then they are left out of
@@ -155,7 +155,7 @@ The options are in the side panel of the file browser:
 | Lights | Creates lights with their XPlane2Blender settings. See "How lights come in" below |
 | All LODs | Imports every level of detail instead of only the first |
 | Hide What X-Plane Hides | Hides the objects that X-Plane would not draw with the datarefs at their default values. Unhide them before exporting again, hidden objects are not exported |
-| Make Export Roots | Ticks each OBJ's collection as an export file. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in and the files are listed unticked in the Scene tab's X-Plane Export panel, so one tick exports one again |
+| Make Export Files | Ticks each OBJ's collection as an export file. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in and the files are listed unticked in the Scene tab's X-Plane Export panel, so one tick exports one again |
 | Night Light Strength | How much the `_LIT` texture glows, 0 shows the daytime look |
 | Light Strength | Switches the spill lights on, such as the cockpit annunciator and panel lights. 0 keeps them from lighting the scene (they are off in the parked pose), 1 is the brightness the light's parameters ask for |
 | Damage / Part Attached / Not Drawn Objects | Also brings in objects that are normally left out (they only show when a part breaks, move with a wing or gear part, or are drawn nowhere) |
@@ -165,6 +165,7 @@ What you get:
 - Animations are keyframed so that **frame 1 is the parked pose**, with linear interpolation like X-Plane
 - Meshes with different manipulators, light levels or materials are separate objects, so everything can be edited and exported again
 - Anything the add-on has no setting for is kept as a custom attribute, or reported as a warning, never silently dropped
+- Empties are drawn at a quarter of the largest part hanging on them (a few millimeters for a knob, at most 6 cm) and a spot light's cone only as long as its reach (15 cm without one), so a cockpit with thousands of empties and hundreds of lights stays readable and clickable. The dashed parent lines are turned off in the viewport the import shows. **Tidy Empties And Light Cones** (Scene tab > X-Plane Tools, and the pie menu) does the same for a scene that was imported before; the pie menu also opens Blender's Selectability & Visibility popover to hide or lock all empties or all lights
 
 How lights come in:
 - `lights.txt` gives a light a **billboard** (the visible halo, lights nothing) and/or a **spill** (really lights its surroundings). Spills become Blender point or spot lights, with the cone and direction from the light's parameters (`WIDTH` is the cosine of half the cone angle, `DX DY DZ` the direction) and the power from its candela or radius. Billboards and `LIGHT_CUSTOM` halos are kept for export but do not light the scene in Cycles or EEVEE

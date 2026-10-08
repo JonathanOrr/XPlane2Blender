@@ -20,6 +20,7 @@ from io_xplane2blender import xplane_config, xplane_helpers
 from io_xplane2blender.tests import animation_file_mappings, test_creation_helpers
 from io_xplane2blender.xplane_config import getDebug, setDebug
 from io_xplane2blender.xplane_helpers import XPlaneLogger, logger
+from io_xplane2blender.xplane_logger import LOG_NAME
 from io_xplane2blender.xplane_types import (
     xplane_attribute,
     xplane_attributes,
@@ -195,4 +196,4 @@ class Exporting:
         Returns the content of the log file after export as a collection of lines, no trailing new lines,
         or KeyError if the text block doesn't exist yet (rare).
         """
-        return [l.body for l in bpy.data.texts["XPlane2Blender.log"].lines]
+        return [l.body for l in bpy.data.texts[LOG_NAME].lines]

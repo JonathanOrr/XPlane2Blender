@@ -2,7 +2,7 @@
 What an object is for X-Plane, in plain words, worked out from the settings it already has. The panels
 (the ui package) draw from this; nothing here draws or stores anything of its own.
 
-An object can be several things at once: a button that moves and glows is "Clickable", "Moves" and "Glows".
+An object can be several things at once: a button that moves and glows is "Clickable", "Moves" and "Glow".
 """
 
 import collections
@@ -342,7 +342,7 @@ def dataref_keys(id_data: bpy.types.ID, index: int, bone: Optional[bpy.types.Bon
 
 # ---- Summary and checks ------------------------------------------------------------------------------------------
 def summary(obj: bpy.types.Object) -> List[str]:
-    """Short words for what the object is, e.g. ["Button", "Moves", "Glows"]"""
+    """Short words for what the object is, e.g. ["Button", "Moves", "Glow"]"""
     words = []
     x = obj.xplane
     if obj.type == "LIGHT":
@@ -360,9 +360,9 @@ def summary(obj: bpy.types.Object) -> List[str]:
     if motion_datarefs(obj):
         words.append("Moves")
     if visibility_datarefs(obj):
-        words.append("Shows / hides")
+        words.append("Shows / Hides")
     if x.lightLevel:
-        words.append("Glows")
+        words.append("Glow")
     if obj.type == "MESH":
         material = obj.active_material
         if material is not None:

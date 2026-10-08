@@ -13,18 +13,17 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from .xplane_config import getDebug
 from .xplane_helpers import XPlaneLogger, logger, unfinished
+from .xplane_logger import LOG_NAME
 from .xplane_types import xplane_file
 
 
 class XPLANE_MT_xplane_export_log(bpy.types.Menu):
     bl_idname = "XPLANE_MT_xplane_export_log"
-    bl_label = "XPlane2Blender Export Log Warning"
+    bl_label = "X-Plane Export Log Warning"
 
     def draw(self, context):
         self.layout.row().label(text="Export produced errors or warnings.")
-        self.layout.row().label(
-            text="Please see the internal text file XPlane2Blender.log"
-        )
+        self.layout.row().label(text=f"Please see the text {LOG_NAME} in the Text Editor")
 
 
 def showLogDialog():
@@ -143,7 +142,7 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
         parts = [f"Exported {len(written)} file(s)"]
         if failed:
             parts.append(
-                f"{len(failed)} not written because of errors ({', '.join(failed)}), see XPlane2Blender.log"
+                f"{len(failed)} not written because of errors ({', '.join(failed)}), see {LOG_NAME}"
             )
         if unfinished.items:
             parts.append("left out as unfinished: " + unfinished.summary())
@@ -172,7 +171,7 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
 
         # always log to internal text file and console
         logger.addTransport(
-            XPlaneLogger.InternalTextTransport("xplane2blender.log"), logLevels
+            XPlaneLogger.InternalTextTransport(), logLevels
         )
         logger.addTransport(XPlaneLogger.ConsoleTransport(), logLevels)
 
@@ -181,7 +180,7 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
             if bpy.context.blend_data.filepath != "":
                 filepath = os.path.dirname(bpy.context.blend_data.filepath)
                 # Something this? self.logfile = os.path.join(dir,name+'_'+time.strftime("%y-%m-%d-%H-%M-%S")+'_xplane2blender.log')
-                self.logFile = open(os.path.join(filepath, "xplane2blender.log"), "w")
+                self.logFile = open(os.path.join(filepath, LOG_NAME), "w")
                 logger.addTransport(XPlaneLogger.FileTransport(self.logFile), logLevels)
             else:
                 logger.error("Cannot create log file if .blend file is not saved")

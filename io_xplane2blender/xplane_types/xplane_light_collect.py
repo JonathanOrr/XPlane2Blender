@@ -194,7 +194,7 @@ class XPlaneLightCollect:
         ):
             logger.error(
                 f"Light '{self.lightName}' is not compatible with Automatic Lights."
-                f" Pick a different light or use 'Named' or 'Manual Param' instead"
+                f" Pick a different light or use 'Library Light, By Name' or 'Library Light, Manual' instead"
             )
             return
         if parsed_light and parsed_light.light_param_def:
@@ -309,7 +309,7 @@ class XPlaneLightCollect:
         light_data = self.blenderObject.data
         if light_data.type not in {"POINT", "SPOT"}:
             logger.error(
-                f"Custom Spill lights must be a Point or Spot light, change {self.blenderObject.name}'s type or"
+                f"Spill lights must be a Point or Spot light, change {self.blenderObject.name}'s type or"
                 f" change it's X-Plane Light Type"
             )
             return
