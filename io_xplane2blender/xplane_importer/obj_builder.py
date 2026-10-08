@@ -9,6 +9,7 @@ import mathutils
 
 from io_xplane2blender import xplane_constants, xplane_display_sizes
 
+from . import header_settings
 from . import motion as motions
 from . import transforms as T
 from .common import ImportOptions, ImportReport
@@ -88,6 +89,9 @@ class ObjBuilder(PartsBuilder):
         self.indices = obj.indices
         self.objects: List[bpy.types.Object] = []
         self.has_manipulators = False
+        self.has_magnets = (
+            False  # Magnets, like manipulators, are only exported in a cockpit OBJ
+        )
         self._groups: Dict[tuple, _Group] = {}
         self._first_lod = obj.lods[0] if obj.lods else None
         self._hidden = set()  # names of objects X-Plane would not draw by default
@@ -408,37 +412,41 @@ class ObjBuilder(PartsBuilder):
         layer.name = self.stem
         layer.export_type = (
             xplane_constants.EXPORT_TYPE_COCKPIT
-            if self.has_manipulators
+            if self.has_manipulators or self.has_magnets
             else xplane_constants.EXPORT_TYPE_AIRCRAFT
         )
         if self.options.all_lods and len(obj.lods) >= 2:
             layer.lods = str(min(len(obj.lods), 4))
             for bucket, (near, far) in zip(layer.lod, obj.lods[:4]):
                 bucket.near, bucket.far = int(near), int(far)
-        manager = self.materials
+        # The export settings name the files as the OBJ does; the images load what X-Plane would
+        named = self.resolver.reference
         for attribute, path in (
-            ("texture", manager.diffuse_path),
-            ("texture_lit", manager.lit_path),
+            ("texture", named(obj.texture)),
+            ("texture_lit", named(obj.texture_lit)),
+            ("texture_normal", named(obj.texture_normal)),
         ):
             if path:
                 setattr(layer, attribute, path)
-        if obj.texture_normal and manager.normal_path:
-            layer.texture_normal = manager.normal_path
         for kind, attribute in (
             ("normal", "texture_map_normal"),
             ("material_gloss", "texture_map_material_gloss"),
             ("gloss", "texture_map_gloss"),
         ):
             if kind in obj.texture_maps:
-                found = self.resolver.resolve(obj.texture_maps[kind])
+                found = named(obj.texture_maps[kind])
                 if found:
                     setattr(layer, attribute, found)
         if obj.has_normal_metalness:
             layer.normal_metalness = True
         if "BLEND_GLASS" in obj.globals:
             layer.blend_glass = True
-        decals = apply_decals(
-            layer, obj, lambda path: self.resolver.resolve(path) or path
+        decals = apply_decals(layer, obj, lambda path: named(path) or path)
+        decals |= header_settings.apply(
+            layer,
+            obj,
+            named,
+            lambda message: self.report.warn(f"{self.stem}: {message}"),
         )
         for directive, entries in obj.globals.items():
             if directive in (
@@ -458,7 +466,7 @@ class ObjBuilder(PartsBuilder):
                 attribute.value = " ".join(args)
         if "PARTICLE_SYSTEM" in obj.globals and obj.globals["PARTICLE_SYSTEM"][0]:
             found = (
-                self.resolver.resolve(obj.globals["PARTICLE_SYSTEM"][0][0])
+                named(obj.globals["PARTICLE_SYSTEM"][0][0])
                 or obj.globals["PARTICLE_SYSTEM"][0][0]
             )
             layer.particle_system_file = found

@@ -17,6 +17,7 @@ from .xplane_manip_bone_checks import (
 from .xplane_manip_keyframe_checks import (
     check_keyframe_translation_eq_count,
     check_keyframes_rotation_are_orderered,
+    check_keyframes_translation_on_a_line,
     check_manip_has_axis_detent_ranges,
 )
 
@@ -31,7 +32,7 @@ def check_spec_drag_axis_bone(
     The bone must
         - have exactly 1 dataref
         - be animated for translation
-        - have two non-clamping location keyframes
+        - have at least two non-clamping location keyframes, all on one line
         - not be animated for rotation
     """
     if log_errors:
@@ -47,12 +48,8 @@ def check_spec_drag_axis_bone(
         and check_bone_is_animated_for_translation(
             drag_axis_bone, log_errors, manipulator
         )
-        and check_keyframe_translation_eq_count(
-            drag_axis_bone,
-            count=2,
-            exclude_clamping=True,
-            log_errors=True,
-            manipulator=manipulator,
+        and check_keyframes_translation_on_a_line(
+            drag_axis_bone, log_errors=True, manipulator=manipulator
         )
         and check_bone_is_not_animated_for_rotation(
             drag_axis_bone, log_errors, manipulator
@@ -359,7 +356,7 @@ def check_spec_detent_bone(
         - have an animated translation/rotation_bone for a parent (take care of by get_information_sources)
         - have exactly 1 dataref
         - be animated for translation
-        - have two non-clamping location keyframes
+        - have at least two non-clamping location keyframes, all on one line
         - not be animated for rotation
     """
 

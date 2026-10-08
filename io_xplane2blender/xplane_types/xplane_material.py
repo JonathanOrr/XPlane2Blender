@@ -104,11 +104,15 @@ class XPlaneMaterial:
                 self.collectLightLevelAttributes(mat)
 
                 # polygon offsett attribute
-                if mat.xplane.poly_os > 0:
-                    self.attributes["ATTR_poly_os"].setValue(mat.xplane.poly_os)
+                # 0 too, so a part after an offset one ends it (0 is what a file starts with, never written there)
+                self.attributes["ATTR_poly_os"].setValue(mat.xplane.poly_os)
 
+                xplane_file = self.xplaneObject.xplaneBone.xplaneFile
+                if xplane_file.options.specular_override:
+                    # Against the file's GLOBAL_specular: only materials that differ write a line
+                    self.attributes["ATTR_shiny_rat"].setValue(mat.specular_intensity)
                 if mat.xplane.cockpit_feature == COCKPIT_FEATURE_NONE:
-                    if not effective_normal_metalness(self.xplaneObject.xplaneBone.xplaneFile):
+                    if not xplane_file.options.specular_override and not effective_normal_metalness(xplane_file):
                         self.attributes["ATTR_shiny_rat"].setValue(mat.specular_intensity)
 
                     blend = mat.xplane.blend_v1000
@@ -188,7 +192,11 @@ class XPlaneMaterial:
         # --- Cockpit Panel Mode/Feature --------------------------------------
         cockpit_panel_mode = xplaneFile.options.cockpit_panel_mode
         cockpit_panel_feature = mat.xplane.cockpit_feature
-        if mat.xplane.cockpit_feature != COCKPIT_FEATURE_NONE:
+        if mat.xplane.cockpit_feature != COCKPIT_FEATURE_NONE or any(
+            # ATTR_cockpit_hud has no setting, only a custom attribute (the F-14's HUD image), which it would end
+            a.name.strip() == "ATTR_cockpit_hud"
+            for a in mat.xplane.customAttributes
+        ):
             self.cockpitAttributes["ATTR_no_cockpit"].setValue(None)
 
         if mat.xplane.cockpit_feature == COCKPIT_FEATURE_DEVICE:

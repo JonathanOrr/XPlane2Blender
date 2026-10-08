@@ -97,6 +97,20 @@ class TestObjParser(XPlaneTestCase):
         self.assertEqual(runs[2], {"cockpit": ("region", "0")})
         self.assertEqual(runs[3], {"cockpit_lit_only": ("2000",)})
 
+    def test_animation_after_geometry_applies_to_what_follows(self) -> None:
+        # Laminar's older files: X-Plane applies an ANIM line to the geometry after it in its block only
+        body = "ANIM_begin\nANIM_trans 1 0 0 1 0 0\nTRIS 0 3\nANIM_rotate 0 1 0 90 90\nANIM_hide 0 1 sim/h\nTRIS 3 3\nANIM_end\nTRIS 6 3\n"
+        root = parse_obj(obj_text(body, tris=None)).root
+        block, after = root.children
+        self.assertEqual(after.offset, 6)
+        self.assertEqual([op.kind for op in block.ops], ["trans"])
+        first, inner = block.children
+        self.assertEqual(first.offset, 0)
+        self.assertTrue(inner.implicit)
+        self.assertEqual([op.kind for op in inner.ops], ["rotate"])
+        self.assertEqual([v.dataref for v in inner.visibility], ["sim/h"])
+        self.assertEqual([c.offset for c in inner.children], [3])
+
     def test_manip_extras_belong_to_their_manipulator(self) -> None:
         body = (
             "ATTR_manip_drag_axis hand 0 1 0 0 1 sim/d tip\nATTR_manip_wheel 0.25\nATTR_axis_detent_range 0 0.5 0.1\nTRIS 0 3\n"

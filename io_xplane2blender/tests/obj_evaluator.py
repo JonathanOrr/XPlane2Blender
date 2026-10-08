@@ -12,6 +12,7 @@ import numpy as np
 from io_xplane2blender.xplane_importer.obj_parser import (
     AnimNode,
     AnimOp,
+    Extra,
     ObjFile,
     TrisRun,
     parse_obj,
@@ -100,6 +101,63 @@ def corners(
     rounded = np.round(stacked, 2)
     order = np.lexsort((rounded[:, 2], rounded[:, 1], rounded[:, 0]))
     return stacked[order]
+
+
+# Where x y z phi theta psi start in each placed item's arguments, and which arguments name it
+_PLACED = {
+    "EMITTER": (1, (0,)),
+    "MAGNET": (2, (0, 1)),
+    "ATTR_landing_gear": (0, (6, 7)),
+}
+
+
+def placed_items(
+    obj: ObjFile,
+    dataref_values: Optional[Dict[str, float]] = None,
+    default: Callable[[str], float] = lambda path: 0.0,
+) -> list:
+    """
+    Every emitter, magnet and landing gear as (kind, names, where): where is its position and turn in X-Plane space,
+    rounded, with the angles read as the exporter writes them (phi is minus the turn about Y, then psi about -Z,
+    theta about X innermost)
+    """
+    values = dataref_values or {}
+    found = []
+
+    def value_of(dataref: str) -> float:
+        return values.get(dataref, default(dataref))
+
+    def visit(node: AnimNode, matrix: np.ndarray) -> None:
+        for op in node.ops:
+            matrix = matrix @ _op_matrix(
+                op, 0.0 if op.is_static else value_of(op.dataref)
+            )
+        for vis in node.visibility:
+            inside = min(vis.v1, vis.v2) <= value_of(vis.dataref) <= max(vis.v1, vis.v2)
+            if not inside if vis.kind == "show" else inside:
+                return
+        for child in node.children:
+            if isinstance(child, AnimNode):
+                visit(child, matrix)
+            elif isinstance(child, Extra) and child.kind in _PLACED:
+                start, names = _PLACED[child.kind]
+                x, y, z, phi, theta, psi = (
+                    float(a) for a in child.args[start : start + 6]
+                )
+                local = np.eye(4)
+                local[:3, 3] = (x, y, z)
+                local = (
+                    local
+                    @ _rotation((0, 1, 0), -phi)
+                    @ _rotation((0, 0, 1), -psi)
+                    @ _rotation((1, 0, 0), theta)
+                )
+                where = np.round(matrix @ local, 3)[:3].flatten() + 0.0
+                label = tuple(child.args[i] for i in names if i < len(child.args))
+                found.append((child.kind, label, tuple(where.tolist())))
+
+    visit(obj.root, np.eye(4))
+    return sorted(found)
 
 
 def corners_from_text(

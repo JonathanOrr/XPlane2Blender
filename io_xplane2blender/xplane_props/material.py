@@ -136,9 +136,10 @@ class XPlaneMaterialSettings(bpy.types.PropertyGroup):
     plugin_device: bpy.props.StringProperty(name="Device ID", description="The device ID declared by your plugin")
     device_lighting_channel: bpy.props.IntProperty(
         name="Rheostat Lighting Channel",
-        description="The brightness knob of the screen: a 0 based index of X-Plane's lighting channels (rheostats). Not affected by 'Light Level'",
+        description="The brightness knob of the screen: a 0 based index of X-Plane's lighting channels (rheostats), or -1 for"
+        " none (Laminar's G1000 screens use it). Not affected by 'Light Level'",
         default=0,
-        min=0,
+        min=-1,
     )
     device_auto_adjust: bpy.props.BoolProperty(
         name="Auto-adjust for daytime readability",

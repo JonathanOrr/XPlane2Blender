@@ -19,8 +19,10 @@ class TestDragAxisAutoDetect(XPlaneTestCase):
         self.assertLoggerErrors(1)
 
     def test_02_doesnt_have_two_non_clamping_keyframes(self):
+        # Three keys along one line are allowed: the drag runs from the first key to the last
         out  = self.exportLayer(1)
-        self.assertLoggerErrors(1)
+        self.assertLoggerErrors(0)
+        self.assertIn("ATTR_manip_drag_axis", out)
 
     def test_03_not_leaf_bone(self):
         out  = self.exportLayer(2)

@@ -12,56 +12,12 @@ from io_xplane2blender.tests.importer_helpers import (
     write_file,
     write_png,
 )
-from io_xplane2blender.tests.obj_evaluator import corners, max_distance
+from io_xplane2blender.tests.obj_evaluator import corners, max_distance, placed_items
+from io_xplane2blender.tests.roundtrip_helpers import HOUSE_IDX, HOUSE_VT, all_datarefs, test_values
 from io_xplane2blender.tests.test_creation_helpers import create_initial_test_setup
 from io_xplane2blender.xplane_importer.common import ImportOptions, ImportReport
 from io_xplane2blender.xplane_importer.importing import import_obj_file
 from io_xplane2blender.xplane_importer.obj_parser import AnimNode, Light, parse_obj
-
-# A little house shape: a floor quad and a wall quad, so that every transform is visible in the corners
-HOUSE_VT = (
-    "VT 0 0 0 0 1 0 0 0\nVT 0 0 -1 0 1 0 0 1\nVT 1 0 -1 0 1 0 1 1\nVT 1 0 0 0 1 0 1 0\n"
-    "VT 0 0 0 0 0 1 0 0\nVT 1 0 0 0 0 1 1 0\nVT 1 1 0 0 0 1 1 1\nVT 0 1 0 0 0 1 0 1\n"
-)
-HOUSE_IDX = "IDX10 0 1 2 0 2 3\nIDX10 4 5 6 4 6 7\n"
-
-
-def all_datarefs(obj):
-    keys = {}
-
-    def visit(node):
-        for op in node.ops:
-            if not op.is_static:
-                keys.setdefault(op.dataref, set()).update(k[0] for k in op.keys)
-        for line in node.visibility:
-            keys.setdefault(line.dataref, set()).update((line.v1, line.v2))
-        for child in node.children:
-            if isinstance(child, AnimNode):
-                visit(child)
-
-    visit(obj.root)
-    return keys
-
-
-def test_values(obj):
-    """Several settings of the datarefs: every key, and between keys"""
-    datarefs = all_datarefs(obj)
-    sets = []
-    for choice in range(4):
-        values = {}
-        for path, keys in datarefs.items():
-            ordered = sorted(keys)
-            if choice == 0:
-                values[path] = 0.0
-            elif choice == 1:
-                values[path] = ordered[-1]
-            elif choice == 2:
-                values[path] = ordered[0]
-            else:
-                values[path] = (ordered[0] + ordered[-1]) / 2 + 0.123 * (ordered[-1] - ordered[0])
-        sets.append(values)
-    return sets
-
 
 def light_summaries(text):
     """Every light as (kind, name, parameters, position), numbers rounded, ignoring where in the blocks it sits"""
@@ -434,6 +390,58 @@ class TestImportRoundTrip(XPlaneTestCase):
             return found
 
         self.assertEqual(states(text), states(exported))
+
+    def test_landing_gear_and_magnets_stay_where_they_were(self) -> None:
+        # As on the A330 main gear: ATTR_landing_gear follows the wheel's triangles, in the frame of the wheel's
+        # animation, and a magnet sits in a turned frame
+        body = (
+            "ANIM_begin\nANIM_trans 2 -1 5 2 -1 5\nANIM_rotate 0 1 0 11.4 11.4\nANIM_rotate 1 0 0 -7.5 -7.5\n"
+            + self.rotate("0 0 -1", "sim/gear", ((0, -76), (0.9, 0), (1, 0)))
+            + "ANIM_begin\nANIM_rotate 1 0 0 90 90\n"
+            + self.rotate("1 0 0", "sim/tire", ((0, 0), (1, 360)))
+            + "TRIS 0 6\nATTR_landing_gear -0.706 0 0 -0.002 0.003 0.008 1 2\nANIM_end\n"
+            + "ANIM_end\n"
+            + "ANIM_begin\nANIM_trans 0 1 0 0 1 0\nANIM_rotate 0 1 0 30 30\n"
+            + "MAGNET pad xpad 0.1 0.2 0.3 10 20 30\nTRIS 6 6\nANIM_end\n"
+        )
+        text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
+        built = import_obj_file(write_file(self.folder.join("gear.obj"), text), ImportOptions(make_exportable=True), ImportReport())
+        (wheel,) = [o for o in built.objects if o.xplane.special_empty_props.special_type == xplane_constants.EMPTY_USAGE_WHEEL]
+        self.assertEqual((1, 2), (wheel.xplane.special_empty_props.wheel_props.gear_index, wheel.xplane.special_empty_props.wheel_props.wheel_index))
+        exported = self.exportExportableRoot(built.collection)
+        self.assertLoggerErrors(0)
+        original, again = parse_obj(text), parse_obj(exported)
+        # Not a state of the triangles any more
+        self.assertFalse([r for r in again.iter_tris() if "landing_gear" in dict(r.state)])
+        for values in ({}, {"sim/gear": 0.3, "sim/tire": 0.25}, {"sim/gear": 0.0, "sim/tire": 1.0}):
+            with self.subTest(values=values):
+                expected, actual = placed_items(original, values), placed_items(again, values)
+                self.assertEqual([(k, n) for k, n, _ in expected], [(k, n) for k, n, _ in actual])
+                for (_, _, a), (_, _, b) in zip(expected, actual):
+                    self.assertLess(max(abs(x - y) for x, y in zip(a, b)), 2e-3)
+
+    def test_glass_and_panel_header_settings_come_back(self) -> None:
+        # Rain, defrost, wipers, the lit texture's luminance and cockpit regions have settings of their own: kept as
+        # extra lines they were never written
+        for name in ("thermal.png", "wipers.png"):
+            write_png(self.folder.join(name))
+        header = (
+            "TEXTURE tex.png\nRAIN_scale 0.6\nTHERMAL_texture thermal.png\n"
+            "THERMAL_source2 0 45 sim/ice/window_heat[0]\nTHERMAL_source2 1 laminar/ice/rate sim/ice/window_heat[1]\n"
+            "WIPER_texture wipers.png\nWIPER_param sim/wiper_angle[0] 0 45 0.05\nWIPER_param sim/wiper_angle[1] 0 40 0.04\n"
+            "GLOBAL_luminance 2500\nCOCKPIT_REGION 0 0 256 256\nCOCKPIT_REGION 256 0 512 128\n"
+        )
+        text = obj_text("TRIS 0 6\n", header=header, vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
+        built = import_obj_file(write_file(self.folder.join("glass.obj"), text), ImportOptions(make_exportable=True), ImportReport())
+        built.collection.xplane.layer.name = self.folder.join("glass")
+        exported = self.exportExportableRoot(built.collection)
+
+        def lines(obj_text_, names):
+            return sorted(" ".join(line.split()) for line in obj_text_.splitlines() if line.split()[:1] and line.split()[0] in names)
+
+        names = {"RAIN_scale", "THERMAL_texture", "THERMAL_source2", "WIPER_texture", "WIPER_param", "GLOBAL_luminance", "COCKPIT_REGION"}
+        normalize = lambda found: sorted(" ".join(str(round(float(x), 3)) if x.replace(".", "", 1).isdigit() else x for x in line.split()) for line in found)
+        self.assertEqual(normalize(lines(text, names)), normalize(lines(exported, names)))
 
     def test_a_knob_with_two_parts_that_show_and_hide(self) -> None:
         # Hiding a part must not hide the ones beside it, which one of them carrying the animation would do

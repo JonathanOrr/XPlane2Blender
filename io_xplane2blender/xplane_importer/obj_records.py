@@ -95,6 +95,9 @@ class AnimNode:
         ""  # The last comment line seen before the block, often a useful name
     )
     lod: Optional[Tuple[float, float]] = None
+    # Opened by an animation or show / hide line that follows geometry in its block (Laminar's older files): X-Plane
+    # applies it to what follows only. It ends with the block's ANIM_end
+    implicit: bool = False
 
 
 @dataclass
@@ -150,6 +153,8 @@ _TOGGLES = {
     "ATTR_shadow": ("shadow", None),
     "ATTR_no_shadow": ("shadow", ("off",)),
     "ATTR_depth": ("depth", None),
+    "ATTR_shade_flat": ("shade", ("flat",)),
+    "ATTR_shade_smooth": ("shade", None),
     "ATTR_no_depth": ("depth", ("off",)),
     "ATTR_cockpit_hud": ("cockpit", ("hud",)),
     "ATTR_no_cockpit": ("cockpit", None),
@@ -177,9 +182,6 @@ _VALUED = {
     "ATTR_diffuse_rgb": "diffuse_rgb",
     "ATTR_emission_rgb": "emission_rgb",
     "ATTR_specular_rgb": "specular_rgb",
-    "ATTR_shade_flat": "shade",
-    "ATTR_shade_smooth": "shade",
-    "ATTR_landing_gear": "landing_gear",
     "ATTR_hud_glass": "hud_glass",
     "ATTR_wiper": "wiper",
     "ATTR_no_wiper": "wiper",
@@ -242,6 +244,7 @@ _GLOBAL_DIRECTIVES = {
     "ATTR_bump_level",
     "GLOBAL_cockpit_lit_only",
 }
-_EXTRAS = {"MAGNET", "EMITTER", "SMOKE_BLACK", "SMOKE_WHITE"}
+# ATTR_landing_gear marks where a wheel is in its animation, like an emitter, it is not a state of the triangles
+_EXTRAS = {"MAGNET", "EMITTER", "SMOKE_BLACK", "SMOKE_WHITE", "ATTR_landing_gear"}
 _LIGHT_NAMED = ("LIGHT_NAMED", "LIGHT_CUSTOM", "LIGHT_PARAM", "LIGHT_SPILL_CUSTOM")
 _IGNORED = {"TRIS_break", "POINT_COUNTS", "OBJ"}

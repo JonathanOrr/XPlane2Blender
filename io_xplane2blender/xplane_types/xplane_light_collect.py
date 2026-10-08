@@ -166,7 +166,8 @@ class XPlaneLightCollect:
                 round(dir_vec.magnitude, PRECISION_KEYFRAME) == 0.0
                 and not self.record_completed.is_omni()
             ):
-                logger.error(
+                # X-Plane loads it (Laminar's F-4 has such lights), so it is written as it is
+                logger.warn(
                     f"{self.blenderObject.name}'s '{self.lightName}' is directional, but has (0, 0, 0) for direction"
                 )
         except ValueError:  # is_omni not ready yet

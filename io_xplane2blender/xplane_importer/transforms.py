@@ -47,9 +47,11 @@ def principal_axis_bl(axis_bl: Sequence[float]) -> Tuple[int, float]:
     if axis_bl.length == 0:
         return -1, 1.0
     axis_bl.normalize()
-    for index in range(3):
-        if abs(abs(axis_bl[index]) - 1.0) < _PRINCIPAL_EPSILON:
-            return index, 1.0 if axis_bl[index] > 0 else -1.0
+    # The other two components measure the tilt (in radians); the main one barely moves for a small tilt, and a wing's
+    # 0.2 degree flex axis snapped to Z put its tip 10 cm off
+    index = max(range(3), key=lambda i: abs(axis_bl[i]))
+    if all(abs(axis_bl[i]) < _PRINCIPAL_EPSILON for i in range(3) if i != index):
+        return index, 1.0 if axis_bl[index] > 0 else -1.0
     return -1, 1.0
 
 

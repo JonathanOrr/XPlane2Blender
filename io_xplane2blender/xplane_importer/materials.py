@@ -150,6 +150,11 @@ class MaterialFactory(MaterialNodes):
                 x.deck = hard[0] == "deck"
         cockpit = state.get("cockpit")
         lit_only = state.get("cockpit_lit_only")
+        if cockpit == ("hud",):
+            # The add-on has no setting for ATTR_cockpit_hud (the F-14's HUD image): it is kept as it is
+            attribute = mat.xplane.customAttributes.add()
+            attribute.name, attribute.reset = "ATTR_cockpit_hud", "ATTR_no_cockpit"
+            cockpit = None
         if cockpit or lit_only is not None:
             x.cockpit_feature = xplane_constants.COCKPIT_FEATURE_PANEL
             luminance = None
@@ -183,7 +188,6 @@ class MaterialFactory(MaterialNodes):
             "diffuse_rgb",
             "emission_rgb",
             "specular_rgb",
-            "landing_gear",
             "cull",
             "shade",
             "rain",
@@ -219,19 +223,22 @@ class MaterialFactory(MaterialNodes):
 
     @staticmethod
     def _custom_attribute(mat: bpy.types.Material, key: str, value: tuple) -> None:
+        # (directive, the directive that ends it or "", whether it takes the state's values)
         names = {
-            "depth": "ATTR_no_depth",
-            "layer_group": "ATTR_layer_group",
-            "diffuse": "ATTR_diffuse",
-            "diffuse_rgb": "ATTR_diffuse_rgb",
-            "emission_rgb": "ATTR_emission_rgb",
-            "specular_rgb": "ATTR_specular_rgb",
-            "landing_gear": "ATTR_landing_gear",
-            "cull": "ATTR_no_cull",
-            "shade": "ATTR_shade_smooth",
-            "rain": "ATTR_rain_scale",
-            "wiper": "ATTR_wiper",
+            "depth": ("ATTR_no_depth", "ATTR_depth", False),
+            "layer_group": ("ATTR_layer_group", "", True),
+            "diffuse": ("ATTR_diffuse", "", True),
+            "diffuse_rgb": ("ATTR_diffuse_rgb", "", True),
+            "emission_rgb": ("ATTR_emission_rgb", "", True),
+            "specular_rgb": ("ATTR_specular_rgb", "", True),
+            "cull": ("ATTR_no_cull", "ATTR_cull", False),
+            "shade": ("ATTR_shade_flat", "ATTR_shade_smooth", False),
+            "rain": ("ATTR_rain_scale", "", True),
+            "wiper": ("ATTR_wiper", "", True),
         }
+        name, reset, valued = names[key]
         attribute = mat.xplane.customAttributes.add()
-        attribute.name = names[key]
-        attribute.value = " ".join(value)
+        attribute.name = name
+        attribute.value = " ".join(value) if valued else ""
+        # The parts after it that do not have it end it, as X-Plane's state carries on otherwise
+        attribute.reset = reset
