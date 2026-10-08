@@ -31,6 +31,7 @@ class LightLook:
     illuminates: bool = False
     direction: Optional[Tuple[float, float, float]] = None  # X-Plane object space
     spot_size: float = math.pi  # Radians, the full cone angle
+    reach: Optional[float] = None  # Meters the light reaches, when its size says
 
 
 def _number(text) -> float:
@@ -113,6 +114,7 @@ def _look_of_spill_custom(light: Light) -> LightLook:
         illuminates=True,
         direction=direction,
         spot_size=spot,
+        reach=numbers[4],
     )
 
 
@@ -151,12 +153,14 @@ def _look_of_lights_txt(light: Light) -> LightLook:
         return LightLook(color=color)  # type: ignore[arg-type]
 
     size = value(columns.SIZE)
+    reach = None
     if size is None:
         watts = watts_for_size(0.5)
     elif light.name in parser.SIZE_AS_INTENSITY:
         watts = watts_for_candela(size)
     else:
         watts = watts_for_size(size)
+        reach = size
     direction = (value(columns.DX), value(columns.DY), value(columns.DZ))
     kind, unit, spot = _cone(direction if None not in direction else None, value(columns.WIDTH))
     return LightLook(
@@ -166,4 +170,5 @@ def _look_of_lights_txt(light: Light) -> LightLook:
         illuminates=True,
         direction=unit,
         spot_size=spot,
+        reach=reach,
     )

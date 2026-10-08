@@ -1,6 +1,6 @@
 """
 The X-Plane parts of the 3D View: overlays (click zones, motion, lights, unfinished work), the lever handle,
-the pie menu, the X-Plane tool, the X-Plane workspace and the detail texture preview.
+the pie menu, the X-Plane tool, the X-Plane workspace, the detail texture preview and Tidy Up.
 """
 
 import traceback
@@ -14,6 +14,7 @@ from . import (
     overlay_more,
     pie,
     settings,
+    tidy,
     tool,
     workspace,
 )
@@ -64,6 +65,7 @@ def _post_pixel():
 classes = (
     *lever.classes,
     *pie.classes,
+    *tidy.classes,
     *tool.classes,
     *workspace.classes,
     *detail_preview.classes,

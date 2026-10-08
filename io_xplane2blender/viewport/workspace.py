@@ -1,8 +1,9 @@
 """
 The X-Plane workspace: a copy of Layout set up for building a cockpit. Its 3D View outlines click zones, labels
-the selected ones, shows motion, lights and unfinished work and has the lever handle, with textures in Solid shading;
-the Properties editor opens on the Object tab. Made the first time it is opened and saved with the .blend like any
-workspace. Opened from the workspace tabs' right-click menu, the Scene tab's X-Plane Tools and the pie menu.
+the selected ones, shows motion, lights and unfinished work and has the lever handle, with textures in Solid shading
+and the dashed parent lines off; the Properties editor opens on the Object tab. Made the first time it is opened and
+saved with the .blend like any workspace. Opened from the workspace tabs' right-click menu, the Scene tab's
+X-Plane Tools and the pie menu.
 """
 
 import bpy
@@ -23,8 +24,11 @@ def set_up(workspace: bpy.types.WorkSpace) -> None:
         view.show_unfinished = True
         for area in screen.areas:
             for space in area.spaces:
-                if space.type == "VIEW_3D" and space.shading.type == "SOLID":
-                    space.shading.color_type = "TEXTURE"
+                if space.type == "VIEW_3D":
+                    if space.shading.type == "SOLID":
+                        space.shading.color_type = "TEXTURE"
+                    # An aircraft has thousands of parents, and a dashed line to each is only clutter
+                    space.overlay.show_relationship_lines = False
                 elif space.type == "PROPERTIES":
                     try:
                         space.context = "OBJECT"

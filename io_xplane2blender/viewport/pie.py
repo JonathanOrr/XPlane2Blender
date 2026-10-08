@@ -69,6 +69,10 @@ class XPLANE_MT_pie(bpy.types.Menu):
             row = box.row(align=True)
             row.prop(s, "show_lever", toggle=True)
             row.prop(s, "show_lights", toggle=True)
+            box.operator("xplane.tidy_viewport", text="Tidy Empties And Cones")
+            box.operator(
+                "wm.call_panel", text="Hide Empties, Lights...", icon="RESTRICT_VIEW_OFF"
+            ).name = "VIEW3D_PT_object_type_visibility"
         else:
             pie.separator()
         pie.menu("XPLANE_MT_add", text="Add", icon="ADD")

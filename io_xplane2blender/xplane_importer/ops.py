@@ -69,7 +69,7 @@ def _option_properties():
         ),
         "show_result": bpy.props.BoolProperty(
             name="Show In Viewport",
-            description="Switch the 3D viewport to the textured Material Preview and frame everything",
+            description="Switch the 3D viewport to the textured Material Preview, hide the dashed parent lines and frame everything",
             default=True,
         ),
         "scale": bpy.props.FloatProperty(
@@ -111,6 +111,8 @@ def _frame_everything(context) -> None:
             if space.type == "VIEW_3D":
                 space.shading.type = "MATERIAL"
                 space.clip_end = max(space.clip_end, 5000.0)
+                # Every animated part hangs on an empty, and each would get a dashed line to its parent
+                space.overlay.show_relationship_lines = False
         region = next((r for r in area.regions if r.type == "WINDOW"), None)
         if region is not None:
             try:
