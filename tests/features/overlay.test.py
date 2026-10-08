@@ -9,6 +9,7 @@ import bpy
 from mathutils import Vector
 
 from io_xplane2blender import xplane_constants as C
+from io_xplane2blender import xplane_light_tools
 from io_xplane2blender.viewport import light_shapes
 from io_xplane2blender.viewport import overlay as xplane_overlay
 from io_xplane2blender.tests import *
@@ -107,6 +108,76 @@ class TestOverlay(XPlaneTestCase):
             self.assertEqual([], light_shapes.screen_tick(context, lamp, where))
         finally:
             light_shapes.draw.screen_point = original
+
+    def library_light(self, name: str, kind: str, params: str = "", blender_type: str = "SPOT"):
+        obj = self.spot(name)
+        obj.data.type = blender_type
+        obj.data.xplane.type = kind
+        obj.data.xplane.name = name
+        obj.data.xplane.params = params
+        return obj
+
+    def test_the_reach_is_what_x_plane_gives_a_spill(self) -> None:
+        reach = xplane_light_tools.throw_distance
+        flood = self.spot("flood")
+        flood.data.xplane.type = C.LIGHT_SPILL_CUSTOM
+        flood.data.xplane.size = 2.5
+        self.assertEqual(2.5, reach(flood))
+        # A library spill is sized in meters too: the card's Light Size, or the third from last typed parameter
+        automatic = self.library_light("airplane_landing_sp", C.LIGHT_AUTOMATIC)
+        automatic.data.xplane.param_size = 7.0
+        self.assertAlmostEqual(7.0, reach(automatic), places=5)
+        automatic.data.xplane.param_size = 9.0
+        self.assertAlmostEqual(9.0, reach(automatic), places=5)
+        typed = self.library_light("airplane_landing_sp", C.LIGHT_PARAM, "1 1 1 0 12 0.9")
+        self.assertAlmostEqual(12.0, reach(typed), places=5)
+        named = self.library_light("pad_flood", C.LIGHT_NAMED)
+        self.assertGreater(reach(named), 0.0)
+
+    def test_there_is_no_reach_where_x_plane_gives_none(self) -> None:
+        reach = xplane_light_tools.throw_distance
+        # Lit by intensity: no cutoff
+        self.assertIsNone(reach(self.library_light("airplane_landing_pm", C.LIGHT_AUTOMATIC)))
+        # Glows light nothing, unknown names and unchosen lights are unknown, and lights not exported are not X-Plane's
+        sprite = self.spot("sprite")
+        sprite.data.xplane.type = C.LIGHT_CUSTOM
+        self.assertIsNone(reach(sprite))
+        self.assertIsNone(reach(self.library_light("not_in_lights_txt", C.LIGHT_NAMED)))
+        self.assertIsNone(reach(self.library_light("", C.LIGHT_AUTOMATIC)))
+        hidden = self.spot("scene only")
+        hidden.data.xplane.type = C.LIGHT_NON_EXPORTING
+        self.assertIsNone(reach(hidden))
+
+    def test_a_spill_is_drawn_as_far_as_it_reaches(self) -> None:
+        flood = self.spot("flood", size=math.radians(90))
+        flood.data.xplane.type = C.LIGHT_SPILL_CUSTOM
+        flood.data.xplane.size = 2.5
+        apex = flood.matrix_world.translation
+        points = light_shapes.shape(flood)
+        self.assertAlmostEqual(2.5, max((p - apex).length for p in points), places=5)
+        self.assertEqual("flood · reach 2.5 m", light_shapes.caption(flood, "flood"))
+
+    def test_a_spot_without_a_reach_has_a_short_cone_that_says_it_only_shows_the_direction(self) -> None:
+        lamp = self.library_light("airplane_landing_pm", C.LIGHT_AUTOMATIC)
+        apex = lamp.matrix_world.translation
+        self.assertAlmostEqual(light_shapes.SLANT, max((p - apex).length for p in light_shapes.shape(lamp)), places=5)
+        self.assertEqual("landing · direction only", light_shapes.caption(lamp, "landing"))
+
+    def test_a_light_that_shines_all_around_is_drawn_as_the_sphere_it_reaches(self) -> None:
+        bulb = self.spot("bulb")
+        bulb.data.type = "POINT"
+        bulb.data.xplane.type = C.LIGHT_SPILL_CUSTOM
+        bulb.data.xplane.size = 1.5
+        center = bulb.matrix_world.translation
+        points = light_shapes.shape(bulb)
+        self.assertEqual(3 * 2 * 32, len(points))
+        for p in points:
+            self.assertAlmostEqual(1.5, (p - center).length, places=5)
+        self.assertEqual("bulb · reach 1.5 m", light_shapes.caption(bulb, "bulb"))
+        # Without a reach there is nothing to draw, and nothing to say but the name
+        bulb.data.xplane.type = C.LIGHT_CUSTOM
+        self.assertEqual([], light_shapes.shape(bulb))
+        self.assertEqual("bulb", light_shapes.caption(bulb, "bulb"))
 
     def test_typed_drag_directions_get_an_arrow(self) -> None:
         obj = test_creation_helpers.create_datablock_mesh(

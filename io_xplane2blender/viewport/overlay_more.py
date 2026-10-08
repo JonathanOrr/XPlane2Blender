@@ -3,8 +3,8 @@ More viewport overlays:
 - Motion: the path the selected animated objects travel from their first to their last keyframe, a tick and the
   dataref value at each keyframe, and the hinge line of turning parts
 - Lights: a ring in each X-Plane light's color with a tick for the way a spot shines, the selected ones named and
-  with their cone (red when no light is chosen yet). It is what Blender's own light gizmos, hidden with Overlays >
-  Extras, are replaced by
+  with their cone out to the reach X-Plane gives them (red when no light is chosen yet). It is what Blender's own
+  light gizmos, hidden with Overlays > Extras, are replaced by
 - Unfinished: red outlines around what the last Check listed, the selected ones saying what is missing
 """
 
@@ -158,7 +158,11 @@ def draw_lights(context) -> None:
         if obj.select_get():
             text.at(
                 obj.matrix_world.translation,
-                name if name is not None else "No light chosen",
+                (
+                    light_shapes.caption(obj, name)
+                    if name is not None
+                    else "No light chosen"
+                ),
                 color,
                 dx=9,
             )
@@ -174,7 +178,7 @@ def draw_light_cones(context) -> None:
     for obj in selected[:MAX_MOTIONS]:
         name = light_name(obj.data)
         color = light_color(obj.data) if name is not None else PROBLEM_COLOR
-        by_color.setdefault(color, []).extend(light_shapes.cone_lines(obj))
+        by_color.setdefault(color, []).extend(light_shapes.shape(obj))
     for color, points in by_color.items():
         draw.lines(points, color, width=2.0)
 

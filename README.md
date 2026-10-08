@@ -96,7 +96,10 @@ viewport's right-click menu has **X-Plane > Make Clickable As**, the animation p
     arrow along the slide of a throttle or seat. Drag it to move the part through its animation as it moves in X-Plane
     and read the dataref value. It only changes the scene frame, nothing is keyed.
   - **Lights** rings every X-Plane light in its color (red when no light is chosen yet), with a tick for the way a spot
-    shines, and names the selected ones and draws their cone.
+    shines. A selected light is named and drawn out to the reach X-Plane gives it, which only a spill has (its size in
+    meters: a Spill's Reach, or the size of a lights.txt spill): a cone for a spot, a sphere for a light that shines
+    all around, and "reach 2.5 m" in its name. The rest are lit by their intensity, which has no cutoff: they get a
+    short cone for the direction and "direction only".
   - **Unfinished** outlines in red what the last Check listed, and says what is missing on the selected ones.
 - **Shift+Q** opens the X-Plane pie menu: Make Clickable As, Animate As, Add, Key This Pose, Move To File, Check
   (which also turns on the Unfinished overlay), Export, the overlay switches, **Tidy Empties And Cones** and

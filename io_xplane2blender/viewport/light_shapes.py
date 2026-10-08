@@ -14,9 +14,11 @@ from typing import List, Optional
 import bpy
 from mathutils import Vector
 
+from io_xplane2blender import xplane_light_tools
+
 from . import draw
 
-# How long the drawn cone of a selected spot is, along its side (meters)
+# How long the cone of a selected spot is drawn when X-Plane gives its light no reach: only for its direction (meters)
 SLANT = 0.4
 # Where a spot's tick starts and ends around its ring, in pixels
 TICK_FROM, TICK_TO = 8.0, 20.0
@@ -53,6 +55,37 @@ def cone_lines(obj: bpy.types.Object, slant: float = SLANT) -> List[Vector]:
             center + (side * math.cos(angle) + turn * math.sin(angle)) * radius,
         ]
     return edges + ring
+
+
+def sphere_lines(obj: bpy.types.Object, radius: float) -> List[Vector]:
+    """How far a light that shines all around reaches: three circles around it, as pairs of points"""
+    center = obj.matrix_world.translation
+    return [
+        point
+        for normal in (Vector((1, 0, 0)), Vector((0, 1, 0)), Vector((0, 0, 1)))
+        for point in draw.circle(center, normal, radius, segments=32)
+    ]
+
+
+def shape(obj: bpy.types.Object) -> List[Vector]:
+    """
+    What to draw for a selected light: a spot's cone as far as the light reaches in X-Plane, or a short one for the
+    direction when X-Plane gives it no reach, and for a light that shines all around the sphere it reaches
+    """
+    reach = xplane_light_tools.throw_distance(obj)
+    if direction(obj) is not None:
+        return cone_lines(obj, reach if reach else SLANT)
+    return sphere_lines(obj, reach) if reach else []
+
+
+def caption(obj: bpy.types.Object, name: str) -> str:
+    """The name of a selected light, and how far it reaches in X-Plane (or that its cone only shows the direction)"""
+    reach = xplane_light_tools.throw_distance(obj)
+    if reach:
+        return f"{name} · reach {reach:g} m"
+    if direction(obj) is not None:
+        return f"{name} · direction only"
+    return name
 
 
 def screen_tick(context, obj: bpy.types.Object, where: Vector) -> List[Vector]:

@@ -28,7 +28,12 @@ from .xplane_constants import (
 from .xplane_utils import xplane_light_params as light_params
 from .xplane_utils import xplane_lights_txt_parser as parser
 
-RAY_VISIBILITY = ("visible_diffuse", "visible_glossy", "visible_transmission", "visible_volume_scatter")
+RAY_VISIBILITY = (
+    "visible_diffuse",
+    "visible_glossy",
+    "visible_transmission",
+    "visible_volume_scatter",
+)
 EEVEE_FACTORS = ("diffuse_factor", "specular_factor", "volume_factor")
 
 
@@ -72,7 +77,9 @@ def kinds_of(name: str) -> Tuple[bool, bool]:
     if parsed is None:
         return False, False
     types = [o.overload_type for o in parsed.overloads]
-    return any(t.startswith("SPILL") for t in types), any(t.startswith("BILLBOARD") for t in types)
+    return any(t.startswith("SPILL") for t in types), any(
+        t.startswith("BILLBOARD") for t in types
+    )
 
 
 def describe(name: str, with_params: bool = True) -> str:
@@ -158,7 +165,11 @@ def _automatic_args(obj: bpy.types.Object, parsed) -> List[str]:
     # X-Plane is y up, Blender is z up
     dx, dy, dz = direction.x, direction.z, -direction.y
     width = math.cos(data.spot_size / 2) if data.type == "SPOT" else 1.0
-    size = x.param_intensity_new if parsed.name in parser.SIZE_AS_INTENSITY else x.param_size
+    size = (
+        x.param_intensity_new
+        if parsed.name in parser.SIZE_AS_INTENSITY
+        else x.param_size
+    )
     values = {
         "R": data.color[0],
         "G": data.color[1],
@@ -176,10 +187,47 @@ def _automatic_args(obj: bpy.types.Object, parsed) -> List[str]:
     return [str(values.get(p, 0)) for p in parsed.light_param_def]
 
 
-def preview_look(obj: bpy.types.Object) -> Optional[Tuple[bool, float, Optional[float]]]:
-    """(lights the scene, watts with the light on, reach in meters or None), or None when there is nothing to preview"""
+def _lights_txt_look(obj: bpy.types.Object):
+    """How X-Plane draws the light a Library Light names, with the object's own parameters, or None when no light is
+    chosen or the name is not in lights.txt"""
     from .xplane_importer import lights as importer_lights
     from .xplane_importer.obj_parser import Light
+
+    x = obj.data.xplane
+    parsed = parsed_light(x.name) if x.name.strip() else None
+    if parsed is None:
+        return None
+    if x.type == LIGHT_NAMED:
+        light = Light("named", (0.0, 0.0, 0.0), parsed.name, [])
+    elif x.type == LIGHT_PARAM:
+        light = Light("param", (0.0, 0.0, 0.0), parsed.name, x.params.split())
+    else:
+        light = Light(
+            "param", (0.0, 0.0, 0.0), parsed.name, _automatic_args(obj, parsed)
+        )
+    return importer_lights.look_of(light)
+
+
+def throw_distance(obj: bpy.types.Object) -> Optional[float]:
+    """
+    How far the light reaches in X-Plane, in meters, where X-Plane gives it one: the size of a spill (a Spill's Reach,
+    or the size a lights.txt spill is given). None for the rest: lights that are lit by their intensity have no
+    cutoff, glows light nothing, and a light with no lights.txt light chosen is unknown
+    """
+    x = obj.data.xplane
+    if x.type == LIGHT_SPILL_CUSTOM:
+        return x.size
+    if x.type in (LIGHT_NAMED, LIGHT_PARAM, LIGHT_AUTOMATIC):
+        look = _lights_txt_look(obj)
+        return look.reach if look is not None else None
+    return None
+
+
+def preview_look(
+    obj: bpy.types.Object,
+) -> Optional[Tuple[bool, float, Optional[float]]]:
+    """(lights the scene, watts with the light on, reach in meters or None), or None when there is nothing to preview"""
+    from .xplane_importer import lights as importer_lights
 
     x = obj.data.xplane
     if x.type == LIGHT_SPILL_CUSTOM:
@@ -187,16 +235,9 @@ def preview_look(obj: bpy.types.Object) -> Optional[Tuple[bool, float, Optional[
     if x.type == LIGHT_CUSTOM:
         return False, 0.0, None
     if x.type in (LIGHT_NAMED, LIGHT_PARAM, LIGHT_AUTOMATIC):
-        parsed = parsed_light(x.name) if x.name.strip() else None
-        if parsed is None:
+        look = _lights_txt_look(obj)
+        if look is None:
             return None
-        if x.type == LIGHT_NAMED:
-            light = Light("named", (0.0, 0.0, 0.0), parsed.name, [])
-        elif x.type == LIGHT_PARAM:
-            light = Light("param", (0.0, 0.0, 0.0), parsed.name, x.params.split())
-        else:
-            light = Light("param", (0.0, 0.0, 0.0), parsed.name, _automatic_args(obj, parsed))
-        look = importer_lights.look_of(light)
         return look.illuminates, look.watts, None
     return None
 
@@ -236,11 +277,15 @@ class XPLANE_OT_lights_preview(bpy.types.Operator):
         soft_max=20.0,
     )
     selected_only: bpy.props.BoolProperty(
-        name="Selected Only", description="Only the selected lights, otherwise every light in the scene", default=True
+        name="Selected Only",
+        description="Only the selected lights, otherwise every light in the scene",
+        default=True,
     )
 
     def execute(self, context):
-        objects = context.selected_objects if self.selected_only else context.scene.objects
+        objects = (
+            context.selected_objects if self.selected_only else context.scene.objects
+        )
         lights = [o for o in objects if o.type == "LIGHT"]
         changed = sum(1 for o in lights if apply_preview(o, self.strength))
         skipped = len(lights) - changed
