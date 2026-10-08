@@ -163,7 +163,7 @@ class XPLANE_PT_file_decals(_FilePanel, bpy.types.Panel):
 
 
 class XPLANE_PT_file_more(_FilePanel, bpy.types.Panel):
-    bl_label = "More"
+    bl_label = "Advanced"
     bl_order = 5
     bl_options = {"DEFAULT_CLOSED"}
 

@@ -92,7 +92,7 @@ class XPLANE_PT_surface(_MaterialTab, bpy.types.Panel):
 
 
 class XPLANE_PT_surface_more(_MaterialTab, bpy.types.Panel):
-    bl_label = "More"
+    bl_label = "Advanced"
     bl_parent_id = "XPLANE_PT_surface"
     bl_options = {"DEFAULT_CLOSED"}
 
