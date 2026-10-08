@@ -8,7 +8,12 @@ from typing import TYPE_CHECKING, Dict
 import bpy
 import mathutils
 
-from io_xplane2blender import xplane_constants, xplane_display_sizes, xplane_props
+from io_xplane2blender import (
+    xplane_constants,
+    xplane_display_sizes,
+    xplane_light_sync,
+    xplane_props,
+)
 from io_xplane2blender.xplane_constants import MANIP_DRAG_ROTATE
 from io_xplane2blender.xplane_types.xplane_manipulator import SETTINGS_WRITTEN
 
@@ -45,7 +50,9 @@ def _number(text: str) -> float:
 class PartsBuilder:
     """The settings half of ObjBuilder"""
 
-    EXTRA_EMPTY_SIZE = 0.05  # Meters, of the empties that are wheels, magnets or emitters
+    EXTRA_EMPTY_SIZE = (
+        0.05  # Meters, of the empties that are wheels, magnets or emitters
+    )
 
     def _object_name(self, group: "_Group") -> str:
         manip = group.object_state.get("manip")
@@ -170,6 +177,13 @@ class PartsBuilder:
     def _add_light(
         self, light: Light, parent, static: mathutils.Matrix, name: str
     ) -> None:
+        # The importer sets both sides of every number the X-Plane light shares with its Blender light itself
+        with xplane_light_sync.paused():
+            self._build_light(light, parent, static, name)
+
+    def _build_light(
+        self, light: Light, parent, static: mathutils.Matrix, name: str
+    ) -> None:
         look = lights.look_of(light)
         matrix = static @ T.translation_xp(light.position)
         data_name = light.name or light.kind
@@ -183,6 +197,9 @@ class PartsBuilder:
             # Spill lights are dataref driven and off in the parked pose, "Light Strength" switches them on
             blender_light["xplane_watts_when_on"] = look.watts
             blender_light.energy = look.watts * self.options.light_strength
+            if self.options.light_strength > 0:
+                # What the power is multiplied by, so that it can be taken out again (see xplane_light_sync)
+                blender_light[xplane_light_sync.STRENGTH] = self.options.light_strength
         else:
             blender_light.energy = 0.0
         # Blender draws a spot's cone as far as its custom distance: short for a light that is off, not a line
@@ -254,6 +271,9 @@ class PartsBuilder:
             self.report.warn(
                 f"{self.stem}: could not read a {light.kind} light, it was imported without its settings"
             )
+        if look.illuminates and self.options.light_strength > 0:
+            # A light that is on has the power its intensity asks for, however large (see xplane_light_sync)
+            xplane_light_sync.push(blender_light)
         self.objects.append(obj)
         self.report.lights_imported += 1
 

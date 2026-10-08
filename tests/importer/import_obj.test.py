@@ -454,6 +454,28 @@ class TestImportObj(XPlaneTestCase):
         self.assertAlmostEqual(light.data.energy, 25 * 4 * math.pi**2 / 683, places=3)
         self.assertEqual(light.data.xplane.params, "1 0.5 0 18 25cd 0 -1 0 0.5")
 
+    def test_a_lit_light_has_the_power_its_intensity_asks_for_and_says_how_much_it_was_multiplied(self) -> None:
+        from io_xplane2blender import xplane_light_sync
+
+        # 200000cd is more than the preview's own limit on a light's power: the link goes by the intensity
+        text = "LIGHT_PARAM airplane_landing_pm 1 2 3 1 1 1 0 200000cd 0 -1 0 0.5\n"
+        light = self.light(text, light_strength=2.0)
+        self.assertAlmostEqual(200000 * 4 * math.pi**2 / 683 * 2.0, light.data.energy, places=1)
+        self.assertEqual(2.0, light.data[xplane_light_sync.STRENGTH])
+        self.assertEqual("1 1 1 0 200000cd 0 -1 0 0.5", light.data.xplane.params)
+        # Nothing was pushed or pulled while it was built, and selecting it changes nothing
+        bpy.context.view_layer.objects.active = light
+        light.select_set(True)
+        xplane_light_sync.blender_changed()
+        self.assertEqual("1 1 1 0 200000cd 0 -1 0 0.5", light.data.xplane.params)
+
+    def test_lights_that_are_off_have_no_strength_to_remember(self) -> None:
+        from io_xplane2blender import xplane_light_sync
+
+        light = self.light("LIGHT_PARAM airplane_landing_pm 1 2 3 1 1 1 0 20000cd 0 -1 0 0.5\n")
+        self.assertEqual(0.0, light.data.energy)
+        self.assertNotIn(xplane_light_sync.STRENGTH, light.data)
+
     def test_spill_lights_are_off_unless_asked(self) -> None:
         light = self.light("LIGHT_PARAM airplane_generic_pm 1 2 3 1 1 1 18 25cd 0 -1 0 0.5\n")
         self.assertEqual(light.data.energy, 0.0)

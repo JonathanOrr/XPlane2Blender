@@ -90,7 +90,14 @@ class TestLightParams(XPlaneTestCase):
         data = lamp()
         layout = FakeLayout()
         light_params.parameters_layout(layout, data)
-        self.assertEqual(["color", "index", "intensity", "direction", "width", "params"], layout.props())
+        # A spot light's rotation is its direction, so the card says to rotate the light instead of asking for one,
+        # and the cone is an angle
+        self.assertEqual(["color", "index", "intensity", "cone_angle", "params"], layout.props())
+        self.assertIn("Direction: rotate the Blender light", layout.labels())
+        data.type = "POINT"
+        layout = FakeLayout()
+        light_params.parameters_layout(layout, data)
+        self.assertEqual(["color", "index", "intensity", "direction", "cone_angle", "params"], layout.props())
 
     def test_every_library_light_with_parameters_draws(self) -> None:
         count = 0
@@ -107,7 +114,7 @@ class TestLightParams(XPlaneTestCase):
     def test_picking_another_light_starts_its_parameters_again(self) -> None:
         data = lamp(params="1 2 3")
         bpy.ops.xplane.light_pick_name("EXEC_DEFAULT", light=LANDING)
-        self.assertEqual("1 1 1 0 20000cd 0 0 0 1", data.xplane.params)
+        self.assertEqual("1 1 1 0 20000cd 0 -1 0 0.92388", data.xplane.params)
         # Parameters that fit are kept
         data.xplane.params = "0.3 0.3 0.3 1 500cd 0 0 -1 0.5"
         bpy.ops.xplane.light_pick_name("EXEC_DEFAULT", light="airplane_taxi_bb")
@@ -117,7 +124,7 @@ class TestLightParams(XPlaneTestCase):
         data = lamp(params="")
         data.xplane.type = C.LIGHT_NAMED
         bpy.ops.xplane.set_light_kind(kind=C.LIGHT_PARAM)
-        self.assertEqual("1 1 1 0 20000cd 0 0 0 1", data.xplane.params)
+        self.assertEqual("1 1 1 0 20000cd 0 -1 0 0.92388", data.xplane.params)
         # Lines that fit are not touched
         data.xplane.params = "0.2 0.2 0.2 1 100cd 0 0 -1 0.5"
         bpy.ops.xplane.set_light_kind(kind=C.LIGHT_AUTOMATIC)
@@ -136,7 +143,7 @@ class TestLightParams(XPlaneTestCase):
         lamp()
         layout = draw_panel(light_card.XPLANE_PT_light)
         self.assertIn("XPlaneLightParams.color", layout.settings())
-        self.assertIn("XPlaneLightParams.direction", layout.settings())
+        self.assertIn("XPlaneLightParams.cone_angle", layout.settings())
 
 
 runTestCases([TestLightParams])

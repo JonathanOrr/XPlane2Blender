@@ -227,7 +227,7 @@ class XPLANE_OT_set_light_kind(bpy.types.Operator):
         lights = [o for o in selected_or_active(context) if o.type == "LIGHT"]
         for obj in lights:
             obj.data.xplane.type = self.kind
-            xplane_light_tools.seed_params(obj.data.xplane)
+            xplane_light_tools.seed_params(obj.data.xplane, obj)
             if self.kind in (C.LIGHT_SPILL_CUSTOM, C.LIGHT_AUTOMATIC) and obj.data.type not in ("POINT", "SPOT"):
                 obj.data.type = "SPOT"
         return {"FINISHED"} if lights else {"CANCELLED"}
