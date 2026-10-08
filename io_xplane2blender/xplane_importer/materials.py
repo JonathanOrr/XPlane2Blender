@@ -128,8 +128,9 @@ class MaterialFactory(MaterialNodes):
         shiny = state.get("shiny")
         if shiny:
             mat.specular_intensity = max(0.0, min(1.0, float(shiny[0])))
-        elif self._global_specular() > 0:
-            # GLOBAL_specular is what ATTR_shiny_rat defaults to for every mesh
+        else:
+            # GLOBAL_specular is what ATTR_shiny_rat defaults to for every mesh, and without it X-Plane's default is 0
+            # (not Blender's 0.5, which the exporter would write)
             mat.specular_intensity = max(0.0, min(1.0, self._global_specular()))
         poly_os = state.get("poly_os")
         if poly_os:
@@ -183,7 +184,6 @@ class MaterialFactory(MaterialNodes):
             "emission_rgb",
             "specular_rgb",
             "landing_gear",
-            "hud_glass",
             "cull",
             "shade",
             "rain",
@@ -227,7 +227,6 @@ class MaterialFactory(MaterialNodes):
             "emission_rgb": "ATTR_emission_rgb",
             "specular_rgb": "ATTR_specular_rgb",
             "landing_gear": "ATTR_landing_gear",
-            "hud_glass": "ATTR_hud_glass",
             "cull": "ATTR_no_cull",
             "shade": "ATTR_shade_smooth",
             "rain": "ATTR_rain_scale",

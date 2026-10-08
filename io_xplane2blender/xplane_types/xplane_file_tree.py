@@ -12,6 +12,7 @@ from io_xplane2blender.xplane_types import (
 
 from ..xplane_helpers import (
     ExportableRoot,
+    is_visible_for_export,
     logger,
 )
 from .xplane_bone import XPlaneBone
@@ -119,7 +120,9 @@ class XPlaneFileTree:
                             new_parent_xplane_obj.export_animation_only = True
                         else:
                             new_parent_xplane_obj.export_animation_only = (
-                                not new_parent_xplane_obj.blenderObject.visible_get()
+                                not is_visible_for_export(
+                                    new_parent_xplane_obj.blenderObject
+                                )
                             )
 
                     try:
@@ -276,7 +279,7 @@ class XPlaneFileTree:
                 # If set from walking up, keep that. Otherwise, decide based on visiblity
                 new_xplane_obj.export_animation_only = (
                     new_xplane_obj.export_animation_only
-                    or not blender_obj.visible_get()
+                    or not is_visible_for_export(blender_obj)
                 )
                 new_xplane_obj.collect()
             elif not found_blender_obj_already and blender_obj:

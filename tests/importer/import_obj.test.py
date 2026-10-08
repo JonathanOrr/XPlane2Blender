@@ -4,7 +4,7 @@ import os
 import bpy
 from mathutils import Vector
 
-from io_xplane2blender import xplane_constants, xplane_display_sizes
+from io_xplane2blender import xplane_constants, xplane_display_sizes, xplane_helpers
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests.importer_helpers import (
     TempFolder,
@@ -129,11 +129,11 @@ class TestImportObj(XPlaneTestCase):
     def test_materials_follow_the_attribute_state(self) -> None:
         body = "TRIS 0 3\nATTR_no_blend 0.4\nTRIS 0 3\nATTR_blend\nATTR_shiny_rat 0.8\nTRIS 0 3\nATTR_shiny_rat 0.8\nTRIS 0 3\n"
         built = self.do_import(obj_text(body, header="TEXTURE tex.png\n", tris=None))
-        (obj,) = self.meshes(built)
-        materials = list(obj.data.materials)
-        self.assertEqual(len(materials), 3)
-        self.assertEqual([p.material_index for p in obj.data.polygons], [0, 1, 2, 2])
-        default, cutout, shiny = materials
+        # One mesh per material: the exporter writes an object with its first material's settings only
+        meshes = self.meshes(built)
+        self.assertEqual([len(o.data.materials) for o in meshes], [1, 1, 1])
+        self.assertEqual([len(o.data.polygons) for o in meshes], [1, 1, 2])
+        default, cutout, shiny = [o.data.materials[0] for o in meshes]
         self.assertEqual(default.xplane.blend_v1000, xplane_constants.BLEND_ON)
         self.assertEqual(cutout.xplane.blend_v1000, xplane_constants.BLEND_OFF)
         self.assertAlmostEqual(cutout.xplane.blendRatio, 0.4, places=4)
@@ -289,6 +289,16 @@ class TestImportObj(XPlaneTestCase):
         self.assertEqual(len(lit), 1)
         self.assertEqual(lit[0].xplane.lightLevel_dataref, "sim/lit")
         self.assertEqual((lit[0].xplane.lightLevel_v1, lit[0].xplane.lightLevel_v2), (0.0, 1.0))
+        self.assertFalse(lit[0].xplane.lightLevel_photometric)
+
+    def test_light_level_brightness(self) -> None:
+        body = "ATTR_light_level 0 1 sim/lit 7500\nTRIS 0 3\nATTR_light_level 0 1 sim/off 0\nTRIS 0 3\n"
+        built = self.do_import(obj_text(body, tris=None))
+        found = {o.xplane.lightLevel_dataref: o.xplane for o in self.meshes(built)}
+        self.assertTrue(found["sim/lit"].lightLevel_photometric)
+        self.assertEqual(found["sim/lit"].lightLevel_brightness, 7500)
+        self.assertTrue(found["sim/off"].lightLevel_photometric)
+        self.assertEqual(found["sim/off"].lightLevel_brightness, 0)
 
     # ---- animations ------------------------------------------------------------------------
     def test_static_anim_blocks_move_the_mesh(self) -> None:
@@ -331,12 +341,14 @@ class TestImportObj(XPlaneTestCase):
         self.assertEqual(self.frame_values(empty, "location", 2), [(1, 1.0, "LINEAR"), (2, 2.0, "LINEAR")])
 
     def test_the_scene_opens_in_the_parked_pose(self) -> None:
-        # Keys at -1, 0 and 1: the key nearest the default value 0 is on frame 1
+        # Keys at -1, 0 and 1: no key is before frame 1, where the playhead cannot go, and the scene opens on the key
+        # nearest the default value 0
         body = "ANIM_begin\nANIM_rotate_begin 0 1 0 sim/surface\nANIM_rotate_key -1 -20\nANIM_rotate_key 0 0\nANIM_rotate_key 1 20\nANIM_rotate_end\nTRIS 0 3\nANIM_end\n"
         built = self.do_import(obj_text(body, tris=None))
         (empty,) = self.meshes(built)
-        self.assertEqual([f for f, _, _ in self.frame_values(empty, "rotation_euler", 2)], [0, 1, 2])
-        bpy.context.scene.frame_set(1)
+        self.assertEqual([f for f, _, _ in self.frame_values(empty, "rotation_euler", 2)], [1, 2, 3])
+        self.assertEqual(bpy.context.scene.frame_current, 2)
+        self.assertGreaterEqual(bpy.context.scene.frame_end, 3)
         self.assertAlmostEqual(empty.rotation_euler.z, 0.0, places=5)
         bpy.context.view_layer.update()
         self.assertAlmostEqual(self.meshes(built)[0].matrix_world.to_euler().z, 0.0, places=5)
@@ -345,7 +357,7 @@ class TestImportObj(XPlaneTestCase):
         body = "ANIM_begin\nANIM_trans_begin sim/flightmodel2/gear/deploy_ratio[0]\nANIM_trans_key 0 0 1 0\nANIM_trans_key 1 0 0 0\nANIM_trans_end\nTRIS 0 3\nANIM_end\n"
         built = self.do_import(obj_text(body, tris=None))
         (empty,) = self.meshes(built)
-        bpy.context.scene.frame_set(1)
+        self.assertEqual(bpy.context.scene.frame_current, 2)
         self.assertAlmostEqual(empty.location.z, 0.0, places=5)  # the key for deploy ratio 1
 
     def test_non_axis_rotation_uses_axis_angle(self) -> None:
@@ -423,10 +435,15 @@ class TestImportObj(XPlaneTestCase):
         hide, show_out, show_in = holders["sim/a"], holders["sim/b"], holders["sim/c"]
         self.assertEqual((hide.xplane.datarefs[0].anim_type, hide.xplane.datarefs[0].show_hide_v1, hide.xplane.datarefs[0].show_hide_v2), (xplane_constants.ANIM_TYPE_HIDE, 0.5, 1.5))
         # At the default value 0, "hide 0.5..1.5" and "show -0.5..0.5" are visible, "show 0.5..1.5" is not
-        self.assertFalse(hide.hide_viewport)
-        self.assertTrue(show_out.hide_viewport)
-        self.assertFalse(show_in.hide_viewport)
-        self.assertTrue(show_out.hide_viewport and show_out.hide_render)
+        self.assertFalse(hide.hide_get())
+        self.assertTrue(show_out.hide_get())
+        self.assertFalse(show_in.hide_get())
+        self.assertTrue(show_out.hide_render)
+        # Hidden with the eye, not disabled, so Blender keeps moving it with its parents, and it is still exported
+        self.assertFalse(show_out.hide_viewport)
+        self.assertTrue(xplane_helpers.previews_its_hide(show_out))
+        self.assertTrue(xplane_helpers.is_visible_for_export(show_out))
+        self.assertFalse(xplane_helpers.previews_its_hide(show_in))
 
     def test_show_and_hide_before_the_first_block_cover_the_whole_file(self) -> None:
         body = "ANIM_hide 0.5 1.5 sim/whole\nTRIS 0 3\nANIM_begin\nANIM_trans 1 0 0 1 0 0\nTRIS 0 3\nANIM_end\n"
@@ -480,7 +497,7 @@ class TestImportObj(XPlaneTestCase):
 
     def test_hiding_can_be_turned_off(self) -> None:
         built = self.do_import(obj_text("ANIM_begin\nANIM_show 1 2 sim/b\nTRIS 0 3\nANIM_end\n", tris=None), hide_default_hidden=False)
-        self.assertFalse(any(o.hide_viewport for o in built.objects))
+        self.assertFalse(any(o.hide_get() or o.hide_viewport for o in built.objects))
 
     def test_animations_can_be_skipped(self) -> None:
         body = "ANIM_begin\nANIM_trans 1 0 0 1 0 0\nANIM_rotate_begin 1 0 0 sim/x\nANIM_rotate_key 0 0\nANIM_rotate_key 1 90\nANIM_rotate_end\nANIM_show 1 2 sim/y\nTRIS 0 3\nANIM_end\n"
@@ -605,7 +622,7 @@ class TestImportObj(XPlaneTestCase):
     def test_lights_in_hidden_blocks_are_hidden(self) -> None:
         built = self.do_import(obj_text("ANIM_begin\nANIM_show 1 2 sim/x\nLIGHT_NAMED beacon 1 2 3\nANIM_end\n", tris=None))
         (light,) = [o for o in built.objects if o.type == "LIGHT"]
-        self.assertTrue(light.hide_viewport)
+        self.assertTrue(light.hide_get())
 
     def test_emitters_and_magnets(self) -> None:
         body = "EMITTER my_smoke 1 2 3 10 20 30\nMAGNET knee xpad 1 2 3 0 0 0\n"

@@ -7,6 +7,7 @@ from typing import Callable, Optional
 import bpy
 import mathutils
 
+from . import frames
 from . import transforms as T
 from .acf_parser import (
     AcfFile,
@@ -111,6 +112,7 @@ def import_aircraft(
             objects_root=acf.objects_folder,
             base_matrix=_placement_matrix(item),
             update_view_layer=False,
+            settle_frames=False,
         )
         if built is not None:
             if (
@@ -143,5 +145,6 @@ def import_aircraft(
         report.info(
             f"{skipped_attached} object(s) attached to wings, gear or the body were skipped"
         )
+    frames.settle(root.all_objects, bpy.context.scene)
     bpy.context.view_layer.update()
     return root

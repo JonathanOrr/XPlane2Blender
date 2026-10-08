@@ -157,6 +157,7 @@ _TOGGLES = {
     "ATTR_hard_deck": ("hard", ("deck",)),
     "ATTR_no_hard": ("hard", None),
     "ATTR_light_level_reset": ("light_level", None),
+    "ATTR_hud_reset": ("hud_glass", None),
     "ATTR_manip_none": ("manip", None),
 }
 # Directives whose arguments become the state value

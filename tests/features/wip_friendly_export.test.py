@@ -32,11 +32,13 @@ class TestWipFriendlyExport(XPlaneTestCase):
         test_creation_helpers.delete_everything()
         unfinished.clear()
 
-    def test_light_level_without_a_dataref_is_left_out(self) -> None:
+    def test_light_level_without_a_dataref_is_written(self) -> None:
+        # X-Plane loads "ATTR_light_level 0 1" with no dataref: Laminar's A330 has it on its glass
         test_creation_helpers.create_datablock_collection("Panel")
         obj = mesh("button_lit", "Panel")
         obj.xplane.lightLevel = True
         obj.xplane.lightLevel_dataref = ""
+        obj.xplane.lightLevel_photometric = True
         done = mesh("button_done", "Panel")
         done.xplane.lightLevel = True
         done.xplane.lightLevel_dataref = "a321/panel/brightness"
@@ -44,11 +46,11 @@ class TestWipFriendlyExport(XPlaneTestCase):
         out = self.exportExportableRoot("Panel")
 
         self.assertEqual(
-            [["ATTR_light_level", "0", "1", "a321/panel/brightness"]],
-            lines_starting(out, "ATTR_light_level"),
+            [["ATTR_light_level", "0", "1"], ["ATTR_light_level", "0", "1", "a321/panel/brightness"]],
+            sorted(lines_starting(out, "ATTR_light_level")),
         )
         self.assertFalse(logger.hasErrors())
-        self.assertEqual(["button_lit"], unfinished.items["light levels without a dataref"])
+        self.assertNotIn("light levels without a dataref", unfinished.items)
 
     def test_light_without_a_name_is_left_out(self) -> None:
         from io_xplane2blender.xplane_utils import xplane_lights_txt_parser
@@ -69,7 +71,7 @@ class TestWipFriendlyExport(XPlaneTestCase):
         self.assertEqual(1, len(lines_starting(out, "LIGHT_PARAM")))
         self.assertEqual(["flood"], unfinished.items["lights without an X-Plane light chosen"])
 
-    def test_material_light_level_without_a_dataref_is_left_out(self) -> None:
+    def test_material_light_level_without_a_dataref_is_written(self) -> None:
         test_creation_helpers.create_datablock_collection("Panel")
         obj = mesh("panel_lit", "Panel")
         mat = obj.material_slots[0].material
@@ -78,9 +80,8 @@ class TestWipFriendlyExport(XPlaneTestCase):
 
         out = self.exportExportableRoot("Panel")
 
-        self.assertEqual([], lines_starting(out, "ATTR_light_level"))
+        self.assertEqual([["ATTR_light_level", "0", "1"]], lines_starting(out, "ATTR_light_level"))
         self.assertFalse(logger.hasErrors())
-        self.assertIn("light levels without a dataref", unfinished.items)
 
     def test_mesh_without_a_material_exports_with_default_settings(self) -> None:
         test_creation_helpers.create_datablock_collection("Panel")

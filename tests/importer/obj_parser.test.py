@@ -83,6 +83,20 @@ class TestObjParser(XPlaneTestCase):
         self.assertEqual(first["manip"], ("command", "button", "sim/cmd/x", "A", "tooltip", "with", "spaces"))
         self.assertEqual(state(runs[1]), {})
 
+    def test_hud_glass_and_cockpit_modes_end(self) -> None:
+        # As in Laminar's A330 cockpit: a lit only part, then ATTR_no_cockpit, which ends it
+        body = (
+            "ATTR_hud_glass\nATTR_cockpit_lit_only 500\nTRIS 0 3\n"
+            "ATTR_hud_reset\nATTR_no_cockpit\nTRIS 0 3\n"
+            "ATTR_cockpit_lit_only 2000\nATTR_cockpit_region 0\nTRIS 0 3\n"
+            "ATTR_cockpit_lit_only 2000\nTRIS 0 3\n"
+        )
+        runs = [state(r) for r in parse_obj(obj_text(body, tris=None)).iter_tris()]
+        self.assertEqual(runs[0], {"hud_glass": (), "cockpit_lit_only": ("500",)})
+        self.assertEqual(runs[1], {})
+        self.assertEqual(runs[2], {"cockpit": ("region", "0")})
+        self.assertEqual(runs[3], {"cockpit_lit_only": ("2000",)})
+
     def test_manip_extras_belong_to_their_manipulator(self) -> None:
         body = (
             "ATTR_manip_drag_axis hand 0 1 0 0 1 sim/d tip\nATTR_manip_wheel 0.25\nATTR_axis_detent_range 0 0.5 0.1\nTRIS 0 3\n"

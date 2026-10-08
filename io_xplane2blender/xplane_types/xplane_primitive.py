@@ -14,7 +14,7 @@ from io_xplane2blender.xplane_constants import (
 
 from ..xplane_config import getDebug
 from ..xplane_constants import *
-from ..xplane_helpers import logger, unfinished
+from ..xplane_helpers import logger
 from .xplane_attribute import XPlaneAttribute
 from .xplane_manip_bone_checks import check_bone_is_leaf
 from .xplane_manipulator import XPlaneManipulator
@@ -32,7 +32,8 @@ class XPlanePrimitive(XPlaneObject):
         super().__init__(blenderObject)
 
         self.attributes.add(XPlaneAttribute("ATTR_hud_glass"))
-        self.attributes.add(XPlaneAttribute("ATTR_hud_reset"))
+        # Every part without HUD glass ends it (the state machine only writes it after an ATTR_hud_glass)
+        self.attributes.add(XPlaneAttribute("ATTR_hud_reset", True))
         self.attributes.add(XPlaneAttribute("ATTR_light_level"))
         self.attributes.add(XPlaneAttribute("ATTR_light_level_reset"))
 
@@ -85,16 +86,15 @@ class XPlanePrimitive(XPlaneObject):
 
     def collectLightLevelAttributes(self) -> None:
         bl_obj = self.blenderObject
-        if bl_obj.xplane.lightLevel and not bl_obj.xplane.lightLevel_dataref.strip():
-            # Not filled in yet. Without a dataref the line would be invalid, so leave it out
-            unfinished.add("light levels without a dataref", bl_obj.name)
-        elif bl_obj.xplane.lightLevel:
+        # An empty dataref is written too: X-Plane loads it (Laminar's own aircraft have it)
+        if bl_obj.xplane.lightLevel:
             ll_values = [
                 bl_obj.xplane.lightLevel_v1,
                 bl_obj.xplane.lightLevel_v2,
-                bl_obj.xplane.lightLevel_dataref,
+                bl_obj.xplane.lightLevel_dataref.strip(),
             ]
-            if bl_obj.xplane.lightLevel_photometric:
+            # After an empty dataref X-Plane would read the brightness as the dataref
+            if bl_obj.xplane.lightLevel_photometric and ll_values[2]:
                 ll_values.append(bl_obj.xplane.lightLevel_brightness)
             self.attributes["ATTR_light_level"].setValue(tuple(ll_values))
             self.material.attributes["ATTR_light_level_reset"].setValue(False)

@@ -250,6 +250,9 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 detents.clear()
             elif name in _TOGGLES:
                 key, value = _TOGGLES[name]
+                if key == "cockpit":
+                    # The cockpit modes replace each other, and ATTR_no_cockpit ends them all (as the exporter's resets)
+                    state.pop("cockpit_lit_only", None)
                 if (
                     key == "cockpit"
                     and value is not None
@@ -265,8 +268,13 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                     state[key] = value
             elif name == "ATTR_cockpit":
                 state["cockpit"] = ("panel",)
+                state.pop("cockpit_lit_only", None)
             elif name in _VALUED:
                 key = _VALUED[name]
+                if key == "cockpit":
+                    state.pop("cockpit_lit_only", None)
+                elif key == "cockpit_lit_only":
+                    state.pop("cockpit", None)
                 if name in ("ATTR_blend", "ATTR_no_blend", "ATTR_shadow_blend"):
                     state[key] = (name[5:], *args)
                 elif name == "ATTR_cockpit_region":

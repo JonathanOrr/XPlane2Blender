@@ -108,7 +108,7 @@ class TestImportRoundTrip(XPlaneTestCase):
         text = obj_text(body, header=header, vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
         path = write_file(self.folder.join("part.obj"), text)
         report = ImportReport()
-        built = import_obj_file(path, ImportOptions(hide_default_hidden=False, make_exportable=True), report)
+        built = import_obj_file(path, ImportOptions(make_exportable=True), report)
         self.assertIsNotNone(built, report.errors)
         exported = self.exportExportableRoot(built.collection)
         self.assertLoggerErrors(0)
@@ -382,6 +382,58 @@ class TestImportRoundTrip(XPlaneTestCase):
             + "ANIM_begin\nANIM_trans 0 1 0 0 1 0\nANIM_rotate 0 1 0 90 90\nTRIS 6 6\nANIM_end\n"
             + "ANIM_end\n"
         )
+
+    def test_parts_hidden_by_default_under_a_rotation(self) -> None:
+        # The importer hides what X-Plane hides with the datarefs at their defaults (nav_pos 0), but they are exported,
+        # where they are when the wing flexes
+        self.assert_round_trip(
+            "ANIM_begin\nANIM_trans 3 0 1 3 0 1\n"
+            + self.rotate("0 0 -1", "sim/flex", ((-7, 0), (7, -3)))
+            + "ANIM_begin\nANIM_hide -0.5 1.5 sim/nav_pos\nATTR_light_level 0 1 sim/off 0\nTRIS 0 6\nANIM_end\n"
+            + "ANIM_begin\nANIM_hide -0.5 1.5 sim/nav_pos\nATTR_light_level 0 1 sim/nav 7500\nTRIS 6 6\nANIM_end\n"
+            + "ANIM_begin\nANIM_hide 1.5 2.5 sim/nav_pos\nTRIS 0 6\nANIM_end\n"
+            + "ANIM_end\n"
+        )
+
+    def test_light_level_brightness(self) -> None:
+        text = obj_text("ATTR_light_level 0 1 sim/nav 7500\nTRIS 0 6\n", header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
+        built = import_obj_file(write_file(self.folder.join("lit.obj"), text), ImportOptions(make_exportable=True), ImportReport())
+        exported = self.exportExportableRoot(built.collection)
+        lines = [line.split() for line in exported.splitlines() if line.strip().startswith("ATTR_light_level\t") or line.strip().startswith("ATTR_light_level ")]
+        self.assertEqual([["ATTR_light_level", "0", "1", "sim/nav", "7500"]], lines)
+
+    def test_parts_with_different_materials_keep_them(self) -> None:
+        # Three screens in one place differ only by device: each keeps its own (the exporter reads one material per mesh)
+        body = (
+            "ATTR_cockpit_device MCDU_1 8 6 1\nTRIS 0 6\n"
+            "ATTR_cockpit_device MCDU_2 4 7 1\nTRIS 6 6\n"
+            "ATTR_cockpit_device MCDU_3 8 8 1\nTRIS 0 6\n"
+        )
+        text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
+        built = import_obj_file(write_file(self.folder.join("fms.obj"), text), ImportOptions(make_exportable=True), ImportReport())
+        exported = self.exportExportableRoot(built.collection)
+        devices = sorted(" ".join(line.split()[1:]) for line in exported.splitlines() if line.split()[:1] == ["ATTR_cockpit_device"])
+        self.assertEqual(["MCDU_1 8 6 1", "MCDU_2 4 7 1", "MCDU_3 8 8 1"], devices)
+
+    def test_hud_glass_and_lit_only_end_where_they_ended(self) -> None:
+        body = (
+            "ATTR_hud_glass\nATTR_cockpit_lit_only 500\nTRIS 6 6\n"
+            "ATTR_hud_reset\nATTR_no_cockpit\nTRIS 0 6\n"
+        )
+        text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
+        built = import_obj_file(write_file(self.folder.join("hud.obj"), text), ImportOptions(make_exportable=True), ImportReport())
+        exported = self.exportExportableRoot(built.collection)
+
+        def states(obj_text_):
+            obj = parse_obj(obj_text_)
+            found = {}
+            for run in obj.iter_tris():
+                corners_ = obj.vertices[obj.indices[run.offset:run.offset + run.count], :3].round(3)
+                state = dict(run.state)
+                found[tuple(sorted(map(tuple, corners_.tolist())))] = ("hud_glass" in state, "cockpit_lit_only" in state)
+            return found
+
+        self.assertEqual(states(text), states(exported))
 
     def test_a_knob_with_two_parts_that_show_and_hide(self) -> None:
         # Hiding a part must not hide the ones beside it, which one of them carrying the animation would do
