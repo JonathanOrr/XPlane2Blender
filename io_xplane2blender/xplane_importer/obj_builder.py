@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Tuple
 import bpy
 import mathutils
 
-from io_xplane2blender import xplane_constants, xplane_display_sizes, xplane_helpers
+from io_xplane2blender import xplane_constants, xplane_display_sizes
 
 from . import motion as motions
 from . import transforms as T
@@ -111,7 +111,6 @@ class ObjBuilder(PartsBuilder):
         self._flush_groups()
         self._carry_animations()
         self._fit_empties()
-        self._apply_hidden()
         self._setup_layer()
         self.report.files_imported += 1
         for message in self.obj.warnings[:20]:
@@ -304,17 +303,14 @@ class ObjBuilder(PartsBuilder):
 
     def _hide(self, obj: bpy.types.Object) -> None:
         """
-        Hides what X-Plane does not draw with the datarefs at their default values (with the eye, once it is built,
-        because Blender does not move the objects that are disabled in the viewports). It is still exported
+        Marks what X-Plane does not draw with the datarefs at their default values: a sphere around it in the viewport
+        and left out of renders. It stays visible, so it is exported like any part (hidden objects are not)
         """
         self._hidden.add(obj.name)
         obj.hide_render = True
-        obj[xplane_helpers.PREVIEW_HIDDEN] = True
-
-    def _apply_hidden(self) -> None:
-        for obj in self.objects:
-            if obj.get(xplane_helpers.PREVIEW_HIDDEN):
-                obj.hide_set(True)
+        if obj.type == "MESH":
+            obj.show_bounds = True
+            obj.display_bounds_type = "SPHERE"
 
     def _add_dataref(
         self,

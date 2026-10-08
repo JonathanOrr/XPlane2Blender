@@ -16,7 +16,7 @@ class ImportOptions:
         False  # Objects the .acf flags as drawn nowhere (flags = 0)
     )
     hide_default_hidden: bool = (
-        True  # Hide what X-Plane hides at the default dataref values
+        True  # A sphere around what X-Plane hides at the default dataref values
     )
     # How to build it
     all_lods: bool = False  # False imports only the first LOD

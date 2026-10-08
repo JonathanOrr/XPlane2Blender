@@ -169,7 +169,7 @@ The options are in the side panel of the file browser:
 | Manipulators | Sets up the clickable manipulators, with their commands, datarefs and tooltips |
 | Lights | Creates lights with their XPlane2Blender settings. See "How lights come in" below |
 | All LODs | Imports every level of detail instead of only the first |
-| Hide What X-Plane Hides | Hides (the eye) the objects that X-Plane would not draw with the datarefs at their default values, so the import looks like the parked aircraft. They are still exported; to leave one out, disable it in the viewports (the screen icon) |
+| Mark What X-Plane Hides | Draws a sphere around the parts that X-Plane would not draw with the datarefs at their default values (Viewport Display > Bounds, Sphere) and leaves them out of renders. They stay visible and are exported like any part: in Blender, hidden objects are never exported |
 | Make Export Files | Ticks each OBJ's collection as an export file. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in and the files are listed unticked in the Scene tab's X-Plane Export panel, so one tick exports one again |
 | Night Light Strength | How much the `_LIT` texture glows, 0 shows the daytime look |
 | Light Strength | Switches the spill lights on, such as the cockpit annunciator and panel lights. 0 keeps them from lighting the scene (they are off in the parked pose), 1 is the brightness the light's parameters ask for |

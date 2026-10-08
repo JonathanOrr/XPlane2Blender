@@ -384,7 +384,7 @@ class TestImportRoundTrip(XPlaneTestCase):
         )
 
     def test_parts_hidden_by_default_under_a_rotation(self) -> None:
-        # The importer hides what X-Plane hides with the datarefs at their defaults (nav_pos 0), but they are exported,
+        # The importer marks what X-Plane hides with the datarefs at their defaults (nav_pos 0): they are exported,
         # where they are when the wing flexes
         self.assert_round_trip(
             "ANIM_begin\nANIM_trans 3 0 1 3 0 1\n"
