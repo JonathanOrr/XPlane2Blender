@@ -103,6 +103,13 @@ class XPlaneManipulatorSettings(bpy.types.PropertyGroup):
     v1_max: _value("Value 1 Max", "Value 1 max")
     v2_min: _value("Value 2 Min", "Value 2 min")
     v2_max: _value("Value 2 Max", "Value 2 max")
+    detent_dataref_range: bpy.props.BoolProperty(
+        name="Own Detent Dataref Range",
+        description="Drag Rotate With Detents: the detent dataref goes from Value 2 Min to Value 2 Max as the lever is"
+        " lifted (Laminar's levers use 0 to 1), and detent heights are in its units. Off: it goes from 0 to the lift"
+        " in meters",
+        default=False,
+    )
     v_down: _value("Value On Mouse Down", "Value to set dataref on mouse down")
     v_up: _value("Value On Mouse Up", "Value to set dataref on mouse up")
     v_hold: _value("Value On Mouse Hold", "Value to set dataref on mouse hold")

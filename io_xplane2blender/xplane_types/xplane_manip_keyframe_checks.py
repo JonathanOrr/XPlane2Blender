@@ -2,6 +2,8 @@
 Checks of keyframes and of pairs of bones for the drag manipulators.
 """
 
+from typing import Tuple
+
 from io_xplane2blender.xplane_constants import *
 from io_xplane2blender.xplane_helpers import logger
 from io_xplane2blender.xplane_types.xplane_bone import XPlaneBone
@@ -152,6 +154,42 @@ def check_keyframe_translation_eq_count(
     )
 
 
+def check_keyframes_translation_on_a_line(
+    translation_bone: XPlaneBone,
+    log_errors: bool = True,
+    manipulator: "XPlaneManipulator" = None,
+) -> bool:
+    """
+    The drag of a drag axis is the line from the first to the last key. Keys between are allowed when they are on it
+    (the C172's flap handle moves unevenly along its drag)
+    """
+    table = next(
+        iter(translation_bone.animations.values())
+    ).getTranslationKeyframeTableNoClamps()
+    if len(table) < 2:
+        return _check_keyframe_translation_count(
+            translation_bone,
+            2,
+            True,
+            lambda x, y: x >= y,
+            "at least",
+            log_errors,
+            manipulator,
+        )
+    first, last = table[0].location, table[-1].location
+    line = last - first
+    for key in table[1:-1]:
+        off = key.location - first
+        if line.length == 0 or off.cross(line).length > 1e-4 * max(line.length, 1e-3):
+            if log_errors:
+                logger.error(
+                    f"The location keyframes of {translation_bone.getBlenderName()} must all be on one line for"
+                    f" the {manipulator.manip.get_effective_type_name()} manipulator"
+                )
+            return False
+    return True
+
+
 def check_keyframe_translation_ge_count(
     translation_bone: XPlaneBone,
     count: int,
@@ -219,6 +257,17 @@ def check_manip_has_axis_detent_ranges(
         return False
     else:
         return True
+
+
+def get_lift_values(translation_bone: XPlaneBone) -> Tuple[float, float]:
+    """
+    The values of the lift's dataref (dataref 2) at the bottom and top of the lift. Detent heights are in these
+    units: 0 to 1 for Laminar's levers, 0 to the lift in meters when it is keyed that way
+    """
+    table = next(
+        iter(translation_bone.animations.values())
+    ).getTranslationKeyframeTableNoClamps()
+    return table[0][0], table[1][0]
 
 
 def get_lift_at_max(translation_bone: XPlaneBone) -> float:

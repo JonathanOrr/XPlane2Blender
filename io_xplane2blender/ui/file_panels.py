@@ -72,6 +72,11 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
         col.prop(layer, "blend_glass", text="See-Through Glass")
         col.prop(layer, "normal_metalness", text="Metalness In Normal Map")
         row = compact_row(col)
+        row.prop(layer, "specular_override", text="")
+        sub = row.row()
+        sub.active = layer.specular_override
+        sub.prop(layer, "specular", text="Specular (whole file)")
+        row = compact_row(col)
         row.prop(layer, "luminance_override", text="")
         sub = row.row()
         sub.active = layer.luminance_override

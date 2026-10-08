@@ -134,8 +134,9 @@ class TestImportAircraft(XPlaneTestCase):
         create_initial_test_setup()
         red = self.do_import({0: entry("fuselage.obj")}, livery="Red")
         self.assertEqual(texture_of(red), os.path.normpath(self.folder.join("liveries", "Red", "objects", "paint.png")))
+        # The OBJ is exported for the aircraft: it names its own texture, which X-Plane swaps for the livery's
         layer = red.children["fuselage"].xplane.layer
-        self.assertEqual(os.path.normpath(layer.texture), os.path.normpath(self.folder.join("liveries", "Red", "objects", "paint.png")))
+        self.assertEqual(os.path.normpath(layer.texture), os.path.normpath(self.folder.join("objects", "paint.png")))
 
     def test_an_unknown_livery_warns(self) -> None:
         self.do_import({0: entry("fuselage.obj")}, livery="Green")

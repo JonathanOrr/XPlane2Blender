@@ -23,6 +23,7 @@ from .xplane_manip_keyframe_checks import (
     check_bones_drag_detent_are_orthogonal,
     check_bones_rotation_translation_animations_are_orthogonal,
     get_lift_at_max,
+    get_lift_values,
 )
 from .xplane_manip_sources import (
     check_spec_detent_bone,
@@ -141,10 +142,19 @@ class XPlaneManipulator:
         ):
             written = self._drag_axis()
         elif self.type in SETTINGS_WRITTEN:
+            # An empty dataref is written as "none": left out, the words after it would move into its place
             value = tuple(
-                getattr(self.manip, setting) for setting in SETTINGS_WRITTEN[self.type]
+                (
+                    (getattr(self.manip, setting).strip() or "none")
+                    if setting.startswith("dataref")
+                    else getattr(self.manip, setting)
+                )
+                for setting in SETTINGS_WRITTEN[self.type]
             )
             self._add("ATTR_manip_" + self.type, _formatted(value, ()))
+            if self.type == MANIP_DRAG_AXIS:
+                # Detent lines without a second direction (a stop, as on the Citation's parking brake)
+                self._write_detent_ranges()
             written = True
         else:
             msg = "Manipulator type %s is unknown or unimplemented" % self.type
@@ -166,7 +176,7 @@ class XPlaneManipulator:
 
         Common Rules:
         - *Animations must only be driven by only 1 dataref
-        - *Animations must have exactly 2 (non-clamping) keyframes
+        - *Animations must have at least 2 (non-clamping) keyframes, all on one line (the drag is first to last)
 
         Special rules for the Detent Bone:
         - Must be a leaf bone (checked in XPlanePrimative.write)
@@ -195,10 +205,10 @@ class XPlaneManipulator:
         # bone.animations - <DataRef,List<KeyframeCollection>>
         frames = _translation_frames(drag_axis_bone)
         drag_axis_xp = xplane_helpers.vec_b_to_x(
-            frames[1].location - frames[0].location
+            frames[-1].location - frames[0].location
         )
         # For use when validating axis detent ranges
-        v1_min, v1_max = frames[0].value, frames[1].value
+        v1_min, v1_max = frames[0].value, frames[-1].value
 
         lift_at_max = 0.0
         if detent_axis_bone:
@@ -232,7 +242,9 @@ class XPlaneManipulator:
         if detent_axis_bone is None:
             return True
         self._axis_detented(detent_axis_bone)
-        return self._detent_ranges(detent_axis_bone, v1_min, v1_max, lift_at_max)
+        return self._detent_ranges(
+            detent_axis_bone, v1_min, v1_max, get_lift_values(detent_axis_bone)
+        )
 
     def _axis_detented(self, detent_axis_bone: XPlaneBone) -> None:
         if self.manip.autodetect_datarefs:
@@ -252,7 +264,7 @@ class XPlaneManipulator:
         translation_bone: XPlaneBone,
         v1_min: float,
         v1_max: float,
-        lift_at_max: float,
+        heights: Tuple[float, float],
     ) -> bool:
         ranges = self.manip.axis_detent_ranges
         if len(ranges) > 0 and not validate_axis_detent_ranges(
@@ -260,16 +272,19 @@ class XPlaneManipulator:
             translation_bone,
             v1_min,
             v1_max,
-            lift_at_max,
+            heights,
             self.manip.get_effective_type_name(),
         ):
             return False
-        for detent in ranges:
+        self._write_detent_ranges()
+        return True
+
+    def _write_detent_ranges(self) -> None:
+        for detent in self.manip.axis_detent_ranges:
             self._add(
                 "ATTR_axis_detent_range",
                 tuple(f"{v:.3f}" for v in (detent.start, detent.end, detent.height)),
             )
-        return True
 
     def _drag_rotate(self) -> bool:
         """
@@ -323,12 +338,19 @@ class XPlaneManipulator:
             return False
 
         lift_at_max = 0.0
+        v2_range = (0.0, 0.0)
         if translation_bone is not None:
             if not check_spec_detent_bone(
                 translation_bone, log_errors=True, manipulator=self
             ):
                 return False
             lift_at_max = get_lift_at_max(translation_bone)
+            # Dataref 2 goes from 0 to the lift in meters, unless its range is set (Laminar's levers go 0 to 1)
+            v2_range = (
+                (self.manip.v2_min, self.manip.v2_max)
+                if self.manip.detent_dataref_range
+                else (0.0, lift_at_max)
+            )
             if round(lift_at_max, 5) == 0.0:
                 logger.error(
                     f"{translation_bone.getBlenderName()}'s detent animation has keyframes but no change between them"
@@ -362,6 +384,19 @@ class XPlaneManipulator:
 
         v1_min, angle1 = rotation_table[0]
         v1_max, angle2 = rotation_table[-1]
+        ranges = self.manip.axis_detent_ranges
+        if ranges and (
+            min(r.start for r in ranges) < v1_min or max(r.end for r in ranges) > v1_max
+        ):
+            # Keys that hold the lever still at an end are part of the control when its detents reach them (the
+            # MD-80's speedbrake is armed at -0.5, where it has not moved yet), so the whole table is the drag
+            rotation_table = next(
+                table
+                for axis, table in kf_collection.getRotationKeyframeTables()
+                if (axis - rotation_axis).length < 1e-6 and table
+            )
+            v1_min, angle1 = rotation_table[0]
+            v1_max, angle2 = rotation_table[-1]
         # Keyframes must differ and be in order (angle1 = 0, angle2 = 360 is legal, X-Plane interpolates between them)
         assert round(angle1, 5) != round(angle2, 5), "How did we get here?"
         if v1_min == v1_max:
@@ -379,8 +414,7 @@ class XPlaneManipulator:
             lift_at_max,
             v1_min,
             v1_max,
-            0.0,  # v2_min
-            lift_at_max,  # v2_max
+            *v2_range,
             self.manip.dataref1,
             # An empty second dataref would leave out the word and shift the tooltip into its place
             self.manip.dataref2.strip() or "none",
@@ -388,10 +422,12 @@ class XPlaneManipulator:
         )
         self._add("ATTR_manip_" + MANIP_DRAG_ROTATE, _formatted(value, DIRECTION))
 
-        if translation_bone is not None and not self._detent_ranges(
-            translation_bone, v1_min, v1_max, lift_at_max
-        ):
-            return False
+        if translation_bone is not None:
+            if not self._detent_ranges(translation_bone, v1_min, v1_max, v2_range):
+                return False
+        else:
+            # Without a lift X-Plane still reads detent ranges (a stop pit), they are written as they are
+            self._write_detent_ranges()
         for rot_keyframe in rotation_table[1:-1]:
             self._add("ATTR_manip_keyframe", (rot_keyframe.value, rot_keyframe.degrees))
         return True

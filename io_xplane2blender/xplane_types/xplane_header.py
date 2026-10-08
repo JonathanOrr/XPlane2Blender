@@ -124,7 +124,12 @@ class XPlaneHeader:
             (len(self.xplaneFile.mesh.vertices), 0, 0, len(self.xplaneFile.mesh.indices))
         )
 
-        if self.xplaneFile.reference_material and normal_metalness:
+        if options.specular_override:
+            # The file's own default shininess (an imported file's GLOBAL_specular, or none: 0)
+            if options.specular > 0:
+                self.attributes["GLOBAL_specular"].setValue(options.specular)
+            self.xplaneFile.commands.written["ATTR_shiny_rat"] = options.specular
+        elif self.xplaneFile.reference_material and normal_metalness:
             self.attributes["GLOBAL_specular"].setValue(1.0)
             # Every ATTR_shiny_rat would repeat it, so they are treated as already written
             self.xplaneFile.commands.written["ATTR_shiny_rat"] = 1.0

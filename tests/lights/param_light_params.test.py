@@ -18,7 +18,8 @@ class TestParamLightParams(XPlaneTestCase):
 
     def test_illegal_params_content(self):
         out = self.exportLayer(1)
-        self.assertLoggerErrors(3)
+        # A directional light with no direction (07) is only a warning: X-Plane loads it, Laminar's F-4 has some
+        self.assertLoggerErrors(2)
 
     def test_unused_param_pass(self):
         filename = inspect.stack()[0].function

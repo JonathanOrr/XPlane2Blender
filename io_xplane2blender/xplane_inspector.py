@@ -297,6 +297,14 @@ def manip_fields(manip) -> List[Field]:
             Field("v2_min", "Up / down from"),
             Field("v2_max", "Up / down to"),
         ]
+    elif t == C.MANIP_DRAG_ROTATE_DETENT:
+        # Off: the detent dataref goes from 0 to the lift in meters, and the detent heights are in meters
+        fields.append(Field("detent_dataref_range", "Own detent dataref range", "bool"))
+        if manip.detent_dataref_range:
+            fields += [
+                Field("v2_min", "Detent dataref at rest"),
+                Field("v2_max", "Detent dataref lifted"),
+            ]
     elif t == C.MANIP_DRAG_AXIS and not manip.autodetect_settings_opt_in:
         fields += [
             Field("dx", "Drag X"),
@@ -319,7 +327,10 @@ def manip_fields(manip) -> List[Field]:
 
 
 def has_detent_ranges(manip) -> bool:
-    return manip.type in _DETENTS
+    # A plain drag rotate or drag axis writes detent ranges too, without a lift (a stop pit), so it shows them
+    return manip.type in _DETENTS or (
+        manip.type in (C.MANIP_DRAG_ROTATE, C.MANIP_DRAG_AXIS) and len(manip.axis_detent_ranges) > 0
+    )
 
 
 # ---- Animation ---------------------------------------------------------------------------------------------------

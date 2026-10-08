@@ -120,6 +120,17 @@ class PartsBuilder:
                 values[field_name] = args[position]
         return values
 
+    @staticmethod
+    def _has_lift(manip, m) -> bool:
+        """ATTR_manip_drag_rotate's lift (meters) is its 10th value after the cursor, with a second dataref"""
+        try:
+            lift = _number(manip[1 + 9])
+        except (IndexError, ValueError):
+            return False
+        return (
+            bool(m.dataref2.strip()) and abs(lift) > 1e-6 and bool(m.axis_detent_ranges)
+        )
+
     def _apply_manipulator(self, blender_obj, manip, extras, detents) -> None:
         kind = manip[0]
         m = blender_obj.xplane.manip
@@ -161,6 +172,17 @@ class PartsBuilder:
             for name, args in extras:
                 if name == "ATTR_manip_wheel" and args:
                     m.wheel_delta = _number(args[0])
+                elif (
+                    name == "ATTR_axis_detented"
+                    and kind == xplane_constants.MANIP_DRAG_AXIS
+                    and len(args) >= 6
+                    # A second direction of length 0 drags nowhere (the C172 seaplane's water rudder has one)
+                    and any(abs(_number(a)) > 1e-9 for a in args[:3])
+                ):
+                    # The second direction is the animation of the part itself, so it is the detent type,
+                    # which the exporter writes from the animations
+                    m.type = xplane_constants.MANIP_DRAG_AXIS_DETENT
+                    m.dataref2 = "" if args[5] == "none" else args[5]
             for detent in detents:
                 if len(detent) >= 3:
                     item = m.axis_detent_ranges.add()
@@ -169,10 +191,13 @@ class PartsBuilder:
             self.report.warn(
                 f"{self.stem}: a wheel or detent setting could not be read as a number"
             )
-        if kind == xplane_constants.MANIP_DRAG_ROTATE and m.axis_detent_ranges:
-            # A drag rotate with detent lines is the rotation with a lift (translation) child, which the exporter
-            # only accepts as the drag rotate with detents type
+        if kind == xplane_constants.MANIP_DRAG_ROTATE and self._has_lift(manip, m):
+            # A drag rotate with a lift is the rotation with a lift (translation) child, which the exporter only
+            # accepts as the drag rotate with detents type. Detent lines without a lift (a stop pit, as on the C172's
+            # trim wheel) stay on the plain drag rotate
             m.type = xplane_constants.MANIP_DRAG_ROTATE_DETENT
+            # The line's own range of the detent dataref (v2_min, v2_max were read with the others)
+            m.detent_dataref_range = True
         self.has_manipulators = True
         self.report.manipulators_imported += 1
 
@@ -304,8 +329,9 @@ class PartsBuilder:
                     extra.args[7:],
                 )
             elif extra.kind == "MAGNET":
-                debug_name, magnet_type = extra.args[0], extra.args[1]
-                x, y, z, phi, theta, psi = map(float, extra.args[2:8])
+                # The type and six numbers end the line; a debug name with spaces (Laminar's "magnet pilot") is the rest
+                debug_name, magnet_type = " ".join(extra.args[:-7]), extra.args[-7]
+                x, y, z, phi, theta, psi = map(float, extra.args[-6:])
                 self._make_special_empty(
                     debug_name,
                     "magnet",
@@ -314,6 +340,18 @@ class PartsBuilder:
                     (x, y, z),
                     (phi, theta, psi),
                     [magnet_type],
+                )
+            elif extra.kind == "ATTR_landing_gear":
+                x, y, z, phi, theta, psi = map(float, extra.args[0:6])
+                gear, wheel = (int(float(a)) for a in extra.args[6:8])
+                self._make_special_empty(
+                    f"wheel {gear}.{wheel}",
+                    "wheel",
+                    parent,
+                    static,
+                    (x, y, z),
+                    (phi, theta, psi),
+                    [gear, wheel],
                 )
             else:
                 self.report.warn(
@@ -330,20 +368,24 @@ class PartsBuilder:
         # Meant to be seen and picked, so not as small as the empties that only move parts
         empty.empty_display_size = self.EXTRA_EMPTY_SIZE * self.options.scale
         phi, theta, psi = angles
-        # The reverse of what the exporter writes
-        empty.rotation_euler = (
-            math.radians(theta),
-            math.radians(psi),
-            math.radians(-phi),
+        # The reverse of what the exporter writes, after the turn of the frame it is in
+        turn = mathutils.Euler(
+            (math.radians(theta), math.radians(psi), math.radians(-phi)), "XYZ"
         )
+        self._exact[empty] = self._exact[empty] @ turn.to_matrix().to_4x4()
+        empty.matrix_basis = self._exact[empty]
         special = empty.xplane.special_empty_props
-        if kind == "emitter":
+        if kind == "wheel":
+            special.special_type = xplane_constants.EMPTY_USAGE_WHEEL
+            special.wheel_props.gear_index, special.wheel_props.wheel_index = rest
+        elif kind == "emitter":
             special.special_type = xplane_constants.EMPTY_USAGE_EMITTER_PARTICLE
             special.emitter_props.name = name
             if rest:
                 special.emitter_props.index_enabled = True
                 special.emitter_props.index = int(float(rest[0]))
         else:
+            self.has_magnets = True
             special.special_type = xplane_constants.EMPTY_USAGE_MAGNET
             special.magnet_props.debug_name = name
             special.magnet_props.magnet_type_is_xpad = "xpad" in rest[0]

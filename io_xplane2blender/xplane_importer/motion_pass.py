@@ -13,7 +13,13 @@ from typing import Callable, Dict, List
 import bpy
 import mathutils
 
-from io_xplane2blender.xplane_constants import EMPTY_USAGE_NONE
+from io_xplane2blender.xplane_constants import (
+    EMPTY_USAGE_NONE,
+    MANIP_DRAG_AXIS,
+    MANIP_DRAG_AXIS_DETENT,
+    MANIP_DRAG_ROTATE,
+    MANIP_DRAG_ROTATE_DETENT,
+)
 
 from . import motion as M
 from . import transforms as T
@@ -59,6 +65,8 @@ class MotionPass:
             if obj in self.motions:
                 self._join_chain(obj)
                 self._carry_mesh(obj)
+                if obj in self.motions:
+                    self._split_leaves(obj)
         self._fold_frames()
         self.objects[:] = [o for o in self.objects if o not in self.gone]
         for obj in self.removed:
@@ -151,9 +159,26 @@ class MotionPass:
             if kid.type == "MESH"
             and kid not in self.motions
             and not self._passes_down(kid, [k for k in kids if k is not kid])
+            and not self._must_be_leaf(kid)
             and (not identity or T.is_identity(self._basis(kid)))
         ]
         return max(parts, key=lambda m: len(m.data.vertices)) if parts else None
+
+    @staticmethod
+    def _must_be_leaf(obj: bpy.types.Object) -> bool:
+        """The exporter writes drag axis and drag rotate click zones only on objects with no children"""
+        manip = obj.xplane.manip
+        return manip.enabled and manip.type in (
+            MANIP_DRAG_AXIS,
+            MANIP_DRAG_AXIS_DETENT,
+            MANIP_DRAG_ROTATE,
+            MANIP_DRAG_ROTATE_DETENT,
+        )
+
+    def _drags_below(self, obj: bpy.types.Object) -> bool:
+        return self._must_be_leaf(obj) or any(
+            self._drags_below(kid) for kid in self.kids.get(obj, [])
+        )
 
     @staticmethod
     def _passes_down(obj: bpy.types.Object, others: List[bpy.types.Object]) -> bool:
@@ -223,6 +248,49 @@ class MotionPass:
             self.removed.append(frame)
             self.gone.add(frame)
 
+    def _split_leaves(self, empty: bpy.types.Object) -> None:
+        """
+        A drag click zone must have no children and take its motion from its own animation, so where an animation
+        holds it and other parts (the Citation's throttles), the zone gets a copy of the animation beside the Empty
+        """
+        kids = self.kids.get(empty, [])
+        leaves = [
+            k
+            for k in kids
+            if k.type == "MESH" and k not in self.motions and self._must_be_leaf(k)
+        ]
+        if len(kids) < 2 or not leaves or empty.xplane.lightLevel:
+            return
+        motion = self.motions[empty]
+        for leaf in leaves:
+            placed = self._basis(leaf)
+            copy = M.Motion(
+                motion.dataref,
+                motion.loop,
+                list(motion.values),
+                list(motion.location) if motion.location else None,
+                [M.Spin(s.axis.copy(), list(s.angles)) for s in motion.spins],
+            )
+            if motion.spins:
+                if not T.is_identity(placed):
+                    leaf.data.transform(placed)
+                basis = self._basis(empty)
+            else:
+                placed = self._basis(empty).to_3x3().to_4x4() @ placed
+                M.shifted(copy, placed.to_translation())
+                basis = placed.to_3x3().to_4x4()
+            self._move_datarefs(empty, leaf)
+            if empty.xplane.override_lods:
+                leaf.xplane.override_lods = True
+                for i in range(4):
+                    leaf.xplane.lod[i] = empty.xplane.lod[i]
+            self.kids[empty].remove(leaf)
+            leaf.parent = empty.parent
+            if empty.parent is not None:
+                self.kids[empty.parent].append(leaf)
+            self._place(leaf, basis)
+            self.motions[leaf] = copy
+
     # ---- frames --------------------------------------------------------------------------
     def _fold_frames(self) -> None:
         """A frame for one part only is the part's own turn. The frames that panels share stay"""
@@ -240,6 +308,9 @@ class MotionPass:
 
     def _can_turn(self, obj: bpy.types.Object, turn: mathutils.Matrix) -> bool:
         """Whether everything below a static turn can take it: the turn is then no longer between them"""
+        if self._drags_below(obj):
+            # The exporter writes a drag's axis in the frame its animation turns in, so that frame stays
+            return False
         motion = self.motions.get(obj)
         if motion is None or not motion.spins:
             return True

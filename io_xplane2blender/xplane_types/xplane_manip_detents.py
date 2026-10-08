@@ -11,17 +11,17 @@ Basic rules
       - The start of one range must be the end of another
       - ranges[0].start == v1_min, ranges[-1].end == v1_max
 - A range's start must be <= its end
-- Height must be between 0 and lift_at_max
+- Height must be between the values of dataref 2 at the bottom and top of the lift
 
 Stop Pits
-- A stop pit is defined as range.start == range.end, range.height is less than each of it's neighbors.
+- A stop pit is defined as range.start == range.end, range.height is not higher than either of its neighbors.
 - A pit can be the first or last detent range, but never the only one
 - Stop pegs, where height is equal to or greater than it's neighbor's height, are never allowed
 """
 
 import collections
 import decimal
-from typing import List
+from typing import List, Tuple
 
 from io_xplane2blender.xplane_helpers import logger
 from io_xplane2blender.xplane_props import XPlaneAxisDetentRange
@@ -42,22 +42,23 @@ def validate_axis_detent_ranges(
     translation_bone: XPlaneBone,
     v1_min: float,
     v1_max: float,
-    lift_at_max: float,
+    heights: Tuple[float, float],
     type_name: str,
 ) -> bool:
+    """heights: the values of dataref 2 at the bottom and top of the lift, which the heights must be between"""
     with decimal.localcontext(decimal.DefaultContext):
         return _validate(
-            axis_detent_ranges, translation_bone, v1_min, v1_max, lift_at_max, type_name
+            axis_detent_ranges, translation_bone, v1_min, v1_max, heights, type_name
         )
 
 
 def _validate(
-    axis_detent_ranges, translation_bone, v1_min, v1_max, lift_at_max, type_name
+    axis_detent_ranges, translation_bone, v1_min, v1_max, heights, type_name
 ) -> bool:
     name = translation_bone.getBlenderName()
     dec_v1_min = D(v1_min)
     dec_v1_max = D(v1_max)
-    dec_lift_at_max = D(lift_at_max)
+    lowest, highest = (D(min(heights)), D(max(heights)))
     if not len(axis_detent_ranges) > 0:
         logger.error(
             f"Must {name} have axis detent range if manipulator type is {type_name}"
@@ -93,10 +94,10 @@ def _validate(
             )
             return False
 
-        if not D(0.0) <= height <= dec_lift_at_max:
+        if not lowest <= height <= highest:
             logger.error(
-                f"Height in axis detent range {detent_range} on {name} must be between 0.0 and the maximum lift"
-                f" height ({dec_lift_at_max})"
+                f"Height in axis detent range {detent_range} on {name} must be between the values of the lift's"
+                f" dataref at the bottom and top of the lift ({lowest} and {highest})"
             )
             return False
 
@@ -135,10 +136,12 @@ def _validate(
             D(detent_range_prev.end),
             D(detent_range_prev.height),
         )
-        if start == end and not prev_height > height < next_height:
+        # The spec: "do not create zero length detents that are higher than their neighbors". Level with one is
+        # allowed (Laminar's Citation throttles have one)
+        if start == end and (height > prev_height or height > next_height):
             logger.error(
-                "Stop pit created by {}'s detent range {} must be lower than"
-                " previous {} and next detent ranges {}".format(
+                "Stop pit created by {}'s detent range {} must not be higher than"
+                " previous {} or next detent ranges {}".format(
                     name,
                     (start, end, height),
                     (prev_start, prev_end, height),

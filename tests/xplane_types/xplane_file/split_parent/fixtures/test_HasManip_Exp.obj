@@ -32,7 +32,7 @@ IDX	5
 	# MATERIAL: Button_Manip_Material
 	ATTR_draw_disable
 	CUSTOM_MATERIAL_PROP	
-	ATTR_manip_drag_xy	button	0	0	0	0	0	0			
+	ATTR_manip_drag_xy	button	0	0	0	0	0	0	none	none	
 	TRIS	0 6
 	ANIM_end
 

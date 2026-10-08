@@ -69,6 +69,36 @@ class TextureResolver:
                 return self._livery_override(base) or base
         return None
 
+    def reference(self, texture_path: str) -> Optional[str]:
+        """
+        The file the OBJ names, for the export settings: in the aircraft's folder (not a livery's) and with the
+        extension written in the OBJ. X-Plane loads A330_wings.dds for a TEXTURE A330_wings.png, so resolve() loads
+        the .dds while the export keeps naming the .png
+        """
+        if not texture_path or texture_path.lower() == "none":
+            return None
+        stem, extension = os.path.splitext(texture_path)
+        candidates = [texture_path]
+        if extension.lower() in _EXTENSIONS or not extension:
+            candidates += [stem + e for e in _EXTENSIONS if e != extension.lower()]
+        for candidate in candidates:
+            found = (
+                candidate
+                if os.path.isabs(candidate) and os.path.isfile(candidate)
+                else self._find_in_dir(self.obj_dir, candidate)
+            )
+            if found:
+                name = os.path.basename(
+                    texture_path.replace("\\", "/").replace(":", "/")
+                )
+                return os.path.join(os.path.dirname(found), name)
+        # Not shipped (Laminar's Aerolite pedals name a normal map that is not there): still named, as the OBJ does
+        return os.path.normpath(
+            os.path.join(
+                self.obj_dir, texture_path.replace("\\", "/").replace(":", "/")
+            )
+        )
+
     def _livery_override(self, base: str) -> Optional[str]:
         if not (self.livery_objects_dir and self.objects_root):
             return None

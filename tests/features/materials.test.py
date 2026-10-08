@@ -45,7 +45,7 @@ class TestMaterials(XPlaneTestCase):
             "ATTR_no_solid_camera": True,
             "ATTR_light_level": None,
             "ATTR_light_level_reset": True,
-            "ATTR_poly_os": None,
+            "ATTR_poly_os": 0,  # carried by every material, so a part after an offset one ends it
         }
         defaultCockpitAttrs = {
             "ATTR_cockpit_device": None,
@@ -99,6 +99,7 @@ class TestMaterials(XPlaneTestCase):
         invisibleAttrs["ATTR_draw_disable"] = True
         invisibleAttrs["ATTR_shadow"] = None
         invisibleAttrs["ATTR_no_shadow"] = None
+        invisibleAttrs["ATTR_poly_os"] = None  # nothing drawn, nothing to offset
 
         surfaceAttrs = defaultAttrs.copy()
         surfaceAttrs["ATTR_no_hard"] = None

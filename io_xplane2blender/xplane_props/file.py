@@ -93,6 +93,20 @@ class XPlaneLayer(bpy.types.PropertyGroup):
     luminance_override: bpy.props.BoolProperty(
         name="Override Maximum Luminance", description="Override maximum luminance for LIT texture", default=False
     )
+    specular_override: bpy.props.BoolProperty(
+        name="Override Specular",
+        description="Write this file's GLOBAL_specular, the shininess every part has unless its material says"
+        " otherwise, including screens and panels, and the materials' Specular where it differs. Off: each material"
+        " writes its own, panels none, and with Metalness In Normal Map the file is fully shiny (1)",
+        default=False,
+    )
+    specular: bpy.props.FloatProperty(
+        name="Specular",
+        description="GLOBAL_specular: 0 to 1. With Metalness In Normal Map it scales the normal map's shine",
+        min=0.0,
+        max=1.0,
+        default=1.0,
+    )
     luminance: bpy.props.IntProperty(
         name="Maximum Luminance",
         description="The overriden maximum luminance value for the LIT texture, in nts",

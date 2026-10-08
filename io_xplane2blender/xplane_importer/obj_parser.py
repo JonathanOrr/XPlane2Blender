@@ -69,6 +69,18 @@ def parse_obj_file(path: str) -> ObjFile:
     return parse_obj(raw.decode("utf-8", errors="replace"), path)
 
 
+def after_geometry(stack: List[AnimNode], lod) -> AnimNode:
+    """
+    The block an animation or show / hide line goes into. After geometry in its block it only applies to what
+    follows, so it opens an implicit block that ends with the block's ANIM_end
+    """
+    if stack[-1].children:
+        node = AnimNode(lod=lod, implicit=True)
+        stack[-1].children.append(node)
+        stack.append(node)
+    return stack[-1]
+
+
 def parse_obj(text: str, path: str = "") -> ObjFile:
     obj = ObjFile(path=path)
     lines = text.splitlines()
@@ -176,6 +188,8 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 stack.append(node)
                 last_comment = ""
             elif name == "ANIM_end":
+                while len(stack) > 1 and stack[-1].implicit:
+                    stack.pop()
                 if len(stack) > 1:
                     stack.pop()
                 else:
@@ -194,7 +208,9 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                     ]
                 else:
                     keys = [(0.0, values[0:3])]
-                stack[-1].ops.append(AnimOp("trans", dataref, keys=keys))
+                after_geometry(stack, lod).ops.append(
+                    AnimOp("trans", dataref, keys=keys)
+                )
             elif name == "ANIM_rotate":
                 axis = _floats(args[:3])
                 a1, a2 = _float(args[3]), _float(args[4])
@@ -205,15 +221,17 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                     keys = [(_float(args[5]), (a1,)), (_float(args[6]), (a2,))]
                 else:
                     keys = [(0.0, (a1,))]
-                stack[-1].ops.append(AnimOp("rotate", dataref, axis, keys))
+                after_geometry(stack, lod).ops.append(
+                    AnimOp("rotate", dataref, axis, keys)
+                )
             elif name == "ANIM_trans_begin":
                 op = AnimOp("trans", args[0] if args else "")
-                stack[-1].ops.append(op)
+                after_geometry(stack, lod).ops.append(op)
             elif name == "ANIM_rotate_begin":
                 op = AnimOp(
                     "rotate", args[3] if len(args) > 3 else "", _floats(args[:3])
                 )
-                stack[-1].ops.append(op)
+                after_geometry(stack, lod).ops.append(op)
             elif name == "ANIM_trans_key":
                 if op is not None:
                     op.keys.append((_float(args[0]), _floats(args[1:4])))
@@ -228,7 +246,7 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
                 if ops:
                     ops[-1].loop = _float(args[0])
             elif name in ("ANIM_show", "ANIM_hide"):
-                stack[-1].visibility.append(
+                after_geometry(stack, lod).visibility.append(
                     Visibility(
                         name[5:],
                         _float(args[0]),

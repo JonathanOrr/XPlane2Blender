@@ -104,6 +104,7 @@ class XPlaneCommands:
         # thus preventing unneeded ATTRs
         self.written = {
             "ATTR_hud_reset" : True,
+            "ATTR_poly_os": 0,
             "ATTR_no_hard": True,
             "ATTR_blend": True,
             "ATTR_no_cockpit": True,
