@@ -177,7 +177,7 @@ class TestPanels(XPlaneTestCase):
             "XPLANE_PT_check": "scene",
             "XPLANE_PT_tools": "scene",
             "VIEW3D_PT_xplane_bulk_edit": "scene",
-            "VIEW3D_PT_xplane_table": "scene",
+            "XPLANE_PT_table": "scene",
         }
         for name, tab in tabs.items():
             panel = getattr(bpy.types, name)

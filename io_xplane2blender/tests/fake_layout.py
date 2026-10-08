@@ -53,6 +53,8 @@ class FakeLayout:
             "use_property_decorate",
             "operator_context",
             "emboss",
+            "ui_units_x",
+            "ui_units_y",
         }, f"layouts have no attribute {key}"
         object.__setattr__(self, key, value)
 
