@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import bpy
 
 from io_xplane2blender import xplane_constants as C
+from io_xplane2blender import xplane_scene_changes as scene_changes
 from io_xplane2blender import xplane_table
 from io_xplane2blender.tests import *
 from io_xplane2blender.tests import test_creation_helpers
@@ -50,7 +51,7 @@ class TestTableView(XPlaneTestCase):
         test_creation_helpers.delete_everything()
         view.table_settings(bpy.context).selected_only = False
         view.table_settings(bpy.context).table = "MANIPULATORS"
-        view.scene_changed()
+        scene_changes.scene_changed()
 
     def test_lists_what_the_table_is_about_sorted_by_name(self) -> None:
         key("key_b", "a321/key/B")
@@ -125,7 +126,7 @@ class TestTableView(XPlaneTestCase):
         later = mesh("later")
         self.assertEqual(["key_A", "key_B"], listed())
         later.xplane.manip.enabled = True
-        view.scene_changed()
+        scene_changes.scene_changed()
         self.assertEqual(["key_A", "key_B", "later"], listed())
 
     def test_clicking_a_row_selects_the_object(self) -> None:
@@ -143,7 +144,7 @@ class TestTableView(XPlaneTestCase):
         settings = view.table_settings(bpy.context)
         for obj in (first, second):
             bpy.context.view_layer.objects.active = obj
-            view.scene_changed()
+            scene_changes.scene_changed()
             self.assertEqual(list(bpy.context.scene.objects).index(obj), settings.index)
         bpy.context.view_layer.objects.active = loose
         self.assertEqual(-1, settings.index)

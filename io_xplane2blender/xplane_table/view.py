@@ -7,15 +7,15 @@ What was found is kept until the scene changes, or for a second.
 """
 
 import csv
-import time
 from typing import List, Tuple
 
 import bpy
-from bpy.app.handlers import persistent
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from io_xplane2blender import xplane_constants as C
+from io_xplane2blender import xplane_scene_changes as changes
 from io_xplane2blender.xplane_properties_panel import Properties, compact_row
+from io_xplane2blender.xplane_scene_changes import Remembered
 
 from .rows import (
     TABLES,
@@ -27,41 +27,15 @@ from .rows import (
     write_csv,
 )
 
-CACHE_SECONDS = 1.0
 LIGHT_NAMED_TYPES = (C.LIGHT_NAMED, C.LIGHT_AUTOMATIC, C.LIGHT_PARAM)
-_changes = [0]
 
-
-@persistent
-def scene_changed(*_args) -> None:
-    """Whatever the scene changes, what the table found is stale. This only counts, the work is done when drawing"""
-    _changes[0] += 1
-
-
-class _Remembered:
-    """The last result of one calculation: kept while the key is the same, for a second at most"""
-
-    def __init__(self):
-        self.key = None
-        self.value = None
-        self.when = 0.0
-        self.version = 0
-
-    def get(self, key, make):
-        now = time.monotonic()
-        if key != self.key or now - self.when > CACHE_SECONDS:
-            self.key, self.value, self.when = key, make(), now
-            self.version += 1
-        return self.value
-
-
-_found = _Remembered()
-_listed = _Remembered()
+_found = Remembered()
+_listed = Remembered()
 # The positions the list showed the last time it looked, for Select Listed
 _last_listed: List[int] = []
 
 
-_positions = _Remembered()
+_positions = Remembered()
 
 
 def _position_of(context, obj: bpy.types.Object) -> int:
@@ -115,7 +89,7 @@ def _found_entries(context, objects) -> List[Tuple[int, bpy.types.Object]]:
         s.selected_only,
         context.scene.as_pointer(),
         len(objects),
-        _changes[0],
+        changes.count(),
     )
 
     def make():
@@ -160,6 +134,15 @@ def _listed_positions(context, entries, text: str, invert: bool) -> List[int]:
 
 def filter_and_order(context, objects, text: str, invert: bool, bit: int):
     """What UIList.filter_items returns: a flag for each of the scene's objects and the order of them"""
+    try:
+        return _filter_and_order(context, objects, text, invert, bit)
+    except ReferenceError:
+        # An undo took away the objects that were found: look again
+        _found.key = _listed.key = None
+        return _filter_and_order(context, objects, text, invert, bit)
+
+
+def _filter_and_order(context, objects, text: str, invert: bool, bit: int):
     entries = _found_entries(context, objects)
     key = (_found.version, text, invert, bit, len(objects))
 

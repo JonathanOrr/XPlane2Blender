@@ -16,7 +16,9 @@ from typing import Callable, Dict, Iterator, List, Optional, Sequence, Set, Tupl
 
 import bpy
 
+from . import xplane_scene_changes as scene_changes
 from .xplane_properties_panel import Properties, compact_grid, compact_row
+from .xplane_scene_changes import Remembered
 
 KINDS = (
     ("COMMANDS", "Commands", "Manipulator commands"),
@@ -236,6 +238,26 @@ def plan_from_settings(context, objects=None) -> Tuple[List[Change], List[bpy.ty
     return changes, skipped, ""
 
 
+_planned = Remembered()
+
+
+def panel_plan(context) -> Tuple[List[Change], List[bpy.types.ID], str]:
+    """plan_from_settings for the panel to draw: kept until the settings or the scene change, as a plan looks at
+    every object of the scope and the panel is drawn whenever the mouse moves over it"""
+    s = settings(context)
+    key = (
+        tuple(current_pairs(s)),
+        s.scope,
+        tuple(sorted(s.kinds)),
+        s.use_regex,
+        s.match_case,
+        scene_changes.count(),
+        context.scene.as_pointer(),
+        len(context.scene.objects),
+    )
+    return _planned.get(key, lambda: plan_from_settings(context))
+
+
 def _skipped_text(skipped: Sequence[bpy.types.ID]) -> str:
     if not skipped:
         return ""
@@ -373,7 +395,7 @@ class XPLANE_PT_bulk_edit(Properties, bpy.types.Panel):
         row.prop(s, "match_case", toggle=True)
         row.prop(s, "use_regex", text="Regex", toggle=True)
 
-        changes, skipped, problem = plan_from_settings(context)
+        changes, skipped, problem = panel_plan(context)
         box = layout.box()
         header = box.row()
         header.prop(
