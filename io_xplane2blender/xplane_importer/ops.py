@@ -46,8 +46,8 @@ def _option_properties():
             default=False,
         ),
         "make_exportable": bpy.props.BoolProperty(
-            name="Make Export Roots",
-            description="Tick each imported OBJ's collection as an XPlane 2Blender root collection, so Export OBJs writes them again. "
+            name="Make Export Files",
+            description="Tick each imported OBJ's collection as an export file, so Export writes them again. "
             "Their texture and export settings are filled in either way, you can tick a single collection later",
             default=False,
         ),
@@ -167,7 +167,7 @@ def _show_report(operator, report: ImportReport) -> None:
             f"...and {len(report.warnings) - 8} more warnings, see the System Console",
         )
     for line in report.warnings + report.errors:
-        print("XPlane2Blender import:", line)
+        print("X-Plane import:", line)
     _show_popup(report)
 
 

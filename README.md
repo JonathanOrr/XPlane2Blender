@@ -112,7 +112,7 @@ viewport's right-click menu has **X-Plane > Make Clickable As**, the animation p
 4. Add `coffee_cup.obj` to the aircraft in Plane Maker (Standard > Objects)
 
 ## Exporting Work In Progress
-You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 61 light levels without a dataref`. The full list is in the `XPlane2Blender.log` text file. This covers light levels without a dataref (an empty one would write an invalid line), meshes without a material (they export with X-Plane's default material state) and library lights with no light chosen yet. A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
+You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 61 light levels without a dataref`. The full list is in the `X-Plane Export.log` text in the Text Editor. This covers light levels without a dataref (an empty one would write an invalid line), meshes without a material (they export with X-Plane's default material state) and library lights with no light chosen yet. A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
 
 ## Find And Replace, Duplicate And Replace
 For the many controls that differ only by side or number. **Scene tab > X-Plane Find And Replace**: add pairs such as `cockpit/mcdu/` → `cockpit/mcdu_2/` and `Captain` → `First Officer`, choose which settings to touch (commands, datarefs, light levels, tooltips, custom attributes) and which objects (selected, selected and their children, or the whole scene), and the panel previews every change before you apply it.
@@ -155,7 +155,7 @@ The options are in the side panel of the file browser:
 | Lights | Creates lights with their XPlane2Blender settings. See "How lights come in" below |
 | All LODs | Imports every level of detail instead of only the first |
 | Hide What X-Plane Hides | Hides the objects that X-Plane would not draw with the datarefs at their default values. Unhide them before exporting again, hidden objects are not exported |
-| Make Export Roots | Ticks each OBJ's collection as an export file. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in and the files are listed unticked in the Scene tab's X-Plane Export panel, so one tick exports one again |
+| Make Export Files | Ticks each OBJ's collection as an export file. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in and the files are listed unticked in the Scene tab's X-Plane Export panel, so one tick exports one again |
 | Night Light Strength | How much the `_LIT` texture glows, 0 shows the daytime look |
 | Light Strength | Switches the spill lights on, such as the cockpit annunciator and panel lights. 0 keeps them from lighting the scene (they are off in the parked pose), 1 is the brightness the light's parameters ask for |
 | Damage / Part Attached / Not Drawn Objects | Also brings in objects that are normally left out (they only show when a part breaks, move with a wing or gear part, or are drawn nowhere) |
