@@ -144,21 +144,29 @@ class MotionPass:
         are then its children, so it must not have a show / hide, LODs or a light level of its own. It must sit at the origin of obj when what it stands in for is not turned about its
         pivot (a turn takes what sits beside the pivot into the shape of the mesh, and leaves the others where they are)
         """
+        kids = self.kids.get(obj, [])
         parts = [
             kid
-            for kid in self.kids.get(obj, [])
+            for kid in kids
             if kid.type == "MESH"
             and kid not in self.motions
-            and not self._passes_down(kid)
+            and not self._passes_down(kid, [k for k in kids if k is not kid])
             and (not identity or T.is_identity(self._basis(kid)))
         ]
         return max(parts, key=lambda m: len(m.data.vertices)) if parts else None
 
     @staticmethod
-    def _passes_down(obj: bpy.types.Object) -> bool:
-        """Show / hide lines, LODs and the light level of an object go on to its children, so it can not take on others"""
+    def _passes_down(obj: bpy.types.Object, others: List[bpy.types.Object]) -> bool:
+        """
+        Show / hide lines, LODs and the light level of an object go on to its children, so it can not take on others.
+        A light level only goes on to children that have none of their own
+        """
         x = obj.xplane
-        return bool(x.datarefs) or x.override_lods or x.lightLevel
+        if x.datarefs or x.override_lods:
+            return True
+        return x.lightLevel and not all(
+            other.type == "MESH" and other.xplane.lightLevel for other in others
+        )
 
     def _adopt(self, parent: bpy.types.Object, kids: List[bpy.types.Object]) -> None:
         for kid in kids:

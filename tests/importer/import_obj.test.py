@@ -449,6 +449,22 @@ class TestImportObj(XPlaneTestCase):
         (other,) = [m for m in self.meshes(built) if m != carrier]
         self.assertEqual(other.parent, carrier)
 
+    def test_a_lit_part_does_not_carry_the_animation_for_one_that_is_not(self) -> None:
+        # The light level of a parent goes on to the children that have none, so the one without is the carrier
+        spin = "ANIM_begin\nANIM_rotate_begin 0 1 0 sim/knob\nANIM_rotate_key 0 0\nANIM_rotate_key 1 90\nANIM_rotate_end\n"
+        built = self.do_import(obj_text(spin + "ATTR_light_level 0 1 sim/lit\nTRIS 0 3\nATTR_light_level_reset\nTRIS 0 3\nANIM_end\n", tris=None))
+        self.assertFalse(self.empties(built))
+        (carrier,) = [m for m in self.meshes(built) if m.xplane.datarefs]
+        self.assertFalse(carrier.xplane.lightLevel)
+        (lit,) = [m for m in self.meshes(built) if m != carrier]
+        self.assertEqual(lit.parent, carrier)
+
+    def test_parts_that_are_all_lit_can_hang_on_one_of_them(self) -> None:
+        spin = "ANIM_begin\nANIM_rotate_begin 0 1 0 sim/knob\nANIM_rotate_key 0 0\nANIM_rotate_key 1 90\nANIM_rotate_end\n"
+        body = spin + "ATTR_light_level 0 1 sim/a\nTRIS 0 3\nATTR_light_level 0 1 sim/b\nTRIS 0 3\nANIM_end\n"
+        built = self.do_import(obj_text(body, tris=None))
+        self.assertFalse(self.empties(built))
+
     def test_animations_with_nothing_in_them_are_left_out(self) -> None:
         body = "ANIM_begin\nANIM_trans_begin sim/x\nANIM_trans_key 0 0 0 0\nANIM_trans_key 1 0 1 0\nANIM_trans_end\nANIM_end\nTRIS 0 3\n"
         built = self.do_import(obj_text(body, tris=None))
