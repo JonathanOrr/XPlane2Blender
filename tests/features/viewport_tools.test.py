@@ -56,6 +56,14 @@ class TestViewportTools(XPlaneTestCase):
         self.assertIn("scene.export_to_relative_dir", layout.operators())
         self.assertIn("xplane.check_in_viewport", layout.operators())
         self.assertIn("show_lever", layout.props())
+        # Blender's own light gizmos are one switch away, in a 3D View
+        self.assertNotIn("show_extras", layout.props())
+        view3d = next((sp for a in bpy.data.screens[0].areas for sp in a.spaces if sp.type == "VIEW_3D"), None)
+        if view3d is not None:
+            layout = FakeLayout()
+            context_in_view = SimpleNamespace(screen=bpy.data.screens[0], object=self.obj, space_data=view3d)
+            pie.XPLANE_MT_pie.draw(SimpleNamespace(layout=layout), context_in_view)
+            self.assertIn("show_extras", layout.props())
         # Key This Pose is offered for animated objects only
         self.assertNotIn("xplane.key_pose", layout.operators())
         bpy.ops.xplane.add_dataref(anim_type=C.ANIM_TYPE_TRANSFORM)

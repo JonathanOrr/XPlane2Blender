@@ -1,9 +1,12 @@
 """Operators and menu entries for importing X-Plane objects and aircraft"""
 
 import os
+from typing import List, Sequence
 
 import bpy
 from bpy_extras.io_utils import ImportHelper
+
+from io_xplane2blender.viewport.settings import view_settings
 
 from .acf_parser import AcfParseError, parse_acf_file
 from .aircraft import import_aircraft
@@ -69,7 +72,9 @@ def _option_properties():
         ),
         "show_result": bpy.props.BoolProperty(
             name="Show In Viewport",
-            description="Switch the 3D viewport to the textured Material Preview, hide the dashed parent lines and frame everything",
+            description="Switch the 3D viewport to the textured Material Preview, hide the dashed parent lines and frame"
+            " everything. With many lights, Blender's own light gizmos are hidden (Overlays > Extras) and the X-Plane"
+            " overlay marks the lights instead",
             default=True,
         ),
         "scale": bpy.props.FloatProperty(
@@ -101,9 +106,23 @@ def _options_from(op) -> ImportOptions:
 
 _last_report_lines = []
 
+# From this many lights, Blender's own drawing of lights (a ground line and a circle of fixed size each) is hidden
+CROWDED_LIGHTS = 20
 
-def _frame_everything(context) -> None:
-    """Switch every 3D viewport to the textured preview and frame what was imported"""
+
+def _is_crowded(report: ImportReport) -> bool:
+    return report.lights_imported >= CROWDED_LIGHTS
+
+
+def _frame_everything(context, crowded: bool = False) -> None:
+    """
+    Switch every 3D viewport to the textured preview and frame what was imported. With many lights, Blender's own
+    gizmos (Overlays > Extras) are hidden, which keeps the lights lighting, and the X-Plane overlay marks them instead
+    """
+    if crowded and context.screen is not None:
+        view = view_settings(context)
+        if view is not None:
+            view.show_lights = True
     for area in context.screen.areas if context.screen else []:
         if area.type != "VIEW_3D":
             continue
@@ -113,6 +132,8 @@ def _frame_everything(context) -> None:
                 space.clip_end = max(space.clip_end, 5000.0)
                 # Every animated part hangs on an empty, and each would get a dashed line to its parent
                 space.overlay.show_relationship_lines = False
+                if crowded:
+                    space.overlay.show_extras = False
         region = next((r for r in area.regions if r.type == "WINDOW"), None)
         if region is not None:
             try:
@@ -142,10 +163,19 @@ class IMPORT_OT_xplane_report(bpy.types.Operator):
             row.label(text=text, icon=icon if index == 0 or icon != "INFO" else "NONE")
 
 
-def _show_popup(report: ImportReport) -> None:
+def _crowded_notes(report: ImportReport, crowded: bool) -> List[str]:
+    if not crowded:
+        return []
+    return [
+        f"{report.lights_imported} lights: shown as rings, Blender's gizmos off (Overlays > Extras)"
+    ]
+
+
+def _show_popup(report: ImportReport, notes: Sequence[str] = ()) -> None:
     if bpy.app.background:
         return
     lines = [("CHECKMARK" if not report.errors else "ERROR", report.summary())]
+    lines += [("INFO", note) for note in notes]
     lines += [("ERROR", e[:110]) for e in report.errors[:6]]
     lines += [("ERROR", w[:110]) for w in report.warnings[:8]]
     extra = len(report.warnings) - 8
@@ -155,8 +185,10 @@ def _show_popup(report: ImportReport) -> None:
     bpy.ops.import_scene.xplane_report("INVOKE_DEFAULT")
 
 
-def _show_report(operator, report: ImportReport) -> None:
+def _show_report(operator, report: ImportReport, notes: Sequence[str] = ()) -> None:
     operator.report({"INFO"}, report.summary())
+    for note in notes:
+        operator.report({"INFO"}, note)
     for warning in report.warnings[:8]:
         operator.report({"WARNING"}, warning)
     for error in report.errors[:8]:
@@ -168,7 +200,7 @@ def _show_report(operator, report: ImportReport) -> None:
         )
     for line in report.warnings + report.errors:
         print("X-Plane import:", line)
-    _show_popup(report)
+    _show_popup(report, notes)
 
 
 class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
@@ -200,9 +232,10 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
             import_obj_file(path, options, report, update_view_layer=False)
         wm.progress_end()
         context.view_layer.update()
-        _show_report(self, report)
+        crowded = _is_crowded(report) and self.show_result
+        _show_report(self, report, _crowded_notes(report, crowded))
         if report.files_imported and self.show_result:
-            _frame_everything(context)
+            _frame_everything(context, crowded)
         return {"FINISHED"} if report.files_imported else {"CANCELLED"}
 
     def draw(self, context):
@@ -301,10 +334,11 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
             progress=progress,
         )
         wm.progress_end()
-        _show_report(self, report)
+        crowded = _is_crowded(report) and self.show_result
+        _show_report(self, report, _crowded_notes(report, crowded))
         done = root is not None and report.files_imported
         if done and self.show_result:
-            _frame_everything(context)
+            _frame_everything(context, crowded)
         return {"FINISHED"} if done else {"CANCELLED"}
 
     def draw(self, context):

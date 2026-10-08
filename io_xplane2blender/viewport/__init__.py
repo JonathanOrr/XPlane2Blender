@@ -43,6 +43,8 @@ def _post_view():
         _safely(overlay.draw_zones, context)
     if s.show_motion:
         _safely(overlay_more.draw_motion, context)
+    if s.show_lights:
+        _safely(overlay_more.draw_light_cones, context)
     if s.show_unfinished:
         _safely(overlay_more.draw_unfinished, context)
 

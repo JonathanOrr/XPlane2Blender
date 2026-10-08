@@ -95,12 +95,13 @@ viewport's right-click menu has **X-Plane > Make Clickable As**, the animation p
   - **Lever Handle** puts a gizmo on the active animated object: a dial around the hinge of a knob, lever or door, an
     arrow along the slide of a throttle or seat. Drag it to move the part through its animation as it moves in X-Plane
     and read the dataref value. It only changes the scene frame, nothing is keyed.
-  - **Lights** rings every X-Plane light in its color (red when no light is chosen yet) and names the selected ones.
+  - **Lights** rings every X-Plane light in its color (red when no light is chosen yet), with a tick for the way a spot
+    shines, and names the selected ones and draws their cone.
   - **Unfinished** outlines in red what the last Check listed, and says what is missing on the selected ones.
 - **Shift+Q** opens the X-Plane pie menu: Make Clickable As, Animate As, Add, Key This Pose, Move To File, Check
-  (which also turns on the Unfinished overlay), Export, the overlay switches, **Tidy Empties And Cones** and a shortcut
-  to Blender's Selectability & Visibility popover (to hide or lock all empties or all lights). Change the key in
-  Preferences > Keymap > Object Mode.
+  (which also turns on the Unfinished overlay), Export, the overlay switches, **Tidy Empties And Cones** and
+  **Blender's Light Gizmos** (Blender's own Overlays > Extras switch, see below). Change the key in Preferences >
+  Keymap > Object Mode.
 - **X-Plane Copy** in the toolbar (the stamp): make a finished button, light or attachment active, then click every
   other one to give it the same settings. The tool settings choose what is copied: Click, Glow, Shows / Hides, Light,
   Attachment.
@@ -171,7 +172,8 @@ What you get:
 - Animations are keyframed so that **frame 1 is the parked pose**, with linear interpolation like X-Plane
 - Meshes with different manipulators, light levels or materials are separate objects, so everything can be edited and exported again
 - Anything the add-on has no setting for is kept as a custom attribute, or reported as a warning, never silently dropped
-- Empties are drawn at a quarter of the largest part hanging on them (a few millimeters for a knob, at most 6 cm) and a spot light's cone only as long as its reach (15 cm for a light that is off and has none: a light that is switched on keeps Blender's own distance, so it lights as it should), so a cockpit with thousands of empties and hundreds of lights stays readable and clickable. The dashed parent lines are turned off in the viewport the import shows. **Tidy Empties And Light Cones** (Scene tab > X-Plane Tools, and the pie menu) does the same for a scene that was imported before; the pie menu also opens Blender's Selectability & Visibility popover to hide or lock all empties or all lights
+- Empties are drawn at a quarter of the largest part hanging on them (a few millimeters for a knob, at most 6 cm) and the lines of a spot light's cone only as long as its reach (15 cm for a light that is off and has none: a light that is switched on keeps Blender's own distance, so it lights as it should). The dashed parent lines are turned off in the viewport the import shows. **Tidy Empties And Light Cones** (Scene tab > X-Plane Tools, and the pie menu) does the same for a scene that was imported before
+- **Lights, many of them:** Blender draws every light with a line down to the ground and, for a spot, a circle whose size depends only on the spot's angle (10 m times the sine of half the angle, however short the cone is and whatever the power), so an aircraft's hundreds of lights bury it. Nothing can shrink those circles but hiding them: **Overlays > Extras off** (the pie menu has the switch, as **Blender's Light Gizmos**) hides them and keeps the lights lighting the scene (hiding lights with the eye in Selectability & Visibility would switch their light off too). An import with 20 or more lights does this for you and turns on the X-Plane **Lights** overlay, which draws a ring in each light's color with a tick for the way a spot shines, and the name and cone of the selected ones. With Extras off, the lights can still be clicked in the viewport (where their rings are), and the Scene tab's **X-Plane Tables > Lights** lists them all
 
 How lights come in:
 - `lights.txt` gives a light a **billboard** (the visible halo, lights nothing) and/or a **spill** (really lights its surroundings). Spills become Blender point or spot lights, with the cone and direction from the light's parameters (`WIDTH` is the cosine of half the cone angle, `DX DY DZ` the direction) and the power from its candela or radius. Billboards and `LIGHT_CUSTOM` halos are kept for export but do not light the scene in Cycles or EEVEE

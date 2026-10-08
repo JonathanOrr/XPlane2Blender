@@ -38,7 +38,9 @@ class XPlaneViewSettings(bpy.types.PropertyGroup):
     )
     show_lights: bpy.props.BoolProperty(
         name="Lights",
-        description="Mark every X-Plane light in its color and name the selected ones",
+        description="Mark every X-Plane light in its color, with a tick for the way a spot shines, and name the selected"
+        " ones and draw their cone. Blender draws a ground line and a circle of fixed size for every light, which is too"
+        " much for hundreds of them: switch Overlays > Extras off to hide those (the lights still light the scene)",
         default=False,
     )
     show_unfinished: bpy.props.BoolProperty(
