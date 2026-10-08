@@ -136,6 +136,18 @@ class TestTableView(XPlaneTestCase):
         self.assertTrue(wanted.select_get())
         self.assertIs(wanted, bpy.context.view_layer.objects.active)
 
+    def test_the_list_marks_the_row_of_the_active_object(self) -> None:
+        first = key("key_A", "a")
+        second = key("key_B", "b")
+        loose = mesh("not in the table")
+        settings = view.table_settings(bpy.context)
+        for obj in (first, second):
+            bpy.context.view_layer.objects.active = obj
+            view.scene_changed()
+            self.assertEqual(list(bpy.context.scene.objects).index(obj), settings.index)
+        bpy.context.view_layer.objects.active = loose
+        self.assertEqual(-1, settings.index)
+
     def test_every_kind_of_row_draws_at_every_width(self) -> None:
         key("key_A", "a")
         glow = mesh("glow")

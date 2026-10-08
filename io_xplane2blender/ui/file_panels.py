@@ -122,9 +122,8 @@ class XPLANE_PT_file_rain(_FilePanel, bpy.types.Panel):
             col = box.column(align=True)
             col.prop(rain, f"thermal_source_{i}_enabled", text=label)
             if getattr(rain, f"thermal_source_{i}_enabled"):
-                row = compact_row(col)
-                row.prop(source, "defrost_time", text="Seconds")
-                row.prop(source, "dataref_on_off", text="On/Off Dataref")
+                col.prop(source, "defrost_time", text="Seconds")
+                col.prop(source, "dataref_on_off", text="On/Off Dataref")
 
         box = layout.box()
         box.label(text="Wipers", icon="MOD_WAVE")

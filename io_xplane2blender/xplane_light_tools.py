@@ -46,6 +46,22 @@ def formal_params(name: str) -> List[str]:
     return list(parsed.light_param_def) if parsed is not None else []
 
 
+def seed_params(settings) -> bool:
+    """
+    Gives a library light with typed parameters a starting line when its line does not fit the light it names:
+    parameters typed for another light mean something else here. Returns whether the line was replaced
+    """
+    formal = formal_params(settings.name)
+    if (
+        settings.type != LIGHT_PARAM
+        or not formal
+        or len(light_params.split_line(settings.params, len(formal))[0]) == len(formal)
+    ):
+        return False
+    settings.params = light_params.default_line(formal)
+    return True
+
+
 def is_known(name: str) -> bool:
     return parsed_light(name) is not None
 
@@ -122,10 +138,7 @@ class XPLANE_OT_light_pick_name(bpy.types.Operator):
     def execute(self, context):
         x = context.active_object.data.xplane
         x.name = self.light
-        formal = formal_params(self.light)
-        # Parameters typed for another light mean something else here: start again from this light's own
-        if x.type == LIGHT_PARAM and formal and len(light_params.split_line(x.params, len(formal))[0]) != len(formal):
-            x.params = light_params.default_line(formal)
+        seed_params(x)
         self.report({"INFO"}, f"{self.light}: {describe(self.light)}")
         return {"FINISHED"}
 

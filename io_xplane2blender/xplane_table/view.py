@@ -59,12 +59,30 @@ _found = _Remembered()
 _listed = _Remembered()
 
 
-def _select_from_table(self, context):
+_positions = _Remembered()
+
+
+def _position_of(context, obj: bpy.types.Object) -> int:
+    """Where an object is in the scene's objects, or -1 when the table does not list it"""
+    entries = _found_entries(context, context.scene.objects)
+    positions = _positions.get((_found.version,), lambda: {o: i for i, o in entries})
+    return positions.get(obj, -1)
+
+
+def _active_row(self) -> int:
+    """The list marks the row of the active object, so it shows which of the objects the viewport has picked"""
+    context = bpy.context
+    active = context.view_layer.objects.active if context.view_layer else None
+    return -1 if active is None else _position_of(context, active)
+
+
+def _select_row(self, row: int) -> None:
     """Clicking a row selects that object, so the table doubles as a way to find a control in the cockpit"""
+    context = bpy.context
     objects = context.scene.objects
-    if not 0 <= self.index < len(objects):
+    if not 0 <= row < len(objects):
         return
-    obj = objects[self.index]
+    obj = objects[row]
     if context.view_layer.objects.get(obj.name) is None:
         return
     for other in context.selected_objects:
@@ -80,7 +98,7 @@ class XPlaneTableSettings(bpy.types.PropertyGroup):
         description="List only the selected objects",
         default=False,
     )
-    index: bpy.props.IntProperty(update=_select_from_table)
+    index: bpy.props.IntProperty(get=_active_row, set=_select_row)
 
 
 def table_settings(context) -> XPlaneTableSettings:
