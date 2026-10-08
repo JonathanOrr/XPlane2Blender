@@ -17,12 +17,38 @@ LIGHT_TYPE_ITEMS = [
         "A light from X-Plane's lights.txt; color, cone and direction come from the Blender light",
         8,
     ),
-    (LIGHT_SPILL_CUSTOM, "Spill", "Lights up the surfaces around it (cockpit flood lights, panel lights)", 9),
-    (LIGHT_CUSTOM, "Glow Sprite", "A halo drawn from part of the texture; it lights nothing", 6),
+    (
+        LIGHT_SPILL_CUSTOM,
+        "Spill",
+        "Lights up the surfaces around it (cockpit flood lights, panel lights)",
+        9,
+    ),
+    (
+        LIGHT_CUSTOM,
+        "Glow Sprite",
+        "A halo drawn from part of the texture; it lights nothing",
+        6,
+    ),
     (LIGHT_NAMED, "Library Light, By Name", "A lights.txt light with no parameters", 5),
-    (LIGHT_PARAM, "Library Light, Manual", "A lights.txt light with its parameters set by hand", 7),
+    (
+        LIGHT_PARAM,
+        "Library Light, Manual",
+        "A lights.txt light with its parameters set by hand",
+        7,
+    ),
     (LIGHT_NON_EXPORTING, "Not Exported", "Only for the Blender scene", 10),
 ]
+
+
+def _changed(quantity):
+    """The settings' update function: the Blender light follows what was changed (see xplane_light_sync)"""
+
+    def update(self, context):
+        from io_xplane2blender import xplane_light_sync
+
+        xplane_light_sync.stored_changed(self.id_data, quantity)
+
+    return update
 
 
 class XPlaneLightSettings(bpy.types.PropertyGroup):
@@ -34,11 +60,14 @@ class XPlaneLightSettings(bpy.types.PropertyGroup):
         default=LIGHT_AUTOMATIC,
         items=LIGHT_TYPE_ITEMS,
     )
-    name: bpy.props.StringProperty(name="Name", description="Name from lights.txt, see the summary for more detail")
+    name: bpy.props.StringProperty(
+        name="Name", description="Name from lights.txt, see the summary for more detail"
+    )
     params: bpy.props.StringProperty(
         name="Parameters",
         description="The additional parameters vary in number and definition based on the particular parameterized"
         " light selected",
+        update=_changed(None),
     )
     enable_rgb_override: bpy.props.BoolProperty(
         name="Enable RGB Picker Override",
@@ -55,17 +84,24 @@ class XPlaneLightSettings(bpy.types.PropertyGroup):
         size=3,
     )
     param_freq: bpy.props.FloatProperty(
-        name="Flash Frequency", description="The number of light flashes per second", min=0.0
+        name="Flash Frequency",
+        description="The number of light flashes per second",
+        min=0.0,
     )
     param_intensity_new: bpy.props.FloatProperty(
         name="Intensity",
-        description="Total light output in a specific direction, in candela",
+        description="Total light output in a specific direction, in candela. It is the Blender light's Power while that"
+        " is above 0",
         min=0.01,
         max=1000000,
         default=20000,
+        update=_changed("intensity"),
     )
     param_index: bpy.props.IntProperty(
-        name="Dataref Index", description="Index in light's associated array dataref", min=0, max=127
+        name="Dataref Index",
+        description="Index in light's associated array dataref",
+        min=0,
+        max=127,
     )
     param_phase: bpy.props.FloatProperty(
         name="Phase Offset",
@@ -74,12 +110,20 @@ class XPlaneLightSettings(bpy.types.PropertyGroup):
     )
     param_size: bpy.props.FloatProperty(
         name="Light Size",
-        description="Spill size uses meters; billboard size uses arbitrary scales - bigger is brighter",
+        description="Spill size uses meters, and is how far it reaches (the Blender light's Custom Distance); billboard"
+        " size uses arbitrary scales - bigger is brighter",
         default=1.0,
         min=LIGHT_PARAM_SIZE_MIN,
         precision=3,
+        update=_changed("reach"),
     )
-    size: bpy.props.FloatProperty(name="Size", description="Size parameter for Custom Lights", default=1.0)
+    size: bpy.props.FloatProperty(
+        name="Size",
+        description="Size parameter for Custom Lights. For a Spill it is how far it reaches in meters (the Blender"
+        " light's Custom Distance)",
+        default=1.0,
+        update=_changed("reach"),
+    )
     dataref: bpy.props.StringProperty(name="Dataref", description="An X-Plane Dataref")
     uv: bpy.props.FloatVectorProperty(
         name="Texture Coordinates",

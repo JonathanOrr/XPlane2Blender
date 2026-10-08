@@ -4,12 +4,16 @@ size) instead of one line of text to type. Nothing is stored here: each setting 
 light's own line of parameters, so that line stays what the exporter writes and the text can still be edited by hand.
 """
 
+import math
 from typing import Dict, List, Tuple
 
 import bpy
 
 from io_xplane2blender import xplane_light_tools as tools
+from io_xplane2blender.xplane_light_sync import links
 from io_xplane2blender.xplane_utils import xplane_light_params as lp
+
+from .common import wrapped
 
 
 def _formal(light: bpy.types.Light) -> List[str]:
@@ -56,6 +60,34 @@ def _triple(names: Tuple[str, str, str], **options):
     return bpy.props.FloatVectorProperty(size=3, get=get, set=set, **options)
 
 
+def _cone_angle():
+    """The cone of a typed light as an angle, which is what Blender's Spot Size is, instead of the cosine of half of
+    it that lights.txt has as WIDTH"""
+
+    def get(self):
+        data = self.id_data
+        style = links.cone_style(data.xplane.name)
+        width = lp.values_of(data.xplane.params, _formal(data)).get("WIDTH", 1.0)
+        return links.spot_size_of(style, width) if style else math.pi
+
+    def set(self, value):
+        data = self.id_data
+        style = links.cone_style(data.xplane.name)
+        if style:
+            links.Cone().set_stored(data, links.width_of(style, value))
+
+    return bpy.props.FloatProperty(
+        name="Cone Angle",
+        description="How wide the light shines, as Blender's Spot Size. It is written as the cosine of half of it",
+        subtype="ANGLE",
+        unit="ROTATION",
+        min=links.MIN_CONE,
+        max=links.MAX_CONE,
+        get=get,
+        set=set,
+    )
+
+
 class XPlaneLightParams(bpy.types.PropertyGroup):
     """bpy.types.Light.xplane_params: the values of a library light's parameter line, which stores them"""
 
@@ -99,6 +131,7 @@ class XPlaneLightParams(bpy.types.PropertyGroup):
         min=0.0,
         precision=1,
     )
+    cone_angle: _cone_angle()
     width: _number(
         bpy.props.FloatProperty,
         "WIDTH",
@@ -150,6 +183,16 @@ SINGLES = {
 }
 
 
+def _directional_cone(data: bpy.types.Light) -> bool:
+    """Whether the typed WIDTH of the light is a cone that can be shown as an angle"""
+    if links.cone_style(data.xplane.name) is None:
+        return False
+    return (
+        lp.values_of(data.xplane.params, _formal(data)).get("WIDTH", 1.0)
+        < links.OMNI_WIDTH
+    )
+
+
 def parameters_layout(layout, data: bpy.types.Light) -> None:
     """One setting for each parameter the light takes, and the line they make as text"""
     x = data.xplane
@@ -166,12 +209,24 @@ def parameters_layout(layout, data: bpy.types.Light) -> None:
                 col.prop(typed, "color")
                 i += 3
             elif names[i : i + 3] == ["DX", "DY", "DZ"]:
-                col.prop(typed, "direction")
+                if data.type == "SPOT":
+                    # A spot light's rotation is the direction: the exporter turns the typed one to match
+                    wrapped(col, "Direction: rotate the Blender light", "INFO")
+                else:
+                    col.prop(typed, "direction")
                 i += 3
             else:
-                if name in SINGLES:
+                if name == "WIDTH" and _directional_cone(data):
+                    col.prop(typed, "cone_angle")
+                elif name in SINGLES:
                     col.prop(typed, SINGLES[name])
                 i += 1
+    if names:
+        wrapped(
+            col,
+            "Color, Cone Angle, Power and Custom Distance of the Blender light follow these values, and the other way round",
+            "LINKED",
+        )
     col.prop(x, "params", text="As Text")
 
 

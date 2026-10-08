@@ -18,6 +18,7 @@ import bpy
 import mathutils
 
 from . import xplane_display_sizes as display_sizes
+from . import xplane_light_sync as light_sync
 from .xplane_constants import (
     LIGHT_AUTOMATIC,
     LIGHT_CUSTOM,
@@ -51,7 +52,7 @@ def formal_params(name: str) -> List[str]:
     return list(parsed.light_param_def) if parsed is not None else []
 
 
-def seed_params(settings) -> bool:
+def seed_params(settings, obj: Optional[bpy.types.Object] = None) -> bool:
     """
     Gives a library light with typed parameters a starting line when its line does not fit the light it names:
     parameters typed for another light mean something else here. Returns whether the line was replaced
@@ -63,7 +64,11 @@ def seed_params(settings) -> bool:
         or len(light_params.split_line(settings.params, len(formal))[0]) == len(formal)
     ):
         return False
-    settings.params = light_params.default_line(formal)
+    light = settings.id_data
+    with light_sync.paused():
+        settings.params = light_params.default_line(formal)
+    # A new typed light takes the color and cone of the Blender light it is made from, not default values
+    light_sync.adopt_blender(light, obj)
     return True
 
 
@@ -145,7 +150,7 @@ class XPLANE_OT_light_pick_name(bpy.types.Operator):
     def execute(self, context):
         x = context.active_object.data.xplane
         x.name = self.light
-        seed_params(x)
+        seed_params(x, context.active_object)
         self.report({"INFO"}, f"{self.light}: {describe(self.light)}")
         return {"FINISHED"}
 
@@ -157,11 +162,16 @@ class XPLANE_OT_light_pick_name(bpy.types.Operator):
 # ---- Viewport preview -----------------------------------------------------------------------------------------
 
 
-def _automatic_args(obj: bpy.types.Object, parsed) -> List[str]:
+def _world_direction(obj: bpy.types.Object) -> mathutils.Vector:
+    """The way a light object shines in Blender's space: its negative Z axis"""
+    return obj.matrix_world.to_3x3() @ mathutils.Vector((0.0, 0.0, -1.0))
+
+
+def _automatic_args(
+    data: bpy.types.Light, parsed, direction: mathutils.Vector
+) -> List[str]:
     """The values an Automatic light gets from its Blender light, close enough for a preview"""
-    data = obj.data
     x = data.xplane
-    direction = obj.matrix_world.to_3x3() @ mathutils.Vector((0.0, 0.0, -1.0))
     # X-Plane is y up, Blender is z up
     dx, dy, dz = direction.x, direction.z, -direction.y
     width = math.cos(data.spot_size / 2) if data.type == "SPOT" else 1.0
@@ -187,13 +197,16 @@ def _automatic_args(obj: bpy.types.Object, parsed) -> List[str]:
     return [str(values.get(p, 0)) for p in parsed.light_param_def]
 
 
-def _lights_txt_look(obj: bpy.types.Object):
-    """How X-Plane draws the light a Library Light names, with the object's own parameters, or None when no light is
-    chosen or the name is not in lights.txt"""
+def lights_txt_look(
+    data: bpy.types.Light, direction: Optional[mathutils.Vector] = None
+):
+    """How X-Plane draws the light a Library Light names, with the light's own parameters, or None when no light is
+    chosen or the name is not in lights.txt. direction is the way it shines in Blender's space, down when not given
+    """
     from .xplane_importer import lights as importer_lights
     from .xplane_importer.obj_parser import Light
 
-    x = obj.data.xplane
+    x = data.xplane
     parsed = parsed_light(x.name) if x.name.strip() else None
     if parsed is None:
         return None
@@ -202,10 +215,20 @@ def _lights_txt_look(obj: bpy.types.Object):
     elif x.type == LIGHT_PARAM:
         light = Light("param", (0.0, 0.0, 0.0), parsed.name, x.params.split())
     else:
+        shine = (
+            direction if direction is not None else mathutils.Vector((0.0, 0.0, -1.0))
+        )
         light = Light(
-            "param", (0.0, 0.0, 0.0), parsed.name, _automatic_args(obj, parsed)
+            "param",
+            (0.0, 0.0, 0.0),
+            parsed.name,
+            _automatic_args(data, parsed, shine),
         )
     return importer_lights.look_of(light)
+
+
+def _lights_txt_look(obj: bpy.types.Object):
+    return lights_txt_look(obj.data, _world_direction(obj))
 
 
 def throw_distance(obj: bpy.types.Object) -> Optional[float]:
@@ -257,8 +280,15 @@ def apply_preview(obj: bpy.types.Object, strength: float) -> bool:
     # The power of a Custom light is its exported alpha, it must stay as the author set it
     if data.xplane.type != LIGHT_CUSTOM:
         data.energy = watts * strength if illuminates else 0.0
+        # What the power is multiplied by, so that it can be taken out again (see xplane_light_sync)
+        if illuminates and strength != 1.0:
+            data[light_sync.STRENGTH] = strength
+        elif light_sync.STRENGTH in data:
+            del data[light_sync.STRENGTH]
     # How far the cone is drawn follows how far the light lights
     display_sizes.fit_cone(data, reach, display_sizes.is_lit(data))
+    # The numbers the X-Plane light shares with the Blender light say the same on both sides again
+    light_sync.push(data)
     return True
 
 
