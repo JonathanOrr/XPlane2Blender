@@ -11,7 +11,7 @@ from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender import xplane_light_tools
 from io_xplane2blender.viewport.settings import view_settings
 
-from .common import Properties, wrapped
+from .common import Properties, compact_row, wrapped
 from .ops_file import (
     XPLANE_OT_check,
     XPLANE_OT_new_file,
@@ -162,7 +162,7 @@ class XPLANE_PT_tools(_SceneTab, bpy.types.Panel):
         layout = self.layout
         view = view_settings(context)
         if view is not None:
-            row = layout.row(align=True)
+            row = compact_row(layout)
             row.prop(view, "show_click_zones", toggle=True, icon="RESTRICT_SELECT_OFF")
             row.prop(view, "click_labels", text="")
         layout.operator(
@@ -195,7 +195,7 @@ class XPLANE_PT_collection(Properties, bpy.types.Panel):
         col = layout.column()
         col.active = collection.xplane.is_exportable_collection
         col.prop(layer, "name", text="Saved As")
-        row = col.row(align=True)
+        row = compact_row(col)
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_AIRCRAFT, text="Aircraft Part")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_COCKPIT, text="Cockpit")
         op = layout.operator(XPLANE_OT_show_file.bl_idname, text="File Settings And Export", icon="SCENE_DATA")

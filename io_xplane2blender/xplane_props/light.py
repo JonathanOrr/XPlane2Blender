@@ -11,12 +11,17 @@ from .common import XPlaneCustomAttribute
 # Blender saves the number of the chosen item. 0 to 4 were the X-Plane 9 lights, which files
 # are converted away from when they are opened
 LIGHT_TYPE_ITEMS = [
-    (LIGHT_NAMED, "Named", "A lights.txt light with no parameters", 5),
-    (LIGHT_CUSTOM, "Custom Billboard", "Custom billboard light", 6),
-    (LIGHT_PARAM, "Manual Param", "A lights.txt light with its parameters typed by hand", 7),
-    (LIGHT_AUTOMATIC, "Automatic", "Makes named and param lights with params taken from Blender light data", 8),
-    (LIGHT_SPILL_CUSTOM, "Custom Spill", "Custom spill light, with automatic parameter detection", 9),
-    (LIGHT_NON_EXPORTING, "Non-Exporting", "Light will not be in the OBJ", 10),
+    (
+        LIGHT_AUTOMATIC,
+        "Library Light",
+        "A light from X-Plane's lights.txt; color, cone and direction come from the Blender light",
+        8,
+    ),
+    (LIGHT_SPILL_CUSTOM, "Spill", "Lights up the surfaces around it (cockpit flood lights, panel lights)", 9),
+    (LIGHT_CUSTOM, "Glow Sprite", "A halo drawn from part of the texture; it lights nothing", 6),
+    (LIGHT_NAMED, "Library Light, By Name", "A lights.txt light with no parameters", 5),
+    (LIGHT_PARAM, "Library Light, Manual", "A lights.txt light with its parameters set by hand", 7),
+    (LIGHT_NON_EXPORTING, "Not Exported", "Only for the Blender scene", 10),
 ]
 
 

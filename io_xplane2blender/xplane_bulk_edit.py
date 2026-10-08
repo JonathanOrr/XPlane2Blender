@@ -16,6 +16,8 @@ from typing import Callable, Dict, Iterator, List, Optional, Sequence, Set, Tupl
 
 import bpy
 
+from .xplane_properties_panel import Properties, compact_grid, compact_row
+
 KINDS = (
     ("COMMANDS", "Commands", "Manipulator commands"),
     ("DATAREFS", "Datarefs", "Animation, manipulator and light datarefs, and light parameters"),
@@ -245,7 +247,7 @@ class XPLANE_OT_bulk_replace(bpy.types.Operator):
     """Replace text in the X-Plane settings (commands, datarefs, light levels, tooltips, custom attributes) of many objects"""
 
     bl_idname = "xplane.bulk_replace"
-    bl_label = "Find and Replace"
+    bl_label = "Find And Replace"
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
@@ -263,7 +265,7 @@ class XPLANE_OT_bulk_duplicate_replace(bpy.types.Operator):
     """Duplicate the selected objects and replace text in the X-Plane settings of the copies, then move them"""
 
     bl_idname = "xplane.bulk_duplicate_replace"
-    bl_label = "Duplicate and Replace"
+    bl_label = "Duplicate And Replace"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -329,10 +331,10 @@ class XPLANE_OT_bulk_pair_remove(bpy.types.Operator):
 
 
 class XPLANE_OT_bulk_pairs_swap(bpy.types.Operator):
-    """Swap Find and Replace in every pair, to go back the other way (right to left instead of left to right)"""
+    """Swap Find And Replace in every pair, to go back the other way (right to left instead of left to right)"""
 
     bl_idname = "xplane.bulk_pairs_swap"
-    bl_label = "Swap Find and Replace"
+    bl_label = "Swap Find And Replace"
     bl_options = {"INTERNAL"}
 
     def execute(self, context):
@@ -344,12 +346,9 @@ class XPLANE_OT_bulk_pairs_swap(bpy.types.Operator):
 PREVIEW_ROWS = 6
 
 
-class VIEW3D_PT_xplane_bulk_edit(bpy.types.Panel):
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
+class XPLANE_PT_bulk_edit(Properties, bpy.types.Panel):
     bl_context = "scene"
-    bl_label = "Find and Replace"
-    bl_parent_id = "XPLANE_PT_tools"
+    bl_label = "X-Plane Find And Replace"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -367,10 +366,10 @@ class VIEW3D_PT_xplane_bulk_edit(bpy.types.Panel):
         row.operator(XPLANE_OT_bulk_pairs_swap.bl_idname, text="", icon="UV_SYNC_SELECT")
 
         layout.prop(s, "scope")
-        grid = layout.grid_flow(columns=2, even_columns=True, align=True)
+        grid = compact_grid(layout, columns=2, even_columns=True, align=True)
         for identifier, _, _ in KINDS:
             grid.prop_enum(s, "kinds", identifier)
-        row = layout.row(align=True)
+        row = compact_row(layout)
         row.prop(s, "match_case", toggle=True)
         row.prop(s, "use_regex", text="Regex", toggle=True)
 
@@ -411,7 +410,7 @@ _classes = (
     XPLANE_OT_bulk_pair_add,
     XPLANE_OT_bulk_pair_remove,
     XPLANE_OT_bulk_pairs_swap,
-    VIEW3D_PT_xplane_bulk_edit,
+    XPLANE_PT_bulk_edit,
 )
 
 

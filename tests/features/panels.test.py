@@ -132,10 +132,15 @@ class TestPanels(XPlaneTestCase):
         bpy.ops.object.mode_set(mode="OBJECT")
         armature.bones.active = armature.bones["lever"]
         self.assertEqual("Not animated", draw_panel(motion.XPLANE_PT_bone).labels()[0][:12])
+        self.assertEqual("Not animated", draw_panel(motion.XPLANE_PT_bone_moves).labels()[0][:12])
         bpy.ops.xplane.add_dataref(anim_type=C.ANIM_TYPE_TRANSFORM, target="bone")
         bpy.ops.xplane.add_dataref(anim_type=C.ANIM_TYPE_SHOW, target="bone")
         self.assertEqual(2, len(armature.bones["lever"].xplane.datarefs))
-        self.assertIn("xplane.key_pose", draw_panel(motion.XPLANE_PT_bone).operators())
+        self.assertIn("xplane.key_pose", draw_panel(motion.XPLANE_PT_bone_moves).operators())
+        summary = draw_panel(motion.XPLANE_PT_bone).labels()
+        self.assertEqual(2, len(summary))
+        self.assertTrue(summary[0].startswith("Moves with"), summary)
+        self.assertTrue(summary[1].startswith("Shows / Hides with"), summary)
         self.assertIn("show_hide_v1", draw_panel(motion.XPLANE_PT_bone_visibility).props())
         bpy.ops.xplane.remove_dataref(index=0, target="bone")
         self.assertEqual(1, len(armature.bones["lever"].xplane.datarefs))
@@ -170,13 +175,14 @@ class TestPanels(XPlaneTestCase):
             "XPLANE_PT_click": "object",
             "XPLANE_PT_light": "object",
             "XPLANE_PT_bone": "bone",
+            "XPLANE_PT_bone_moves": "bone",
             "XPLANE_PT_surface": "material",
             "XPLANE_PT_collection": "collection",
             "XPLANE_PT_export": "scene",
             "XPLANE_PT_file": "scene",
             "XPLANE_PT_check": "scene",
             "XPLANE_PT_tools": "scene",
-            "VIEW3D_PT_xplane_bulk_edit": "scene",
+            "XPLANE_PT_bulk_edit": "scene",
             "XPLANE_PT_table": "scene",
         }
         for name, tab in tabs.items():

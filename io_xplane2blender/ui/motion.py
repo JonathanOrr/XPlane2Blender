@@ -8,7 +8,7 @@ from io_xplane2blender import xplane_anim_presets
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
 
-from .common import Properties, custom_lines_layout, wrapped
+from .common import Properties, compact_row, custom_lines_layout, wrapped
 from .ops_object import (
     XPLANE_OT_add_dataref,
     XPLANE_OT_go_to_frame,
@@ -65,7 +65,7 @@ def visibility_layout(layout, owner, bone=None) -> None:
         wrapped(layout, "Always shown. Add a rule to show or hide it with a dataref:")
     for index, dataref in rules:
         box = layout.box()
-        row = box.row(align=True)
+        row = compact_row(box)
         row.prop_enum(dataref, "anim_type", C.ANIM_TYPE_SHOW, text="Show")
         row.prop_enum(dataref, "anim_type", C.ANIM_TYPE_HIDE, text="Hide")
         row.label(text="when")
@@ -73,7 +73,7 @@ def visibility_layout(layout, owner, bone=None) -> None:
         row = box.row(align=True)
         row.prop(dataref, "path", text="")
         search_button(row, "dataref", f"{target}:xplane.datarefs[{index}].path")
-        row = box.row(align=True)
+        row = compact_row(box)
         row.prop(dataref, "show_hide_v1", text="is from")
         row.prop(dataref, "show_hide_v2", text="to")
     row = layout.row(align=True)
@@ -82,11 +82,9 @@ def visibility_layout(layout, owner, bone=None) -> None:
 
 
 def draw_order_layout(layout, settings) -> None:
-    row = layout.row(align=True)
-    row.prop(settings, "override_weight", text="Draw Order")
-    sub = row.row()
-    sub.active = settings.override_weight
-    sub.prop(settings, "weight", text="")
+    layout.prop(settings, "override_weight", text="Draw Order")
+    if settings.override_weight:
+        layout.prop(settings, "weight", text="Order")
 
 
 class _BoneTab(Properties):
@@ -99,7 +97,23 @@ class _BoneTab(Properties):
 
 
 class XPLANE_PT_bone(_BoneTab, bpy.types.Panel):
-    bl_label = "X-Plane Moves"
+    bl_label = "X-Plane"
+
+    def draw(self, context):
+        moves = [d.path for _, d in I.motion_datarefs(context.bone)]
+        rules = [d.path for _, d in I.visibility_datarefs(context.bone)]
+        if moves:
+            wrapped(self.layout, "Moves with " + ", ".join(moves))
+        if rules:
+            wrapped(self.layout, "Shows / Hides with " + ", ".join(rules))
+        if not moves and not rules:
+            wrapped(self.layout, "Not animated")
+
+
+class XPLANE_PT_bone_moves(_BoneTab, bpy.types.Panel):
+    bl_label = "Moves"
+    bl_parent_id = "XPLANE_PT_bone"
+    bl_order = 2
 
     def draw(self, context):
         motion_layout(self.layout, context, context.bone, context.object.data, context.bone)
@@ -108,6 +122,7 @@ class XPLANE_PT_bone(_BoneTab, bpy.types.Panel):
 class XPLANE_PT_bone_visibility(_BoneTab, bpy.types.Panel):
     bl_label = "Shows / Hides"
     bl_parent_id = "XPLANE_PT_bone"
+    bl_order = 3
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -117,6 +132,7 @@ class XPLANE_PT_bone_visibility(_BoneTab, bpy.types.Panel):
 class XPLANE_PT_bone_more(_BoneTab, bpy.types.Panel):
     bl_label = "Advanced"
     bl_parent_id = "XPLANE_PT_bone"
+    bl_order = 9
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -125,4 +141,4 @@ class XPLANE_PT_bone_more(_BoneTab, bpy.types.Panel):
         custom_lines_layout(col, context.bone.xplane, "bone:xplane")
 
 
-classes = (XPLANE_PT_bone, XPLANE_PT_bone_visibility, XPLANE_PT_bone_more)
+classes = (XPLANE_PT_bone, XPLANE_PT_bone_moves, XPLANE_PT_bone_visibility, XPLANE_PT_bone_more)

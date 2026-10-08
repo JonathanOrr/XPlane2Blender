@@ -2,7 +2,7 @@
 Helps author X-Plane lights without knowing lights.txt by heart:
 - pick a light name from a searchable list that says what each light is (a spill that lights its surroundings,
   or a glow that lights nothing) and which parameters it takes,
-- see which parameters a Manual Param light needs and whether the right number is filled in,
+- see which parameters a Library Light, Manual needs and whether the right number is filled in,
 - preview in the viewport how X-Plane lights the scene: spill lights light their surroundings (custom spills out to
   their real reach), glow-only lights light nothing.
 
@@ -24,13 +24,14 @@ from .xplane_constants import (
     LIGHT_PARAM,
     LIGHT_SPILL_CUSTOM,
 )
+from .xplane_utils import xplane_light_params as light_params
 from .xplane_utils import xplane_lights_txt_parser as parser
 
 RAY_VISIBILITY = ("visible_diffuse", "visible_glossy", "visible_transmission", "visible_volume_scatter")
 EEVEE_FACTORS = ("diffuse_factor", "specular_factor", "volume_factor")
 
 
-def _parsed(name: str) -> Optional["parser.ParsedLight"]:
+def parsed_light(name: str) -> Optional["parser.ParsedLight"]:
     parser.parse_lights_file()
     try:
         return parser.get_parsed_light(name.strip())
@@ -38,13 +39,19 @@ def _parsed(name: str) -> Optional["parser.ParsedLight"]:
         return None
 
 
+def formal_params(name: str) -> List[str]:
+    """The names of the parameters a library light takes, in order, or an empty list for an unknown light or one with none"""
+    parsed = parsed_light(name) if name.strip() else None
+    return list(parsed.light_param_def) if parsed is not None else []
+
+
 def is_known(name: str) -> bool:
-    return _parsed(name) is not None
+    return parsed_light(name) is not None
 
 
 def kinds_of(name: str) -> Tuple[bool, bool]:
     """(spills, glows): whether the light lights its surroundings, and whether it has a visible halo"""
-    parsed = _parsed(name)
+    parsed = parsed_light(name)
     if parsed is None:
         return False, False
     types = [o.overload_type for o in parsed.overloads]
@@ -52,7 +59,7 @@ def kinds_of(name: str) -> Tuple[bool, bool]:
 
 
 def describe(name: str, with_params: bool = True) -> str:
-    parsed = _parsed(name)
+    parsed = parsed_light(name)
     if parsed is None:
         return "Not in lights.txt: check the spelling"
     spills, glows = kinds_of(name)
@@ -68,8 +75,8 @@ def describe(name: str, with_params: bool = True) -> str:
 
 
 def param_check(name: str, params: str) -> Tuple[List[str], str]:
-    """The parameters a Manual Param light takes, and a problem with the typed values or an empty string"""
-    parsed = _parsed(name)
+    """The parameters a Library Light, Manual takes, and a problem with the typed values or an empty string"""
+    parsed = parsed_light(name)
     if parsed is None:
         return [], ""
     wanted = list(parsed.light_param_def)
@@ -112,7 +119,12 @@ class XPLANE_OT_light_pick_name(bpy.types.Operator):
         return obj is not None and obj.type == "LIGHT"
 
     def execute(self, context):
-        context.active_object.data.xplane.name = self.light
+        x = context.active_object.data.xplane
+        x.name = self.light
+        formal = formal_params(self.light)
+        # Parameters typed for another light mean something else here: start again from this light's own
+        if x.type == LIGHT_PARAM and formal and len(light_params.split_line(x.params, len(formal))[0]) != len(formal):
+            x.params = light_params.default_line(formal)
         self.report({"INFO"}, f"{self.light}: {describe(self.light)}")
         return {"FINISHED"}
 
@@ -161,7 +173,7 @@ def preview_look(obj: bpy.types.Object) -> Optional[Tuple[bool, float, Optional[
     if x.type == LIGHT_CUSTOM:
         return False, 0.0, None
     if x.type in (LIGHT_NAMED, LIGHT_PARAM, LIGHT_AUTOMATIC):
-        parsed = _parsed(x.name) if x.name.strip() else None
+        parsed = parsed_light(x.name) if x.name.strip() else None
         if parsed is None:
             return None
         if x.type == LIGHT_NAMED:

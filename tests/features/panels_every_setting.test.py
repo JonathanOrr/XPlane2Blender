@@ -149,6 +149,7 @@ class TestEverySettingHasAPlace(XPlaneTestCase):
         bone = armature.bones["lever"].xplane
         bone.customAttributes.add()
         bone.customAnimAttributes.add()
+        bone.override_weight = True
         bpy.ops.xplane.add_dataref(anim_type=C.ANIM_TYPE_TRANSFORM, target="bone")
         self.draw()
 

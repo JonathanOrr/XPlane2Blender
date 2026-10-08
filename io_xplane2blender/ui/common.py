@@ -4,13 +4,10 @@ Drawing helpers shared by the panels of every tab.
 
 import bpy
 
+from io_xplane2blender.xplane_properties_panel import Properties, compact_grid, compact_row  # noqa: F401
+
 from .search import text_with_search
 from .state import resolve
-
-
-class Properties:
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
 
 
 def _line_width(icon: str) -> int:
@@ -95,7 +92,7 @@ def custom_lines_layout(layout, settings, target: str, animation: bool = True, r
         row.prop(attr, "value", text="")
         remove_button(row, f"{target}.customAttributes", i)
         if reset:
-            row = box.row(align=True)
+            row = compact_row(box)
             row.prop(attr, "reset", text="Undone By")
             row.prop(attr, "weight", text="Order")
     add_button(col, f"{target}.customAttributes", "Add Line")
@@ -116,10 +113,10 @@ def glow_layout(layout, settings, target: str) -> None:
     layout.active = settings.lightLevel
     wrapped(layout, "The night (LIT) texture's brightness follows a dataref, like a backlight on a dimmer.")
     text_with_search(layout, settings, "lightLevel_dataref", "Dataref", "dataref", target)
-    row = layout.row(align=True)
+    row = compact_row(layout)
     row.prop(settings, "lightLevel_v1", text="Off At")
     row.prop(settings, "lightLevel_v2", text="Full At")
-    row = layout.row(align=True)
+    row = compact_row(layout)
     row.prop(settings, "lightLevel_photometric", text="")
     sub = row.row(align=True)
     sub.active = settings.lightLevel_photometric

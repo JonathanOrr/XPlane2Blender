@@ -15,6 +15,7 @@ from bpy.app.handlers import persistent
 from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from io_xplane2blender import xplane_constants as C
+from io_xplane2blender.xplane_properties_panel import Properties, compact_row
 
 from .rows import (
     TABLES,
@@ -290,19 +291,16 @@ class XPLANE_OT_table_import_csv(bpy.types.Operator, ImportHelper):
         return {"FINISHED"}
 
 
-class XPLANE_PT_table(bpy.types.Panel):
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
+class XPLANE_PT_table(Properties, bpy.types.Panel):
     bl_context = "scene"
-    bl_label = "Table"
-    bl_parent_id = "XPLANE_PT_tools"
+    bl_label = "X-Plane Tables"
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         s = table_settings(context)
         layout = self.layout
         layout.row().prop(s, "table", expand=True)
-        row = layout.row()
+        row = compact_row(layout, align=False)
         row.prop(s, "selected_only")
         row.label(text=f"{table_count(context)} object(s)")
         layout.template_list(

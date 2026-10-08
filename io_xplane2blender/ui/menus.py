@@ -8,18 +8,13 @@ import bpy
 from io_xplane2blender import xplane_anim_presets
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
+from io_xplane2blender.xplane_props.light import LIGHT_TYPE_ITEMS
 
 from .ops_file import XPLANE_OT_move_to_file, XPLANE_OT_new_file
 from .ops_object import XPLANE_OT_set_control_kind, XPLANE_OT_set_light_kind
 
-LIGHT_KINDS = (
-    (C.LIGHT_AUTOMATIC, "Library Light", "A light from X-Plane's lights.txt; color, cone and direction come from the Blender light"),
-    (C.LIGHT_SPILL_CUSTOM, "Spill", "Lights up the surfaces around it (cockpit flood lights, panel lights)"),
-    (C.LIGHT_CUSTOM, "Glow Sprite", "A halo drawn from part of the texture; it lights nothing"),
-    (C.LIGHT_NAMED, "Library Light By Name", "A lights.txt light with no parameters"),
-    (C.LIGHT_PARAM, "Library Light, Typed Parameters", "A lights.txt light with its parameters typed by hand"),
-    (C.LIGHT_NON_EXPORTING, "Not Exported", "Only for the Blender scene"),
-)
+# The kinds of light with their names, as the Type setting lists them
+LIGHT_KINDS = tuple((kind, label, help) for kind, label, help, _ in LIGHT_TYPE_ITEMS)
 
 ATTACHMENTS = (
     (C.EMPTY_USAGE_WHEEL, "Wheel", "Where a landing gear wheel is drawn"),
@@ -117,6 +112,9 @@ class XPLANE_OT_add_light(bpy.types.Operator):
     def execute(self, context):
         data = bpy.data.lights.new(light_kind_label(self.kind).lower(), "POINT" if self.kind == C.LIGHT_CUSTOM else "SPOT")
         data.xplane.type = self.kind
+        if self.kind == C.LIGHT_CUSTOM:
+            # The exporter writes the power of a glow sprite as its alpha: opaque
+            data.energy = 1.0
         _place_and_select(context, bpy.data.objects.new(data.name, data))
         return {"FINISHED"}
 

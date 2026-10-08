@@ -8,7 +8,7 @@ from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender.xplane_props.rain import THERMAL_SOURCES as THERMAL_LABELS
 
-from .common import Properties, custom_lines_layout
+from .common import Properties, custom_lines_layout, compact_row
 from .file_decals import decals_layout
 from .ops_file import XPLANE_OT_textures_from_materials
 from .state import active_file
@@ -34,10 +34,10 @@ def _cockpit_panel_layout(layout, layer) -> None:
     for i, region in enumerate(layer.cockpit_region[: int(layer.cockpit_regions)]):
         sub = col.box().column(align=True)
         sub.label(text=f"Region {i + 1}")
-        row = sub.row(align=True)
+        row = compact_row(sub)
         row.prop(region, "left")
         row.prop(region, "top", text="Bottom")
-        row = sub.row(align=True)
+        row = compact_row(sub)
         row.prop(region, "width", text=f"Width 2^ ({2 ** region.width})")
         row.prop(region, "height", text=f"Height 2^ ({2 ** region.height})")
 
@@ -54,7 +54,7 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
         layer = active_file(context).xplane.layer
         col = layout.column()
         col.prop(layer, "name", text="Saved As")
-        row = col.row(align=True)
+        row = compact_row(col)
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_AIRCRAFT, text="Aircraft Part")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_COCKPIT, text="Cockpit")
 
@@ -71,7 +71,7 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
         col = box.column()
         col.prop(layer, "blend_glass", text="See-Through Glass")
         col.prop(layer, "normal_metalness", text="Metalness In Normal Map")
-        row = col.row(align=True)
+        row = compact_row(col)
         row.prop(layer, "luminance_override", text="")
         sub = row.row()
         sub.active = layer.luminance_override
@@ -84,7 +84,7 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
         box.label(text="Distances (Levels Of Detail)", icon="CON_DISTLIMIT")
         box.prop(layer, "lods", text="Levels")
         for i, lod in enumerate(layer.lod[: int(layer.lods)]):
-            row = box.row(align=True)
+            row = compact_row(box)
             row.label(text=f"{i + 1}")
             row.prop(lod, "near")
             row.prop(lod, "far")
@@ -122,7 +122,7 @@ class XPLANE_PT_file_rain(_FilePanel, bpy.types.Panel):
             col = box.column(align=True)
             col.prop(rain, f"thermal_source_{i}_enabled", text=label)
             if getattr(rain, f"thermal_source_{i}_enabled"):
-                row = col.row(align=True)
+                row = compact_row(col)
                 row.prop(source, "defrost_time", text="Seconds")
                 row.prop(source, "dataref_on_off", text="On/Off Dataref")
 
@@ -139,13 +139,13 @@ class XPLANE_PT_file_rain(_FilePanel, bpy.types.Panel):
             wiper = getattr(rain, f"wiper_{i}")
             col.prop(wiper, "object_name", text="Blade Object")
             col.prop(wiper, "dataref", text="Dataref")
-            row = col.row(align=True)
+            row = compact_row(col)
             row.prop(wiper, "start", text="From")
             row.prop(wiper, "end", text="To")
             col.prop(wiper, "nominal_width", text="Blade Width")
 
         scene = context.scene
-        row = box.row()
+        row = compact_row(box, align=False)
         row.prop(scene.xplane, "wiper_bake_start")
         row.label(text=f"To Frame {scene.xplane.wiper_bake_start + 254}")
         op = box.operator("xplane.bake_wiper_gradient_texture", text=f"Bake For {I.file_name(owner)}")
