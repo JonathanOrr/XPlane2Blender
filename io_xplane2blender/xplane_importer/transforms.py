@@ -38,7 +38,12 @@ def principal_axis(axis_xp: Sequence[float]) -> Tuple[int, float]:
     If the X-Plane axis is along one Blender axis returns (index, sign), else (-1, 1.0).
     Used to pick Euler rotation channels that are nice to edit
     """
-    axis_bl = vec_to_blender(axis_xp)
+    return principal_axis_bl(vec_to_blender(axis_xp))
+
+
+def principal_axis_bl(axis_bl: Sequence[float]) -> Tuple[int, float]:
+    """principal_axis for an axis that is in Blender space already"""
+    axis_bl = mathutils.Vector(axis_bl)
     if axis_bl.length == 0:
         return -1, 1.0
     axis_bl.normalize()
