@@ -179,16 +179,17 @@ class PartsBuilder:
         if look.kind == "SPOT":
             blender_light.spot_size = look.spot_size
             blender_light.spot_blend = 0.2
-            # Blender draws a spot's cone out to its custom distance: short, not a line across the cockpit
-            xplane_display_sizes.shorten_cone(
-                blender_light, look.reach, self.options.scale
-            )
         if look.illuminates:
             # Spill lights are dataref driven and off in the parked pose, "Light Strength" switches them on
             blender_light["xplane_watts_when_on"] = look.watts
             blender_light.energy = look.watts * self.options.light_strength
         else:
             blender_light.energy = 0.0
+        # Blender draws a spot's cone as far as its custom distance: short for a light that is off, not a line
+        # across the cockpit, and as far as it reaches for one that lights
+        xplane_display_sizes.fit_cone(
+            blender_light, look.reach, blender_light.energy > 0, self.options.scale
+        )
         obj = bpy.data.objects.new(self._clean(data_name), blender_light)
         self.collection.objects.link(obj)
         obj.parent = parent

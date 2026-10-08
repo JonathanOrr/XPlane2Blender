@@ -82,7 +82,7 @@ class XPlaneMaterialSettings(bpy.types.PropertyGroup):
     )
     poly_os: bpy.props.IntProperty(
         name="Polygon Offset",
-        description="Sets the polygon offset state. Leave at 0 for default behaviour",
+        description="Draws the surface on top of the ones under it (X-Plane's polygon offset), for decals and labels that flicker. Leave at 0 for default behaviour",
         default=0,
         step=1,
         min=0,
@@ -136,7 +136,7 @@ class XPlaneMaterialSettings(bpy.types.PropertyGroup):
     plugin_device: bpy.props.StringProperty(name="Device ID", description="The device ID declared by your plugin")
     device_lighting_channel: bpy.props.IntProperty(
         name="Rheostat Lighting Channel",
-        description="0 based index that control's screen's brightness. Not affected by 'Light Level'",
+        description="The brightness knob of the screen: a 0 based index of X-Plane's lighting channels (rheostats). Not affected by 'Light Level'",
         default=0,
         min=0,
     )

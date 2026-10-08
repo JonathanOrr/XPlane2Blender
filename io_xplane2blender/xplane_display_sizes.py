@@ -11,7 +11,12 @@ from typing import Dict, Iterable, Optional
 
 import bpy
 
-from .xplane_constants import EMPTY_USAGE_NONE, LIGHT_SPILL_CUSTOM
+from .xplane_constants import (
+    EMPTY_USAGE_NONE,
+    LIGHT_CUSTOM,
+    LIGHT_NON_EXPORTING,
+    LIGHT_SPILL_CUSTOM,
+)
 
 # Of the largest part hanging on an empty, and how small and how large an empty is drawn (in meters)
 FRACTION = 0.25
@@ -68,34 +73,60 @@ def fit_empty_sizes(
     return changed
 
 
-def shorten_cone(
-    light: bpy.types.Light, reach: Optional[float] = None, unit: float = 1.0
+# Marks a light whose custom distance is the one this module set, so it can be undone when the light is turned on
+TIDIED = "xplane_short_cone"
+
+
+def fit_cone(
+    light: bpy.types.Light,
+    reach: Optional[float] = None,
+    lit: bool = False,
+    unit: float = 1.0,
 ) -> bool:
     """
-    Draws a spot light's cone as long as the light's reach, or CONE_LENGTH without one. A light that already has a
-    custom distance is left alone: somebody chose it. Returns whether the light was changed
+    Blender draws a spot light's cone as far as its custom distance, and as far as it lights without one, which is
+    tens of meters. A light with a reach gets that as its distance, lit or not: it is how far it lights. Without
+    one a light that is off gets CONE_LENGTH, and a light that is lit gets Blender's own distance back, so it lights
+    as it should. A distance somebody chose is left alone. Returns whether the light was changed
     """
-    if (
-        light.type != "SPOT"
-        or not hasattr(light, "use_custom_distance")
-        or light.use_custom_distance
-    ):
+    if light.type != "SPOT" or not hasattr(light, "use_custom_distance"):
+        return False
+    ours = bool(light.get(TIDIED))
+    if light.use_custom_distance and not ours:
+        return False
+    if lit and not reach:
+        if not ours:
+            return False
+        light.use_custom_distance = False
+        del light[TIDIED]
+        return True
+    wanted = max(reach if reach else CONE_LENGTH * unit, MIN_CONE * unit)
+    if light.use_custom_distance and abs(light.cutoff_distance - wanted) < 1e-6:
         return False
     light.use_custom_distance = True
-    light.cutoff_distance = max(reach if reach else CONE_LENGTH * unit, MIN_CONE * unit)
+    light.cutoff_distance = wanted
+    light[TIDIED] = True
     return True
 
 
+def is_lit(light: bpy.types.Light) -> bool:
+    """Whether a light lights the scene, which is when it has power. A glow sprite's power is its alpha"""
+    return light.energy > 0.0 and light.xplane.type != LIGHT_CUSTOM
+
+
 def tidy_lights(lights: Iterable[bpy.types.Object], unit: float = 1.0) -> int:
-    """shorten_cone for the lights of these objects (a light shared by several objects is done once)"""
+    """fit_cone for the lights of these objects (a light shared by several objects is done once)"""
     done = set()
     changed = 0
     for obj in lights:
-        if obj.type != "LIGHT" or obj.data in done:
+        if (
+            obj.type != "LIGHT"
+            or obj.data in done
+            or obj.data.xplane.type == LIGHT_NON_EXPORTING
+        ):
             continue
         done.add(obj.data)
         x = obj.data.xplane
-        changed += shorten_cone(
-            obj.data, x.size if x.type == LIGHT_SPILL_CUSTOM else None, unit
-        )
+        reach = x.size if x.type == LIGHT_SPILL_CUSTOM else None
+        changed += fit_cone(obj.data, reach, is_lit(obj.data), unit)
     return changed

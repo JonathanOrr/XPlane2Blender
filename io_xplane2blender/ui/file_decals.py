@@ -28,6 +28,7 @@ def _scale_row(layout, layer, prefix: str) -> None:
 
 def _keys_column(layout, layer, prefix: str, title: str) -> None:
     col = layout.column(align=True)
+    col.use_property_split = False
     col.label(text=title)
     for key, label in KEYS:
         col.prop(layer, f"{prefix}_{key}", text=label)

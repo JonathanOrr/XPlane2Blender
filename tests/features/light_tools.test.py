@@ -95,6 +95,22 @@ class TestLightTools(XPlaneTestCase):
         self.assertAlmostEqual(0.7, halo.data.energy, places=5)  # A custom light's power is its exported alpha
         self.assertAlmostEqual(3.0, unknown.data.energy, places=5)
 
+    def test_preview_gives_a_tidied_light_its_distance_back_and_takes_it_again(self) -> None:
+        from io_xplane2blender import xplane_display_sizes
+
+        spill = light("spill", "named", "SPOT")
+        spill.data.xplane.name = find_light(spills=True, glows=False, takes_params=False)
+        spill.data.energy = 0.0
+        xplane_display_sizes.tidy_lights([spill])
+        self.assertTrue(spill.data.use_custom_distance)
+        bpy.ops.xplane.lights_preview(selected_only=False, strength=1.0)
+        self.assertGreater(spill.data.energy, 0.0)
+        self.assertFalse(spill.data.use_custom_distance)
+        bpy.ops.xplane.lights_preview(selected_only=False, strength=0.0)
+        self.assertEqual(0.0, spill.data.energy)
+        self.assertTrue(spill.data.use_custom_distance)
+        self.assertAlmostEqual(xplane_display_sizes.CONE_LENGTH, spill.data.cutoff_distance, places=5)
+
     def test_preview_never_changes_the_export(self) -> None:
         test_creation_helpers.create_datablock_collection("Layer 1")
         spill = light("spill", "named")

@@ -17,6 +17,7 @@ from typing import List, Optional, Tuple
 import bpy
 import mathutils
 
+from . import xplane_display_sizes as display_sizes
 from .xplane_constants import (
     LIGHT_AUTOMATIC,
     LIGHT_CUSTOM,
@@ -202,9 +203,8 @@ def apply_preview(obj: bpy.types.Object, strength: float) -> bool:
     # The power of a Custom light is its exported alpha, it must stay as the author set it
     if data.xplane.type != LIGHT_CUSTOM:
         data.energy = watts * strength if illuminates else 0.0
-    if reach is not None and hasattr(data, "use_custom_distance"):
-        data.use_custom_distance = True
-        data.cutoff_distance = max(reach, 0.001)
+    # How far the cone is drawn follows how far the light lights
+    display_sizes.fit_cone(data, reach, display_sizes.is_lit(data))
     return True
 
 

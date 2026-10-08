@@ -27,8 +27,10 @@ def empty(name: str, parent=None, size: float = 0.2) -> bpy.types.Object:
     return obj
 
 
-def spot(name: str, **settings) -> bpy.types.Object:
+def spot(name: str, energy: float = 0.0, **settings) -> bpy.types.Object:
+    """A spot light that is off, unless it is given power"""
     data = bpy.data.lights.new(name, "SPOT")
+    data.energy = energy
     for key, value in settings.items():
         setattr(data, key, value)
     obj = bpy.data.objects.new(name, data)
@@ -117,6 +119,39 @@ class TestTidy(XPlaneTestCase):
         self.assertTrue(plain.data.use_custom_distance)
         self.assertAlmostEqual(sizes.CONE_LENGTH, plain.data.cutoff_distance, places=5)
         self.assertAlmostEqual(0.7, reach.data.cutoff_distance, places=5)
+
+    def test_a_light_that_lights_keeps_its_own_distance(self) -> None:
+        lit = spot("lit", energy=50.0)
+        reach = spot("lit spill", energy=50.0)
+        reach.data.xplane.type = C.LIGHT_SPILL_CUSTOM
+        reach.data.xplane.size = 3.0
+        bpy.ops.xplane.tidy_viewport()
+        self.assertFalse(lit.data.use_custom_distance)
+        # How far a spill lights is how far its cone is drawn
+        self.assertTrue(reach.data.use_custom_distance)
+        self.assertAlmostEqual(3.0, reach.data.cutoff_distance, places=5)
+
+    def test_turning_a_light_on_gives_its_distance_back_and_off_shortens_it_again(self) -> None:
+        lamp = spot("lamp")
+        sizes.tidy_lights([lamp])
+        self.assertTrue(lamp.data.use_custom_distance)
+        lamp.data.energy = 20.0
+        self.assertEqual(1, sizes.tidy_lights([lamp]))
+        self.assertFalse(lamp.data.use_custom_distance)
+        self.assertIsNone(lamp.data.get(sizes.TIDIED))
+        lamp.data.energy = 0.0
+        self.assertEqual(1, sizes.tidy_lights([lamp]))
+        self.assertTrue(lamp.data.use_custom_distance)
+        self.assertAlmostEqual(sizes.CONE_LENGTH, lamp.data.cutoff_distance, places=5)
+
+    def test_a_glow_sprite_is_never_lit_and_a_scene_light_is_left_alone(self) -> None:
+        sprite = spot("sprite", energy=1.0)
+        sprite.data.xplane.type = C.LIGHT_CUSTOM
+        scene_light = spot("scene light")
+        scene_light.data.xplane.type = C.LIGHT_NON_EXPORTING
+        self.assertEqual(1, sizes.tidy_lights([sprite, scene_light]))
+        self.assertTrue(sprite.data.use_custom_distance)
+        self.assertFalse(scene_light.data.use_custom_distance)
 
     def test_a_distance_somebody_chose_is_kept(self) -> None:
         chosen = spot("chosen", use_custom_distance=True, cutoff_distance=12.0)

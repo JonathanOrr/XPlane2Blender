@@ -47,7 +47,7 @@ def _screen_layout(col, context, m) -> None:
         grid.use_property_split = False
         for bus in range(6):
             grid.prop(m, f"device_bus_{bus}", toggle=True)
-        col.prop(m, "device_lighting_channel", text="Brightness Knob (Channel)")
+        col.prop(m, "device_lighting_channel", text="Brightness Channel")
         col.prop(m, "device_auto_adjust", text="Brighter In Daylight")
     if m.cockpit_feature != C.COCKPIT_FEATURE_NONE:
         row = compact_row(col)
@@ -102,7 +102,7 @@ class XPLANE_PT_surface_more(_MaterialTab, bpy.types.Panel):
         col.prop(m, "surfaceType", text="Hard Surface")
         if m.surfaceType != C.SURFACE_TYPE_NONE:
             col.prop(m, "deck", text="Can Be Under It (deck)")
-        col.prop(m, "poly_os", text="Draw On Top (polygon offset)")
+        col.prop(m, "poly_os", text="Draw On Top")
         custom_lines_layout(col, m, "material:xplane", animation=False)
 
 

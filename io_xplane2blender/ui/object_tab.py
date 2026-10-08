@@ -186,7 +186,7 @@ class XPLANE_PT_attachment(Card, bpy.types.Panel):
         layout.prop(special, "special_type", text="Is A")
         col = layout.column()
         if special.special_type == C.EMPTY_USAGE_EMITTER_PARTICLE:
-            col.prop(special.emitter_props, "name", text="Emitter (from the .pss)")
+            col.prop(special.emitter_props, "name", text="Emitter")
             row = compact_row(col)
             row.prop(special.emitter_props, "index_enabled", text="")
             sub = row.row(align=True)

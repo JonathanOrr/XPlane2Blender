@@ -552,6 +552,16 @@ class TestImportObj(XPlaneTestCase):
         self.assertTrue(light.data.use_custom_distance)
         self.assertAlmostEqual(xplane_display_sizes.CONE_LENGTH, light.data.cutoff_distance, places=5)
 
+    def test_a_lit_spill_light_keeps_blenders_distance_so_it_lights_as_it_should(self) -> None:
+        light = self.light("LIGHT_PARAM airplane_generic_pm 1 2 3 1 0.5 0 18 25cd 0 -1 0 0.5\n", light_strength=1.0)
+        self.assertGreater(light.data.energy, 0.0)
+        self.assertFalse(light.data.use_custom_distance)
+
+    def test_a_lit_spill_light_with_a_size_in_meters_is_drawn_that_far(self) -> None:
+        light = self.light("LIGHT_SPILL_CUSTOM 1 2 3 0.9 0.8 0.7 1 0.4 0 0 -1 0.5 my/dataref\n", light_strength=1.0)
+        self.assertTrue(light.data.use_custom_distance)
+        self.assertAlmostEqual(0.4, light.data.cutoff_distance, places=5)
+
     def test_a_spill_light_with_a_size_in_meters_has_a_cone_of_that_length(self) -> None:
         light = self.light("LIGHT_SPILL_CUSTOM 1 2 3 0.9 0.8 0.7 1 0.4 0 0 -1 0.5 my/dataref\n")
         self.assertTrue(light.data.use_custom_distance)
