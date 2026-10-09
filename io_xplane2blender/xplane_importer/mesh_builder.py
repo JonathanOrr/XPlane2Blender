@@ -73,8 +73,16 @@ def build_mesh(
     # Triangles with no area (corners on a line, less than a micrometre wide) draw nothing, and Blender's normals
     # around them change when the mesh is turned (an imported part rotated and applied): they are left out
     a, b, c = (coords[faces[:, i]] for i in range(3))
-    edges = np.stack([np.linalg.norm(b - a, axis=1), np.linalg.norm(c - b, axis=1), np.linalg.norm(a - c, axis=1)])
-    width = np.linalg.norm(np.cross(b - a, c - a), axis=1) / np.maximum(edges.max(axis=0, initial=0.0), 1e-12)
+    edges = np.stack(
+        [
+            np.linalg.norm(b - a, axis=1),
+            np.linalg.norm(c - b, axis=1),
+            np.linalg.norm(a - c, axis=1),
+        ]
+    )
+    width = np.linalg.norm(np.cross(b - a, c - a), axis=1) / np.maximum(
+        edges.max(axis=0, initial=0.0), 1e-12
+    )
     welded_ok &= width >= 1e-6 * scale
     if not welded_ok.all():
         faces = faces[welded_ok]
@@ -108,12 +116,12 @@ def build_mesh(
     ):  # Blender before 4.1 needs this for custom normals
         mesh.use_auto_smooth = True
     mesh.normals_split_custom_set(normals.tolist())
-    _keep_folded_normals(mesh, faces, normals)
+    _keep_folded_normals(mesh, normals)
     mesh.update()
     return mesh, len(faces)
 
 
-def _keep_folded_normals(mesh, faces: np.ndarray, normals: np.ndarray) -> None:
+def _keep_folded_normals(mesh, normals: np.ndarray) -> None:
     """
     Blender keeps a custom normal relative to the faces that join around a vertex. Where they fold back on each
     other their directions cancel and Blender keeps nothing (a 737 copilot's collar): the edges of such vertices
@@ -122,8 +130,10 @@ def _keep_folded_normals(mesh, faces: np.ndarray, normals: np.ndarray) -> None:
     lost = np.abs(corner_normals(mesh) - normals).max(axis=1) > 1e-2
     if not lost.any():
         return
+    corner_vertices = np.empty(len(mesh.loops), dtype=np.int64)
+    mesh.loops.foreach_get("vertex_index", corner_vertices)
     vertices = np.zeros(len(mesh.vertices), dtype=bool)
-    vertices[faces.reshape(-1)[lost]] = True
+    vertices[corner_vertices[lost]] = True
     edge_vertices = np.empty(len(mesh.edges) * 2, dtype=np.int64)
     mesh.edges.foreach_get("vertices", edge_vertices)
     sharp = vertices[edge_vertices.reshape(-1, 2)].any(axis=1)
@@ -132,7 +142,9 @@ def _keep_folded_normals(mesh, faces: np.ndarray, normals: np.ndarray) -> None:
         mesh.edges.foreach_get("use_edge_sharp", old)
         mesh.edges.foreach_set("use_edge_sharp", old | sharp)
     else:
-        attribute = mesh.attributes.get("sharp_edge") or mesh.attributes.new("sharp_edge", "BOOLEAN", "EDGE")
+        attribute = mesh.attributes.get("sharp_edge") or mesh.attributes.new(
+            "sharp_edge", "BOOLEAN", "EDGE"
+        )
         old = np.zeros(len(mesh.edges), dtype=bool)
         attribute.data.foreach_get("value", old)
         attribute.data.foreach_set("value", old | sharp)
@@ -142,7 +154,9 @@ def _keep_folded_normals(mesh, faces: np.ndarray, normals: np.ndarray) -> None:
 def corner_normals(mesh) -> np.ndarray:
     """The normal of every corner (loop) of the mesh, as an (N, 3) array"""
     out = np.empty(len(mesh.loops) * 3, dtype=np.float64)
-    if hasattr(mesh, "calc_normals_split"):  # Blender before 4.1 (its corner_normals is empty)
+    if hasattr(
+        mesh, "calc_normals_split"
+    ):  # Blender before 4.1 (its corner_normals is empty)
         mesh.calc_normals_split()
         mesh.loops.foreach_get("normal", out)
     else:
@@ -162,4 +176,6 @@ def transform_mesh(mesh, matrix) -> None:
     normals = normals @ turn.T
     lengths = np.linalg.norm(normals, axis=1)
     lengths[lengths < 1e-12] = 1.0
-    mesh.normals_split_custom_set((normals / lengths[:, None]).tolist())
+    normals /= lengths[:, None]
+    mesh.normals_split_custom_set(normals.tolist())
+    _keep_folded_normals(mesh, normals)

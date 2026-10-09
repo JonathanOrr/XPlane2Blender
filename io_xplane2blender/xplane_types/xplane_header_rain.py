@@ -33,8 +33,14 @@ def collect(attributes: XPlaneAttributes, rain, filename: str, relative: Callabl
     if wipers and not rain.wiper_texture:
         logger.warn(f"{filename}: Must have Wiper Texture to use Wipers")
 
+    thermal_path = None
     if rain.thermal_texture and thermal_sources:
-        attributes["THERMAL_texture"].setValue(relative(rain.thermal_texture))
+        try:
+            thermal_path = relative(rain.thermal_texture)
+        except (OSError, ValueError):
+            pass  # The path's error is logged; the rest of the file still exports
+    if thermal_path:
+        attributes["THERMAL_texture"].setValue(thermal_path)
         for i in thermal_sources:
             source = getattr(rain, f"thermal_source_{i}")
             if not source.defrost_time:
@@ -50,7 +56,10 @@ def collect(attributes: XPlaneAttributes, rain, filename: str, relative: Callabl
             _add(attributes, "THERMAL_source2", (i - 1, defrost_time, source.dataref_on_off))
 
     if rain.wiper_texture and wipers:
-        attributes["WIPER_texture"].setValue(relative(rain.wiper_texture))
+        try:
+            attributes["WIPER_texture"].setValue(relative(rain.wiper_texture))
+        except (OSError, ValueError):
+            return  # The path's error is logged; the rest of the file still exports
         for i in range(1, 5):
             # Wipers are numbered from the first, so the list stops at the first one turned off
             if not getattr(rain, f"wiper_{i}_enabled"):

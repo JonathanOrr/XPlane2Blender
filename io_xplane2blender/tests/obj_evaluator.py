@@ -171,10 +171,14 @@ def corner_normals(obj: ObjFile) -> np.ndarray:
             if isinstance(child, AnimNode):
                 visit(child, matrix)
             elif isinstance(child, TrisRun):
-                vertices = obj.vertices[obj.indices[child.offset : child.offset + child.count]]
+                vertices = obj.vertices[
+                    obj.indices[child.offset : child.offset + child.count]
+                ]
                 places = vertices[:, 0:3] @ matrix[:3, :3].T + matrix[:3, 3]
                 normals = vertices[:, 3:6] @ matrix[:3, :3].T
-                normals /= np.maximum(np.linalg.norm(normals, axis=1, keepdims=True), 1e-12)
+                normals /= np.maximum(
+                    np.linalg.norm(normals, axis=1, keepdims=True), 1e-12
+                )
                 rows.append(np.hstack([places, normals]))
 
     visit(obj.root, np.eye(4))
