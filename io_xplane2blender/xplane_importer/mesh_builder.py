@@ -104,7 +104,7 @@ def build_mesh(
     uvs = vertices[loop_vertices, 6:8]
 
     mesh = bpy.data.meshes.new(name)
-    mesh.from_pydata(coords.tolist(), [], faces.tolist())
+    _fill(mesh, coords, faces)
     mesh.polygons.foreach_set("material_index", material_slots.astype(np.int32))
     mesh.polygons.foreach_set("use_smooth", np.ones(len(faces), dtype=bool))
 
@@ -119,6 +119,17 @@ def build_mesh(
     _keep_folded_normals(mesh, normals)
     mesh.update()
     return mesh, len(faces)
+
+
+def _fill(mesh, coords: np.ndarray, faces: np.ndarray) -> None:
+    """What Mesh.from_pydata does for triangles, from arrays and without marking the faces flat first"""
+    mesh.vertices.add(len(coords))
+    mesh.loops.add(faces.size)
+    mesh.polygons.add(len(faces))
+    mesh.vertices.foreach_set("co", coords.astype(np.float32).ravel())
+    mesh.polygons.foreach_set("loop_start", np.arange(0, faces.size, 3, dtype=np.int32))
+    mesh.polygons.foreach_set("vertices", faces.astype(np.int32).ravel())
+    mesh.update(calc_edges=True)
 
 
 def _keep_folded_normals(mesh, normals: np.ndarray) -> None:
