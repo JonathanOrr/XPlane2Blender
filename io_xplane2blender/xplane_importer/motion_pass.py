@@ -70,8 +70,9 @@ class MotionPass:
                     self._split_leaves(obj)
         self._fold_frames()
         self.objects[:] = [o for o in self.objects if o not in self.gone]
-        for obj in self.removed:
-            bpy.data.objects.remove(obj)
+        if self.removed:
+            # One by one, each removal goes through every object in the file (an airliner: a minute in all)
+            bpy.data.batch_remove(self.removed)
         for obj, name in self.renames:
             obj.name = name
         return len(self.removed)
