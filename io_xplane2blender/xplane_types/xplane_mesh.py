@@ -6,6 +6,7 @@ from typing import List, Optional
 
 import bpy
 import mathutils
+import numpy as np
 
 from io_xplane2blender import xplane_helpers
 
@@ -18,6 +19,21 @@ from .xplane_object import XPlaneObject
 # Normals closer than this are one vertex: Blender stores custom normals with about 1e-5 of error, so the same
 # normal on two faces of a vertex comes back a little different and would be written twice (imported meshes)
 NORMAL_MERGE = 1e-4
+
+
+def _turned_corner_normals(mesh, matrix) -> np.ndarray:
+    """The mesh's corner normals as they point once the mesh is transformed by matrix"""
+    normals = np.empty(len(mesh.loops) * 3, dtype=np.float64)
+    if hasattr(mesh, "calc_normals_split"):  # Blender before 4.1 (its corner_normals is empty)
+        mesh.calc_normals_split()
+        mesh.loops.foreach_get("normal", normals)
+    else:
+        mesh.corner_normals.foreach_get("vector", normals)
+    turn = np.array(matrix.to_3x3().inverted_safe().transposed())
+    normals = normals.reshape(-1, 3) @ turn.T
+    lengths = np.linalg.norm(normals, axis=1)
+    lengths[lengths < 1e-12] = 1.0
+    return normals / lengths[:, None]
 
 
 def _near_normal(candidates, normal) -> int:
@@ -98,21 +114,14 @@ class XPlaneMesh:
                     xplaneObject.xplaneBone.getBakeMatrixForAttached()
                 )
                 is_mirrored = xplaneObject.bakeMatrix.determinant() < 0
-                mirrored_normals = {}
-                if is_mirrored and mesh.has_custom_normals:
-                    # Custom normals are encoded relative to the face winding.
-                    # Keep their directions before the reflection changes that basis.
-                    if hasattr(mesh, "calc_normals_split"):
-                        mesh.calc_normals_split()
-                    mesh.calc_loop_triangles()
-                    normal_matrix = (
-                        xplaneObject.bakeMatrix.to_3x3().inverted_safe().transposed()
-                    )
-                    for tri in mesh.loop_triangles:
-                        for loop, normal in zip(tri.loops, tri.split_normals):
-                            mirrored_normals[loop] = (
-                                normal_matrix @ mathutils.Vector(normal)
-                            ).normalized()
+                # Custom normals are encoded relative to their faces and worked out again after a transform: a
+                # reflection changes that basis, and a normal that points against its face (flipped or back
+                # faces, common in imported aircraft) can come back pointing anywhere. Keep their directions
+                kept_normals = (
+                    _turned_corner_normals(mesh, xplaneObject.bakeMatrix)
+                    if mesh.has_custom_normals
+                    else None
+                )
                 mesh.transform(xplaneObject.bakeMatrix)
 
                 if hasattr(mesh, "calc_normals_split"):
@@ -145,8 +154,10 @@ class XPlaneMesh:
                         indices=tri.vertices,
                         normal=tri.normal,
                         split_normals=(
-                            tuple(mirrored_normals[loop] for loop in tri.loops)
-                            if mirrored_normals
+                            tuple(
+                                mathutils.Vector(kept_normals[loop]) for loop in tri.loops
+                            )
+                            if kept_normals is not None
                             else tri.split_normals
                         ),
                         uvs=(
@@ -171,7 +182,7 @@ class XPlaneMesh:
                             else tmp_face.normal
                         )
                         if is_mirrored and not (
-                            mirrored_normals and tmp_face.original_face.use_smooth
+                            kept_normals is not None and tmp_face.original_face.use_smooth
                         ):
                             # Recalculated mesh normals follow the reflected faces inward.
                             normal = -normal

@@ -128,7 +128,9 @@ class ObjBuilder(PartsBuilder):
     # ---- tree walk -------------------------------------------------------------------
     def _lod_index(self, lod: Optional[tuple]) -> int:
         """Which of the four LOD buckets of the add-on an ATTR_LOD range is, or -1 for all of them"""
-        if lod is None or not self.options.all_lods or lod not in self.obj.lods:
+        if lod is None or lod not in self.obj.lods:
+            return -1
+        if not self.options.all_lods and len(self.obj.lods) > 1:
             return -1
         index = self.obj.lods.index(lod)
         return index if index < 4 else -1
@@ -415,7 +417,8 @@ class ObjBuilder(PartsBuilder):
             if self.has_manipulators or self.has_magnets
             else xplane_constants.EXPORT_TYPE_AIRCRAFT
         )
-        if self.options.all_lods and len(obj.lods) >= 2:
+        # A single LOD is all there is: its range is kept too (an airliner's crew rest is drawn within 5 m only)
+        if obj.lods and (self.options.all_lods or len(obj.lods) == 1):
             layer.lods = str(min(len(obj.lods), 4))
             for bucket, (near, far) in zip(layer.lod, obj.lods[:4]):
                 bucket.near, bucket.far = int(near), int(far)

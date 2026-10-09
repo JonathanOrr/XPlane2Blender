@@ -23,6 +23,7 @@ from io_xplane2blender.xplane_constants import (
 
 from . import motion as M
 from . import transforms as T
+from .mesh_builder import transform_mesh
 
 
 class MotionPass:
@@ -231,7 +232,7 @@ class MotionPass:
         if motion.spins:
             # Turning takes the part about the pivot, so what sits beside the pivot is part of its shape
             if not T.is_identity(placed):
-                mesh.data.transform(placed)
+                transform_mesh(mesh.data, placed)
             self._place(mesh, self._basis(empty))
         else:
             # Moving takes the part with it: its turn stays where it is and its place is moved with every key
@@ -273,7 +274,7 @@ class MotionPass:
             )
             if motion.spins:
                 if not T.is_identity(placed):
-                    leaf.data.transform(placed)
+                    transform_mesh(leaf.data, placed)
                 basis = self._basis(empty)
             else:
                 placed = self._basis(empty).to_3x3().to_4x4() @ placed
@@ -339,7 +340,7 @@ class MotionPass:
             obj, mathutils.Matrix.Translation(turn @ self._basis(obj).to_translation())
         )
         if obj.type == "MESH":
-            obj.data.transform(turn.to_4x4())
+            transform_mesh(obj.data, turn.to_4x4())
         else:
             for kid in self.kids.get(obj, []):
                 self._turn(kid, turn)

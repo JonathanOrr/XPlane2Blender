@@ -160,6 +160,35 @@ def placed_items(
     return sorted(found)
 
 
+def corner_normals(obj: ObjFile) -> np.ndarray:
+    """An (N, 6) array of every triangle corner and its normal in X-Plane space at the parked pose, sorted by place"""
+    rows: List[np.ndarray] = []
+
+    def visit(node: AnimNode, matrix: np.ndarray) -> None:
+        for op in node.ops:
+            matrix = matrix @ _op_matrix(op, 0.0)
+        for child in node.children:
+            if isinstance(child, AnimNode):
+                visit(child, matrix)
+            elif isinstance(child, TrisRun):
+                vertices = obj.vertices[
+                    obj.indices[child.offset : child.offset + child.count]
+                ]
+                places = vertices[:, 0:3] @ matrix[:3, :3].T + matrix[:3, 3]
+                normals = vertices[:, 3:6] @ matrix[:3, :3].T
+                normals /= np.maximum(
+                    np.linalg.norm(normals, axis=1, keepdims=True), 1e-12
+                )
+                rows.append(np.hstack([places, normals]))
+
+    visit(obj.root, np.eye(4))
+    if not rows:
+        return np.zeros((0, 6))
+    stacked = np.vstack(rows)
+    rounded = np.round(stacked, 3)
+    return stacked[np.lexsort(tuple(rounded[:, i] for i in reversed(range(6))))]
+
+
 def corners_from_text(
     text: str, dataref_values=None, default=lambda path: 0.0
 ) -> np.ndarray:
