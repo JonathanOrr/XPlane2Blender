@@ -212,5 +212,30 @@ class TestObjParser(XPlaneTestCase):
         self.assertEqual(obj.texture, "my folder/a b.png")
         self.assertEqual(obj.point_counts, (3, 0, 0, 3))
 
+    def test_lines_read_a_block_at_a_time_are_splitlines(self) -> None:
+        # Line endings of one and two characters, and every place a block can end
+        text = "A\r\n800\rOBJ\n\nVT 1\x0bVT 2\r\n\r\nIDX 0\x85TRIS 0 1\u2028# end\r\n\n"
+        for block in range(1, len(text) + 2):
+            with self.subTest(block=block):
+                self.assertEqual(text.splitlines(), list(obj_parser._lines(text, block)))
+
+    def test_tables_read_in_chunks_are_the_same(self) -> None:
+        # Big files convert their vertex and index lines in chunks, a bad vertex keeps its number in the file
+        vertices = "".join(f"VT {i} 0 0 0 1 0 0.5 0.5\n" for i in range(10)) + "VT 1 2\n"
+        indices = "".join(f"IDX {i}\n" for i in range(11)) + "IDX x\n"
+        text = obj_text("TRIS 0 9\n", vertices=vertices, indices=indices, tris=None)
+        whole = parse_obj(text)
+        chunk = obj_parser._TABLE_CHUNK
+        try:
+            obj_parser._TABLE_CHUNK = 4
+            chunked = parse_obj(text)
+        finally:
+            obj_parser._TABLE_CHUNK = chunk
+        self.assertTrue(np.array_equal(whole.vertices, chunked.vertices))
+        self.assertTrue(np.array_equal(whole.indices, chunked.indices))
+        # A chunk read before the end of the file warns in its place in the list
+        self.assertEqual(sorted(whole.warnings), sorted(chunked.warnings))
+        self.assertIn("vertex 10 is incomplete, it was replaced with zeros", chunked.warnings)
+
 
 runTestCases([TestObjParser])

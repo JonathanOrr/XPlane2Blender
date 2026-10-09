@@ -121,7 +121,7 @@ class XPlaneHeader:
         self._collect_particle_system(relative)
 
         self.attributes["POINT_COUNTS"].setValue(
-            (len(self.xplaneFile.mesh.vertices), 0, 0, len(self.xplaneFile.mesh.indices))
+            (self.xplaneFile.mesh.globalindex, 0, 0, len(self.xplaneFile.mesh.indices))
         )
 
         if options.specular_override:

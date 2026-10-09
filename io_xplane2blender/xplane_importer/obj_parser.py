@@ -66,7 +66,27 @@ def _floats(tokens: List[str]) -> Tuple[float, ...]:
 def parse_obj_file(path: str) -> ObjFile:
     with open(path, "rb") as f:
         raw = f.read()
-    return parse_obj(raw.decode("utf-8", errors="replace"), path)
+    text = raw.decode("utf-8", errors="replace")
+    del raw
+    return parse_obj(text, path)
+
+
+# Lines of vertex or index table converted to numbers at a time: all at once, a big file's numbers as text took
+# ten times the memory of the file
+_TABLE_CHUNK = 65536
+
+
+def _lines(text: str, block: int = 1 << 20):
+    """
+    text.splitlines(), a block at a time: a big file's list of lines took more memory than the file. Blocks end
+    just after a newline, so a line ending of two characters is never split
+    """
+    start = 0
+    while start < len(text):
+        end = text.find("\n", start + block)
+        end = len(text) if end == -1 else end + 1
+        yield from text[start:end].splitlines()
+        start = end
 
 
 def after_geometry(stack: List[AnimNode], lod) -> AnimNode:
@@ -83,13 +103,16 @@ def after_geometry(stack: List[AnimNode], lod) -> AnimNode:
 
 def parse_obj(text: str, path: str = "") -> ObjFile:
     obj = ObjFile(path=path)
-    lines = text.splitlines()
+    lines = _lines(text)
 
     # --- Header: line endings marker, version, "OBJ" ---------------------------------------
     index = 0
     header_seen = False
-    while index < len(lines) and index < 6:
-        token = lines[index].strip()
+    while index < 6:
+        line = next(lines, None)
+        if line is None:
+            break
+        token = line.strip()
         index += 1
         if token == "OBJ":
             header_seen = True
@@ -130,6 +153,8 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
     # The vertex and index tables are most of a big file, they are collected as text and converted in bulk
     vertex_lines: List[str] = []
     index_lines: List[str] = []
+    vertex_blocks: List[np.ndarray] = []
+    index_blocks: List[np.ndarray] = []
 
     def note_repairs(line_number: int) -> None:
         if _repaired:
@@ -141,7 +166,7 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
 
     _repaired.clear()
     last_line = 0
-    for line_number, line in enumerate(lines[index:], start=index + 1):
+    for line_number, line in enumerate(lines, start=index + 1):
         note_repairs(last_line)
         last_line = line_number
         stripped = line.strip()
@@ -152,6 +177,14 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
             if "#" in stripped:
                 stripped = stripped.partition("#")[0]
             vertex_lines.append(stripped[3:])
+            if len(vertex_lines) == _TABLE_CHUNK:
+                vertex_blocks.append(
+                    _to_vertex_array(
+                        vertex_lines, obj, _TABLE_CHUNK * len(vertex_blocks)
+                    )
+                )
+                vertex_lines.clear()
+                _repaired.clear()  # A table's repaired numbers were never reported as one line's
             continue
         if lead == "IDX":
             if "#" in stripped:
@@ -159,6 +192,9 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
             index_lines.append(
                 stripped[5:] if stripped.startswith("IDX10") else stripped[3:]
             )
+            if len(index_lines) == _TABLE_CHUNK:
+                index_blocks.append(_to_index_array(index_lines, obj))
+                index_lines.clear()
             continue
         if stripped[0] == "#":
             comment = stripped.lstrip("# ").strip()
@@ -374,12 +410,19 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
     if len(stack) > 1:
         obj.warnings.append(f"{len(stack) - 1} ANIM_begin blocks were never closed")
 
-    obj.vertices = _to_vertex_array(vertex_lines, obj)
-    obj.indices = _to_index_array(index_lines, obj)
+    vertex_blocks.append(
+        _to_vertex_array(vertex_lines, obj, _TABLE_CHUNK * len(vertex_blocks))
+    )
+    index_blocks.append(_to_index_array(index_lines, obj))
+    obj.vertices = np.concatenate(vertex_blocks)
+    obj.indices = np.concatenate(index_blocks)
     return obj
 
 
-def _to_vertex_array(vertex_lines: List[str], obj: ObjFile) -> np.ndarray:
+def _to_vertex_array(
+    vertex_lines: List[str], obj: ObjFile, first: int = 0
+) -> np.ndarray:
+    """The vertex lines' numbers as an (N, 8) table, first is the number of the first of them in the file"""
     if not vertex_lines:
         return np.zeros((0, 8))
     try:
@@ -387,7 +430,7 @@ def _to_vertex_array(vertex_lines: List[str], obj: ObjFile) -> np.ndarray:
     except ValueError:
         # Something is wrong with at least one line, read them one by one and fix them up
         rows = []
-        for number, text in enumerate(vertex_lines):
+        for number, text in enumerate(vertex_lines, start=first):
             try:
                 values = [_float(t) for t in text.split()[:8]]
             except ValueError:
