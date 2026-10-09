@@ -100,6 +100,27 @@ def _vt_rows(mesh, kept_normals: Optional[np.ndarray], uv_layer, is_mirrored: bo
     return rows.astype(np.float64)
 
 
+def _as_whole_rows(rows: np.ndarray) -> np.ndarray:
+    """Each row as one value, so that numpy compares rows bit for bit"""
+    whole = np.dtype((np.void, rows.dtype.itemsize * rows.shape[1]))
+    return np.ascontiguousarray(rows).view(whole).ravel()
+
+
+def _first_unique(rows: np.ndarray):
+    """The distinct rows in the order they first come: (first index of each, each row's distinct number)"""
+    _, first, inverse = np.unique(_as_whole_rows(rows), return_index=True, return_inverse=True)
+    order = np.argsort(first)
+    number = np.empty_like(order)
+    number[order] = np.arange(len(order))
+    return first[order], number[inverse.reshape(-1)]
+
+
+def _groups(rows: np.ndarray):
+    """Each row's group of equal rows, and how many rows each group has"""
+    _, inverse, sizes = np.unique(_as_whole_rows(rows), return_inverse=True, return_counts=True)
+    return inverse.reshape(-1), sizes
+
+
 class XPlaneMesh:
     """
     Stores the data for the OBJ's mesh - its VT and IDX tables.
@@ -136,18 +157,17 @@ class XPlaneMesh:
 
         dg = bpy.context.evaluated_depsgraph_get()
         optimize = bpy.context.scene.xplane.optimize
-        # Shared by the whole file: parts with the same shape in their own frames (a clock's digits) share vertices
-        vertices_dct = {}
-        # (position, uv) -> [(normal, index)], for normals that differ by Blender's rounding only
-        near = collections.defaultdict(list)
+        # Shared by the whole file: parts with the same shape in their own frames (a clock's digits) share vertices.
+        # The rows of every mesh are collected and shared at the end
+        pending: List[np.ndarray] = []
+        corners = len(self.indices)
         for xplaneObject in xplaneObjects:
             if (
                 xplaneObject.type == "MESH"
                 and xplaneObject.xplaneBone
                 and not xplaneObject.export_animation_only
             ):
-                xplaneObject.indices[0] = len(self.indices)
-                first_vertice_of_this_xplaneObject = len(self.vertices)
+                xplaneObject.indices[0] = corners
 
                 # This is the heart of the exporter turning object into VT/IDX table:
                 # - Get the mesh of the object with its modifiers
@@ -187,45 +207,46 @@ class XPlaneMesh:
 
                 rows = _vt_rows(mesh, kept_normals, uv_layer, is_mirrored)
                 if optimize:
-                    self._add_shared(rows, vertices_dct, near)
+                    pending.append(rows)
                 else:
                     self.indices.extend(range(self.globalindex, self.globalindex + len(rows)))
                     self.vertices.extend(map(tuple, rows.tolist()))
                     self.globalindex += len(rows)
+                corners += len(rows)
                 if len(rows):
-                    xplaneObject.indices[1] = len(self.indices)
+                    xplaneObject.indices[1] = corners
 
                 evaluated_obj.to_mesh_clear()
+        if pending:
+            self._add_shared(np.concatenate(pending))
 
-    def _add_shared(self, rows: np.ndarray, vertices_dct: dict, near) -> None:
+    def _add_shared(self, rows: np.ndarray) -> None:
         """
-        Adds a mesh's VT rows (one per corner, in IDX order), reusing the file's vertices that are the same or differ
-        by Blender's rounding of normals only. Rows repeated in the mesh are looked up once, in their first order
+        Adds the file's VT rows (one per corner, in IDX order). A row the same as an earlier one, or one that differs
+        from an earlier one at the same position and UV by Blender's rounding of normals only, reuses its vertex.
+        Rows are compared as Python compares them (-0.0 is 0.0) and written as they first came
         """
-        if not len(rows):
-            return
-        _, first, inverse = np.unique(
-            np.ascontiguousarray(rows).view(np.dtype((np.void, rows.dtype.itemsize * rows.shape[1]))).ravel(),
-            return_index=True,
-            return_inverse=True,
-        )
-        order = np.argsort(first)
-        rank = np.empty_like(order)
-        rank[order] = np.arange(len(order))
-        found = []
-        for vt_entry in map(tuple, rows[first[order]].tolist()):
-            vindex = vertices_dct.get(vt_entry, -1)
-            if vindex == -1:
-                place = vt_entry[:3] + vt_entry[6:]
-                vindex = _near_normal(near[place], vt_entry[3:6])
-                if vindex == -1:
-                    near[place].append((vt_entry[3:6], self.globalindex))
-                    vindex = self.globalindex
-                    self.vertices.append(vt_entry)
-                    self.globalindex += 1
-                vertices_dct[vt_entry] = vindex
-            found.append(vindex)
-        self.indices.extend(np.array(found, dtype=np.int64)[rank[inverse.reshape(-1)]].tolist())
+        key = rows + 0.0
+        first, corner_row = _first_unique(key)
+        rows, key = rows[first], key[first]
+        # Normals that differ by rounding only can only be at the same position and UV, usually a few rows
+        place, counts = _groups(key[:, [0, 1, 2, 6, 7]])
+        target = np.arange(len(rows))
+        shared_place = np.nonzero(counts[place] > 1)[0]
+        made = collections.defaultdict(list)
+        for i, at, normal in zip(
+            shared_place.tolist(), place[shared_place].tolist(), key[shared_place, 3:6].tolist()
+        ):
+            j = _near_normal(made[at], normal)
+            if j == -1:
+                made[at].append((normal, i))
+            else:
+                target[i] = j
+        created = target == np.arange(len(rows))
+        vertex = np.cumsum(created) - 1 + self.globalindex
+        self.vertices.extend(map(tuple, rows[created].tolist()))
+        self.globalindex += int(created.sum())
+        self.indices.extend(vertex[target][corner_row].tolist())
 
     def writeVertices(self) -> str:
         """
@@ -258,7 +279,13 @@ class XPlaneMesh:
                 return joined
             for i, text in enumerate(lines):
                 if "e" in text:
-                    lines[i] = f"VT\t{tab.join(floatToStr(component) for component in self.vertices[i])}\n"
+                    numbers = text[3:-1].split("\t")
+                    line = self.vertices[i]
+                    lines[i] = (
+                        "VT\t"
+                        + tab.join(n if "e" not in n else floatToStr(line[c]) for c, n in enumerate(numbers))
+                        + "\n"
+                    )
             return "".join(lines)
 
     def writeIndices(self) -> str:
