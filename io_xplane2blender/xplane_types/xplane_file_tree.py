@@ -127,9 +127,7 @@ class XPlaneFileTree:
                     # ----------------------------------------------------------
                     new_parent_xplane_obj = convert_to_xplane_object(parent_obj)
                     if new_parent_xplane_obj:
-                        if (
-                            not in_root(new_parent_xplane_obj.blenderObject.name)
-                        ):
+                        if not in_root(new_parent_xplane_obj.blenderObject.name):
                             # We don't have to test for blender_obj.visible_get here,
                             # all objects that start inside the exportable collection will
                             # have the assumption of being False - XPlaneObject's default for this is False
@@ -274,9 +272,8 @@ class XPlaneFileTree:
                 ), "recurse should never be assigning self.rootBone twice"
                 self.rootBone = new_xplane_bone
             try:
-                if (
-                    not found_blender_obj_already
-                    and not in_root(blender_obj.parent.name)
+                if not found_blender_obj_already and not in_root(
+                    blender_obj.parent.name
                 ):
                     if blender_obj.parent.name in scene_names:
                         walk_upward(new_xplane_bone)
@@ -341,9 +338,8 @@ class XPlaneFileTree:
                 real_bone_parents = make_bones_for_armature_bones(blender_obj)
 
             for child_obj in parent_blender_objects:
-                if (
-                    isinstance(exportable_root, bpy.types.Collection)
-                    and not in_root(child_obj.name)
+                if isinstance(exportable_root, bpy.types.Collection) and not in_root(
+                    child_obj.name
                 ):
                     continue
                 if (
