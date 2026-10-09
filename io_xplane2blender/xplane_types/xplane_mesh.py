@@ -47,6 +47,59 @@ def _near_normal(candidates, normal) -> int:
     return -1
 
 
+def _vt_rows(mesh, kept_normals: Optional[np.ndarray], uv_layer, is_mirrored: bool) -> np.ndarray:
+    """
+    The mesh's VT rows (x y z nx ny nz s t in X-Plane's axes), one per triangle corner in X-Plane's winding. Values
+    are Blender's single precision floats, as the exporter always wrote them
+    """
+    count = len(mesh.loop_triangles)
+    tri_loops = np.empty(count * 3, dtype=np.int32)
+    mesh.loop_triangles.foreach_get("loops", tri_loops)
+    tri_vertices = np.empty(count * 3, dtype=np.int32)
+    mesh.loop_triangles.foreach_get("vertices", tri_vertices)
+    face_normals = np.empty(count * 3, dtype=np.float32)
+    mesh.loop_triangles.foreach_get("normal", face_normals)
+    polygons = np.empty(count, dtype=np.int32)
+    mesh.loop_triangles.foreach_get("polygon_index", polygons)
+    smooth_polygons = np.empty(len(mesh.polygons), dtype=bool)
+    mesh.polygons.foreach_get("use_smooth", smooth_polygons)
+    coords = np.empty(len(mesh.vertices) * 3, dtype=np.float32)
+    mesh.vertices.foreach_get("co", coords)
+
+    # A reflection already changes Blender's CCW winding to CW, otherwise it is reversed for X-Plane as usual
+    corner_order = [0, 1, 2] if is_mirrored else [2, 1, 0]
+    loops = tri_loops.reshape(-1, 3)[:, corner_order].ravel()
+    vertices = tri_vertices.reshape(-1, 3)[:, corner_order].ravel()
+    smooth = np.repeat(smooth_polygons[polygons], 3)
+
+    if kept_normals is not None:
+        corner_normals = kept_normals.astype(np.float32)
+    else:
+        corner_normals = np.empty(len(mesh.loops) * 3, dtype=np.float32)
+        if hasattr(mesh, "calc_normals_split"):  # Blender before 4.1
+            mesh.loops.foreach_get("normal", corner_normals)
+        else:
+            mesh.corner_normals.foreach_get("vector", corner_normals)
+        corner_normals = corner_normals.reshape(-1, 3)
+    normals = np.where(
+        smooth[:, None], corner_normals[loops], np.repeat(face_normals.reshape(-1, 3), 3, axis=0)
+    )
+    if is_mirrored:
+        # Recalculated mesh normals follow the reflected faces inward
+        flip = ~smooth if kept_normals is not None else np.ones(len(smooth), dtype=bool)
+        normals = np.where(flip[:, None], -normals, normals)
+
+    rows = np.zeros((len(loops), 8), dtype=np.float32)
+    positions = coords.reshape(-1, 3)[vertices]
+    rows[:, 0], rows[:, 1], rows[:, 2] = positions[:, 0], positions[:, 2], -positions[:, 1]
+    rows[:, 3], rows[:, 4], rows[:, 5] = normals[:, 0], normals[:, 2], -normals[:, 1]
+    if uv_layer:
+        uvs = np.empty(len(mesh.loops) * 2, dtype=np.float32)
+        uv_layer.data.foreach_get("uv", uvs)
+        rows[:, 6:8] = uvs.reshape(-1, 2)[loops]
+    return rows.astype(np.float64)
+
+
 class XPlaneMesh:
     """
     Stores the data for the OBJ's mesh - its VT and IDX tables.
@@ -126,97 +179,53 @@ class XPlaneMesh:
 
                 if hasattr(mesh, "calc_normals_split"):
                     mesh.calc_normals_split()
-                
                 mesh.calc_loop_triangles()
-                loop_triangles = mesh.loop_triangles
                 try:
                     uv_layer = mesh.uv_layers[xplaneObject.material.uv_name]
                 except (KeyError, TypeError) as e:
                     uv_layer = None
 
-                TempFace = collections.namedtuple(
-                    "TempFace",
-                    field_names=[
-                        "original_face",  # type: bpy.types.MeshLoopTriangle
-                        "indices",  # type: Tuple[float, float, float]
-                        "normal",  # type: Tuple[float, float, float]
-                        "split_normals",  # type: Tuple[Tuple[float, float, float], Tuple[float, float, float], Tuple[float, float, float]]
-                        "uvs",  # type: Tuple[mathutils.Vector, mathutils.Vector, mathutils.Vector]
-                    ],
-                )
-                tmp_faces = []  # type: List[TempFace]
-                for tri in mesh.loop_triangles:
-                    tmp_face = TempFace(
-                        original_face=tri,
-                        # BAD NAME ALERT!
-                        # mesh.vertices is the actual vertex table,
-                        # tri.vertices is indices in that vertex table
-                        indices=tri.vertices,
-                        normal=tri.normal,
-                        split_normals=(
-                            tuple(
-                                mathutils.Vector(kept_normals[loop]) for loop in tri.loops
-                            )
-                            if kept_normals is not None
-                            else tri.split_normals
-                        ),
-                        uvs=(
-                            tuple(
-                                uv_layer.data[loop_index].uv for loop_index in tri.loops
-                            )
-                            if uv_layer
-                            else (mathutils.Vector((0.0, 0.0)),) * 3
-                        ),
-                    )
-                    tmp_faces.append(tmp_face)
-
-                for tmp_face in tmp_faces:
-                    # A reflection already changes Blender's CCW winding to CW.
-                    # Otherwise reverse the winding for X-Plane as usual.
-                    for i in range(3) if is_mirrored else reversed(range(3)):
-                        index = tmp_face.indices[i]
-                        vertex = xplane_helpers.vec_b_to_x(mesh.vertices[index].co)
-                        normal = xplane_helpers.vec_b_to_x(
-                            tmp_face.split_normals[i]
-                            if tmp_face.original_face.use_smooth
-                            else tmp_face.normal
-                        )
-                        if is_mirrored and not (
-                            kept_normals is not None and tmp_face.original_face.use_smooth
-                        ):
-                            # Recalculated mesh normals follow the reflected faces inward.
-                            normal = -normal
-                        uv = tmp_face.uvs[i]
-                        vt_entry = tuple(vertex[:] + normal[:] + uv[:])
-
-                        # Optimization Algorithm:
-                        # Try to find a matching vt_entry's index in the mesh's index table
-                        # If found, skip adding to global vertices list
-                        # If not found (-1), append the new vert, save its vertex
-                        if optimize:
-                            vindex = vertices_dct.get(vt_entry, -1)
-                            if vindex == -1:
-                                place = vt_entry[:3] + vt_entry[6:]
-                                vindex = _near_normal(near[place], vt_entry[3:6])
-                                if vindex == -1:
-                                    near[place].append((vt_entry[3:6], self.globalindex))
-                        else:
-                            vindex = -1
-
-                        if vindex == -1:
-                            vindex = self.globalindex
-                            self.vertices.append(vt_entry)
-                            self.globalindex += 1
-
-                        if optimize:
-                            vertices_dct[vt_entry] = vindex
-
-                        self.indices.append(vindex)
-
-                    # store the faces in the prim
+                rows = _vt_rows(mesh, kept_normals, uv_layer, is_mirrored)
+                if optimize:
+                    self._add_shared(rows, vertices_dct, near)
+                else:
+                    self.indices.extend(range(self.globalindex, self.globalindex + len(rows)))
+                    self.vertices.extend(map(tuple, rows.tolist()))
+                    self.globalindex += len(rows)
+                if len(rows):
                     xplaneObject.indices[1] = len(self.indices)
 
                 evaluated_obj.to_mesh_clear()
+
+    def _add_shared(self, rows: np.ndarray, vertices_dct: dict, near) -> None:
+        """
+        Adds a mesh's VT rows (one per corner, in IDX order), reusing the file's vertices that are the same or differ
+        by Blender's rounding of normals only. Rows repeated in the mesh are looked up once, in their first order
+        """
+        if not len(rows):
+            return
+        _, first, inverse = np.unique(
+            np.ascontiguousarray(rows).view(np.dtype((np.void, rows.dtype.itemsize * rows.shape[1]))).ravel(),
+            return_index=True,
+            return_inverse=True,
+        )
+        order = np.argsort(first)
+        rank = np.empty_like(order)
+        rank[order] = np.arange(len(order))
+        found = []
+        for vt_entry in map(tuple, rows[first[order]].tolist()):
+            vindex = vertices_dct.get(vt_entry, -1)
+            if vindex == -1:
+                place = vt_entry[:3] + vt_entry[6:]
+                vindex = _near_normal(near[place], vt_entry[3:6])
+                if vindex == -1:
+                    near[place].append((vt_entry[3:6], self.globalindex))
+                    vindex = self.globalindex
+                    self.vertices.append(vt_entry)
+                    self.globalindex += 1
+                vertices_dct[vt_entry] = vindex
+            found.append(vindex)
+        self.indices.extend(np.array(found, dtype=np.int64)[rank[inverse.reshape(-1)]].tolist())
 
     def writeVertices(self) -> str:
         """
@@ -240,12 +249,17 @@ class XPlaneMesh:
             # print("end XPlaneMesh.writeVertices " + str(time.perf_counter()-start))
             return s
         else:
-            s = "".join(
-                f"VT\t" f"{tab.join(floatToStr(component) for component in line)}" f"\n"
-                for line in self.vertices
-            )
-            # print("end XPlaneMesh.writeVertices " + str(time.perf_counter()-start))
-            return s
+            # One format per line is floatToStr's first try for all eight numbers. The rare line where one of them
+            # needs an exponent is written again by floatToStr
+            line_format = "VT\t" + "\t".join([f"{{:.{PRECISION_OBJ_FLOAT}g}}"] * 8) + "\n"
+            lines = [line_format.format(*line) for line in self.vertices]
+            joined = "".join(lines)
+            if "e" not in joined:
+                return joined
+            for i, text in enumerate(lines):
+                if "e" in text:
+                    lines[i] = f"VT\t{tab.join(floatToStr(component) for component in self.vertices[i])}\n"
+            return "".join(lines)
 
     def writeIndices(self) -> str:
         """

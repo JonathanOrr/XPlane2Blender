@@ -26,6 +26,24 @@ class XPlaneFileTree:
     def create_xplane_bone_hiearchy(
         self, exportable_root: ExportableRoot
     ) -> Optional[XPlaneObject]:
+        # Blender's Object.children and name lookups in a collection go through every object in the file: they are
+        # read once here (an imported airliner has thousands of objects)
+        children_of: Dict[bpy.types.Object, List[bpy.types.Object]] = {}
+        for obj in bpy.data.objects:
+            if obj.parent is not None:
+                children_of.setdefault(obj.parent, []).append(obj)
+        scene_names = {obj.name for obj in bpy.context.scene.objects}
+        root_names = (
+            {obj.name for obj in exportable_root.all_objects}
+            if isinstance(exportable_root, bpy.types.Collection)
+            else None
+        )
+
+        def in_root(name: str) -> bool:
+            if root_names is None:
+                return name in exportable_root.all_objects
+            return name in root_names
+
         def allowed_children(
             parent_like: Union[bpy.types.Collection, bpy.types.Object],
         ) -> List[bpy.types.Object]:
@@ -41,11 +59,11 @@ class XPlaneFileTree:
             try:
                 children = sorted(parent_like.all_objects, key=lambda r: r.name)
             except AttributeError:
-                children = parent_like.children
+                children = tuple(children_of.get(parent_like, ()))
 
             allowed_children = []
             for child_obj in children:
-                if child_obj.name not in bpy.context.scene.objects:
+                if child_obj.name not in scene_names:
                     logger.warn(
                         f"{child_obj.name} is outside the current scene. It and any children cannot be collected"
                     )
@@ -109,10 +127,7 @@ class XPlaneFileTree:
                     # ----------------------------------------------------------
                     new_parent_xplane_obj = convert_to_xplane_object(parent_obj)
                     if new_parent_xplane_obj:
-                        if (
-                            not new_parent_xplane_obj.blenderObject.name
-                            in exportable_root.all_objects
-                        ):
+                        if not in_root(new_parent_xplane_obj.blenderObject.name):
                             # We don't have to test for blender_obj.visible_get here,
                             # all objects that start inside the exportable collection will
                             # have the assumption of being False - XPlaneObject's default for this is False
@@ -257,11 +272,10 @@ class XPlaneFileTree:
                 ), "recurse should never be assigning self.rootBone twice"
                 self.rootBone = new_xplane_bone
             try:
-                if (
-                    not found_blender_obj_already
-                    and blender_obj.parent.name not in exportable_root.all_objects
+                if not found_blender_obj_already and not in_root(
+                    blender_obj.parent.name
                 ):
-                    if blender_obj.parent.name in bpy.context.scene.objects:
+                    if blender_obj.parent.name in scene_names:
                         walk_upward(new_xplane_bone)
                     else:
                         logger.warn(
@@ -324,9 +338,8 @@ class XPlaneFileTree:
                 real_bone_parents = make_bones_for_armature_bones(blender_obj)
 
             for child_obj in parent_blender_objects:
-                if (
-                    isinstance(exportable_root, bpy.types.Collection)
-                    and child_obj.name not in exportable_root.all_objects
+                if isinstance(exportable_root, bpy.types.Collection) and not in_root(
+                    child_obj.name
                 ):
                     continue
                 if (
