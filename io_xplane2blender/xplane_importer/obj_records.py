@@ -162,6 +162,7 @@ _TOGGLES = {
     "ATTR_hard_deck": ("hard", ("deck",)),
     "ATTR_no_hard": ("hard", None),
     "ATTR_light_level_reset": ("light_level", None),
+    "ATTR_albedo_opacity_reset": ("albedo_opacity", None),
     "ATTR_hud_reset": ("hud_glass", None),
     "ATTR_manip_none": ("manip", None),
 }
@@ -173,6 +174,8 @@ _VALUED = {
     "ATTR_no_blend": "blend",
     "ATTR_shadow_blend": "blend",
     "ATTR_light_level": "light_level",
+    # Not in the OBJ8 spec but read by X-Plane 12 (12.05 fixed a bug in it): fades the albedo by a dataref
+    "ATTR_albedo_opacity": "albedo_opacity",
     "ATTR_cockpit_region": "cockpit",
     "ATTR_cockpit_device": "cockpit",
     "ATTR_cockpit_lit_only": "cockpit_lit_only",
