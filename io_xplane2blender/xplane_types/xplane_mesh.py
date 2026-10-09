@@ -2,7 +2,7 @@ import array
 import collections
 import re
 import time
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import bpy
 import mathutils
@@ -97,7 +97,7 @@ def _vt_rows(mesh, kept_normals: Optional[np.ndarray], uv_layer, is_mirrored: bo
         uvs = np.empty(len(mesh.loops) * 2, dtype=np.float32)
         uv_layer.data.foreach_get("uv", uvs)
         rows[:, 6:8] = uvs.reshape(-1, 2)[loops]
-    return rows.astype(np.float64)
+    return rows
 
 
 def _as_whole_rows(rows: np.ndarray) -> np.ndarray:
@@ -130,10 +130,9 @@ class XPlaneMesh:
     """
 
     def __init__(self):
-        # Contains all OBJ VT directives, data in the order as specified by the OBJ8 spec
-        self.vertices = (
-            []
-        )  # type: List[Tuple[float, float, float, float, float, float, float, float]]
+        # The OBJ's VT rows (x y z nx ny nz s t), in blocks of single precision floats: as Python tuples a vertex
+        # took ten times the memory
+        self.vertex_blocks: List[np.ndarray] = []
         # array - contains all face indices
         self.indices = array.array("i")  # type: List[int]
         # int - Stores the current global vertex index.
@@ -158,8 +157,8 @@ class XPlaneMesh:
         dg = bpy.context.evaluated_depsgraph_get()
         optimize = bpy.context.scene.xplane.optimize
         # Shared by the whole file: parts with the same shape in their own frames (a clock's digits) share vertices.
-        # The rows of every mesh are collected and shared at the end
-        pending: List[np.ndarray] = []
+        # Each mesh's distinct rows are kept, with each corner's row number, and shared at the end
+        pending: List[Tuple[np.ndarray, np.ndarray]] = []
         corners = len(self.indices)
         for xplaneObject in xplaneObjects:
             if (
@@ -206,11 +205,12 @@ class XPlaneMesh:
                     uv_layer = None
 
                 rows = _vt_rows(mesh, kept_normals, uv_layer, is_mirrored)
-                if optimize:
-                    pending.append(rows)
+                if optimize and len(rows):
+                    first, corner_row = _first_unique(rows + np.float32(0.0))
+                    pending.append((rows[first], corner_row.astype(np.int32)))
                 else:
-                    self.indices.extend(range(self.globalindex, self.globalindex + len(rows)))
-                    self.vertices.extend(map(tuple, rows.tolist()))
+                    self._add_indices(np.arange(self.globalindex, self.globalindex + len(rows)))
+                    self.vertex_blocks.append(rows)
                     self.globalindex += len(rows)
                 corners += len(rows)
                 if len(rows):
@@ -218,17 +218,25 @@ class XPlaneMesh:
 
                 evaluated_obj.to_mesh_clear()
         if pending:
-            self._add_shared(np.concatenate(pending))
+            self._add_shared(pending)
 
-    def _add_shared(self, rows: np.ndarray) -> None:
+    def _add_indices(self, indices: np.ndarray) -> None:
+        self.indices.frombytes(indices.astype(np.intc).tobytes())
+
+    def _add_shared(self, pending: List[Tuple[np.ndarray, np.ndarray]]) -> None:
         """
-        Adds the file's VT rows (one per corner, in IDX order). A row the same as an earlier one, or one that differs
-        from an earlier one at the same position and UV by Blender's rounding of normals only, reuses its vertex.
-        Rows are compared as Python compares them (-0.0 is 0.0) and written as they first came
+        Adds the file's VT rows: each mesh's distinct rows, in the order they first come, and each of its corners'
+        row number. A row the same as an earlier one, or one that differs from an earlier one at the same position
+        and UV by Blender's rounding of normals only, reuses its vertex. Rows are compared as Python compares them
+        (-0.0 is 0.0) and written as they first came
         """
-        key = rows + 0.0
-        first, corner_row = _first_unique(key)
-        rows, key = rows[first], key[first]
+        offsets = np.cumsum([0] + [len(rows) for rows, _ in pending])
+        corner_rows = np.concatenate([corner_row + offset for (_, corner_row), offset in zip(pending, offsets)])
+        rows = np.concatenate([rows for rows, _ in pending])
+        pending.clear()
+        first, row_number = _first_unique(rows + np.float32(0.0))
+        rows = rows[first]
+        key = rows + np.float32(0.0)
         # Normals that differ by rounding only can only be at the same position and UV, usually a few rows
         place, counts = _groups(key[:, [0, 1, 2, 6, 7]])
         target = np.arange(len(rows))
@@ -244,9 +252,15 @@ class XPlaneMesh:
                 target[i] = j
         created = target == np.arange(len(rows))
         vertex = np.cumsum(created) - 1 + self.globalindex
-        self.vertices.extend(map(tuple, rows[created].tolist()))
+        self.vertex_blocks.append(rows[created])
         self.globalindex += int(created.sum())
-        self.indices.extend(vertex[target][corner_row].tolist())
+        self._add_indices(vertex[target][row_number][corner_rows])
+
+    def _vertex_rows(self, size: int = 65536):
+        """The VT rows as lists of Python floats, a few at a time"""
+        for block in self.vertex_blocks:
+            for start in range(0, len(block), size):
+                yield block[start : start + size].tolist()
 
     def writeVertices(self) -> str:
         """
@@ -260,33 +274,31 @@ class XPlaneMesh:
         debug = getDebug()
         tab = f"\t"
         if debug:
-            s = "".join(
-                f"VT\t"
-                f"{tab.join(floatToStr(component) for component in line)}"
-                f"\t# {i}"
-                f"\n"
-                for i, line in enumerate(self.vertices)
+            rows = (row for chunk in self._vertex_rows() for row in chunk)
+            return "".join(
+                f"VT\t{tab.join(floatToStr(component) for component in line)}\t# {i}\n"
+                for i, line in enumerate(rows)
             )
-            # print("end XPlaneMesh.writeVertices " + str(time.perf_counter()-start))
-            return s
-        else:
-            # One format per line is floatToStr's first try for all eight numbers. The rare line where one of them
-            # needs an exponent is written again by floatToStr
-            line_format = "VT\t" + "\t".join([f"{{:.{PRECISION_OBJ_FLOAT}g}}"] * 8) + "\n"
-            lines = [line_format.format(*line) for line in self.vertices]
-            joined = "".join(lines)
-            if "e" not in joined:
-                return joined
-            for i, text in enumerate(lines):
-                if "e" in text:
-                    numbers = text[3:-1].split("\t")
-                    line = self.vertices[i]
-                    lines[i] = (
-                        "VT\t"
-                        + tab.join(n if "e" not in n else floatToStr(line[c]) for c, n in enumerate(numbers))
-                        + "\n"
-                    )
-            return "".join(lines)
+        # One format per line is floatToStr's first try for all eight numbers. The rare number that needs an
+        # exponent is written again by floatToStr
+        line_format = "VT\t" + "\t".join([f"{{:.{PRECISION_OBJ_FLOAT}g}}"] * 8) + "\n"
+        parts = []
+        for rows in self._vertex_rows():
+            lines = [line_format.format(*line) for line in rows]
+            text = "".join(lines)
+            if "e" in text:
+                for i, line_text in enumerate(lines):
+                    if "e" in line_text:
+                        numbers = line_text[3:-1].split("\t")
+                        line = rows[i]
+                        lines[i] = (
+                            "VT\t"
+                            + tab.join(n if "e" not in n else floatToStr(line[c]) for c, n in enumerate(numbers))
+                            + "\n"
+                        )
+                text = "".join(lines)
+            parts.append(text)
+        return "".join(parts)
 
     def writeIndices(self) -> str:
         """
@@ -321,13 +333,5 @@ class XPlaneMesh:
         return o
 
     def write(self):
-        o = ""
-        debug = False
-
         verticesOut = self.writeVertices()
-        o += verticesOut
-        if len(verticesOut):
-            o += "\n"
-        o += self.writeIndices()
-
-        return o
+        return "".join((verticesOut, "\n" if verticesOut else "", self.writeIndices()))

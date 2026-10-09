@@ -246,25 +246,14 @@ class XPlaneFile(XPlaneFileTree):
             self.getMaterials(), self.options.export_type
         )
 
-        o = ""
-        o += self.header.write()
-        o += "\n"
-
+        # Joined once: the VT and IDX tables are most of a big file, and each += copied all of it
+        parts = [self.header.write(), "\n"]
         meshOut = self.mesh.write()
-        o += meshOut
-
-        if len(meshOut):
-            o += "\n"
-
+        parts += [meshOut, "\n" if meshOut else ""]
+        del meshOut
         lodsOut = self._writeLods()
-        o += lodsOut
-
-        if len(lodsOut):
-            o += "\n"
-
-        o += self.writeFooter()
-
-        return o
+        parts += [lodsOut, "\n" if lodsOut else "", self.writeFooter()]
+        return "".join(parts)
 
     def _writeLods(self) -> str:
         o = ""
