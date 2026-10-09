@@ -192,6 +192,7 @@ class MaterialFactory(MaterialNodes):
             "shade",
             "rain",
             "wiper",
+            "albedo_opacity",
         ):
             if key in state:
                 self._custom_attribute(mat, key, state[key])
@@ -235,6 +236,11 @@ class MaterialFactory(MaterialNodes):
             "shade": ("ATTR_shade_flat", "ATTR_shade_smooth", False),
             "rain": ("ATTR_rain_scale", "", True),
             "wiper": ("ATTR_wiper", "", True),
+            "albedo_opacity": (
+                "ATTR_albedo_opacity",
+                "ATTR_albedo_opacity_reset",
+                True,
+            ),
         }
         name, reset, valued = names[key]
         attribute = mat.xplane.customAttributes.add()

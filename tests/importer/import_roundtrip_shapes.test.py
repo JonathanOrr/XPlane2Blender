@@ -1,4 +1,4 @@
-"""Round trips found on a third-party airliner: a part with one LOD, and normals next to faces with no area"""
+"""Round trips found on a third-party airliner: a part with one LOD, normals next to faces with no area, fading ice"""
 
 import numpy as np
 
@@ -110,6 +110,26 @@ class TestImportRoundTripShapes(XPlaneTestCase):
         for row in expected:
             with self.subTest(corner=np.round(row[:3], 3).tolist()):
                 self.assertLess(min(float(np.abs(row - other).max()) for other in actual), 1e-3)
+
+    def test_ice_fades_by_its_dataref(self) -> None:
+        # The airliner's ice: ATTR_albedo_opacity is not in the OBJ8 spec but X-Plane 12 reads it. Its last use is
+        # never reset, as on the airliner, so it carries on to the end
+        body = (
+            "ATTR_albedo_opacity 0 1 sim/test/ice_wing\nTRIS 0 6\nATTR_albedo_opacity_reset\nTRIS 6 6\n"
+            "ATTR_albedo_opacity 0 1 sim/test/ice_nose\nTRIS 0 6\n"
+        )
+        text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris=None)
+
+        def fades(obj_text_):
+            obj = parse_obj(obj_text_)
+            self.assertEqual({}, obj.unknown)
+            runs = [dict(r.state).get("albedo_opacity") for r in obj.iter_tris()]
+            return sorted(str(f and (float(f[0]), float(f[1]), f[2])) for f in runs)
+
+        self.assertEqual(
+            ["(0.0, 1.0, 'sim/test/ice_nose')", "(0.0, 1.0, 'sim/test/ice_wing')", "None"], fades(text)
+        )
+        self.assertEqual(fades(text), fades(self._export(text)))
 
 
 runTestCases([TestImportRoundTripShapes])
