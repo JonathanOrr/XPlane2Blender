@@ -316,6 +316,7 @@ class XPlaneLightCollect:
             return
         p = self.params
         p.r, p.g, p.b = self.color
+        p.a = light_data.xplane.spill_dim
         p.size = self.size
         if light_data.type == "POINT":
             p.dx, p.dy, p.dz = Vector((0, 0, 0))

@@ -610,9 +610,11 @@ class TestImportObj(XPlaneTestCase):
         light = self.light("LIGHT_SPILL_CUSTOM 0 0 0 1 1 1 1 2 0 0 0 1 none\n")
         self.assertEqual(light.data.type, "POINT")
 
-    def test_a_spill_alpha_other_than_one_is_reported(self) -> None:
-        self.light("LIGHT_SPILL_CUSTOM 0 0 0 1 1 1 0 2 0 0 0 1 none\n")
-        self.assertTrue(any("alpha" in w for w in self.report.warnings), self.report.warnings)
+    def test_a_spill_alpha_is_its_dim(self) -> None:
+        # The King Air's spills start at 0 and their datarefs brighten them
+        light = self.light("LIGHT_SPILL_CUSTOM 0 0 0 1 1 1 0.25 2 0 0 0 1 none\n")
+        self.assertAlmostEqual(light.data.xplane.spill_dim, 0.25)
+        self.assertFalse(self.report.warnings)
 
     def test_lights_can_be_skipped(self) -> None:
         built = self.do_import(obj_text("LIGHT_NAMED beacon 1 2 3\n"), import_lights=False)
