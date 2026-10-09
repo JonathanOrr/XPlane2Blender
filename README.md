@@ -194,7 +194,7 @@ How lights come in:
 - `lights.txt` gives a light a **billboard** (the visible halo, lights nothing) and/or a **spill** (really lights its surroundings). Spills become Blender point or spot lights, with the cone and direction from the light's parameters (`WIDTH` is the cosine of half the cone angle, `DX DY DZ` the direction) and the power from its candela or radius. Billboards and `LIGHT_CUSTOM` halos are kept for export but do not light the scene in Cycles or EEVEE
 - The numbers are for a plausible picture, not a measurement. The exporter writes a light's parameters as stored and never reads the power of a named, parameterized or spill light, so you can change the Blender power freely. The power the light has when on is stored on the light as `xplane_watts_when_on`
 - `LIGHT_CUSTOM` is the exception: the exporter writes the Blender power as the light's alpha, and colors outside 0 to 1 (some halos use -1 as a placeholder) use the "RGB Picker Override"
-- Re-exporting writes the same parameters, and the same position and direction in the aircraft. XPlane2Blender always writes an alpha of 1 for `LIGHT_SPILL_CUSTOM` and normalizes its direction, the importer warns when an alpha was different
+- Re-exporting writes the same parameters, and the same position and direction in the aircraft. A `LIGHT_SPILL_CUSTOM`'s alpha is the Spill's **Dim** (1 is full brightness; the King Air's spills start at 0 and their datarefs brighten them), and its direction is written normalized
 
 Limits worth knowing:
 - Wings and fuselages that Plane Maker builds from its own parts (not from OBJ files) are not imported, only the OBJ objects are

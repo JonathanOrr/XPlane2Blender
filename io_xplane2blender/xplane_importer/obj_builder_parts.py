@@ -292,16 +292,13 @@ class PartsBuilder:
                 if all(c < 9.0 for c in rgb):
                     blender_light.color = [min(max(abs(c), 0.0), 1.0) for c in rgb]
             elif light.kind == "spill_custom":
-                # r g b a size dx dy dz width dataref, the exporter always writes an alpha of 1
+                # r g b a size dx dy dz width dataref
                 x.type = xplane_constants.LIGHT_SPILL_CUSTOM
                 nums = [_number(a) for a in light.args[:9]]
                 self._exact_color(x, nums[0:3])
+                x.spill_dim = max(0.0, min(1.0, nums[3]))
                 x.size = nums[4]
                 x.dataref = light.args[9] if len(light.args) > 9 else ""
-                if abs(nums[3] - 1.0) > 1e-6:
-                    self.report.warn(
-                        f"{self.stem}: a spill light has an alpha of {nums[3]:g}, the exporter always writes 1"
-                    )
         except (ValueError, IndexError):
             self.report.warn(
                 f"{self.stem}: could not read a {light.kind} light, it was imported without its settings"

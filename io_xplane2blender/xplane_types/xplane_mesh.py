@@ -15,6 +15,21 @@ from ..xplane_helpers import floatToStr, logger
 from .xplane_face import XPlaneFace
 from .xplane_object import XPlaneObject
 
+# Normals closer than this are one vertex: Blender stores custom normals with about 1e-5 of error, so the same
+# normal on two faces of a vertex comes back a little different and would be written twice (imported meshes)
+NORMAL_MERGE = 1e-4
+
+
+def _near_normal(candidates, normal) -> int:
+    for other, index in candidates:
+        if (
+            abs(other[0] - normal[0]) < NORMAL_MERGE
+            and abs(other[1] - normal[1]) < NORMAL_MERGE
+            and abs(other[2] - normal[2]) < NORMAL_MERGE
+        ):
+            return index
+    return -1
+
 
 class XPlaneMesh:
     """
@@ -51,6 +66,11 @@ class XPlaneMesh:
         xplaneObjects = sorted(xplaneObjects, key=getSortKey)
 
         dg = bpy.context.evaluated_depsgraph_get()
+        optimize = bpy.context.scene.xplane.optimize
+        # Shared by the whole file: parts with the same shape in their own frames (a clock's digits) share vertices
+        vertices_dct = {}
+        # (position, uv) -> [(normal, index)], for normals that differ by Blender's rounding only
+        near = collections.defaultdict(list)
         for xplaneObject in xplaneObjects:
             if (
                 xplaneObject.type == "MESH"
@@ -139,7 +159,6 @@ class XPlaneMesh:
                     )
                     tmp_faces.append(tmp_face)
 
-                vertices_dct = {}
                 for tmp_face in tmp_faces:
                     # A reflection already changes Blender's CCW winding to CW.
                     # Otherwise reverse the winding for X-Plane as usual.
@@ -163,8 +182,13 @@ class XPlaneMesh:
                         # Try to find a matching vt_entry's index in the mesh's index table
                         # If found, skip adding to global vertices list
                         # If not found (-1), append the new vert, save its vertex
-                        if bpy.context.scene.xplane.optimize:
+                        if optimize:
                             vindex = vertices_dct.get(vt_entry, -1)
+                            if vindex == -1:
+                                place = vt_entry[:3] + vt_entry[6:]
+                                vindex = _near_normal(near[place], vt_entry[3:6])
+                                if vindex == -1:
+                                    near[place].append((vt_entry[3:6], self.globalindex))
                         else:
                             vindex = -1
 
@@ -173,7 +197,7 @@ class XPlaneMesh:
                             self.vertices.append(vt_entry)
                             self.globalindex += 1
 
-                        if bpy.context.scene.xplane.optimize:
+                        if optimize:
                             vertices_dct[vt_entry] = vindex
 
                         self.indices.append(vindex)

@@ -13,13 +13,35 @@ def _number(text: str) -> float:
     return float(text.replace(",", "."))
 
 
+def _shiny_panel(obj: ObjFile) -> bool:
+    """A drawn panel (or device) part with a shininess"""
+    for run in obj.iter_tris():
+        state = dict(run.state)
+        cockpit, shiny = state.get("cockpit"), state.get("shiny")
+        if (
+            cockpit
+            and cockpit != ("hud",)
+            and shiny
+            and state.get("draw") != ("disable",)
+        ):
+            try:
+                if _number(shiny[0]) > 0:
+                    return True
+            except ValueError:
+                pass
+    return False
+
+
 def apply(
     layer, obj: ObjFile, named: Callable[[str], str], warn
 ) -> Set[Tuple[str, tuple]]:
     """Fills the file's settings from the header. Returns the (directive, args) pairs taken"""
     taken = set()
-    if obj.has_normal_metalness and "GLOBAL_specular" not in obj.globals:
+    if "GLOBAL_specular" not in obj.globals and (
+        obj.has_normal_metalness or _shiny_panel(obj)
+    ):
         # Without GLOBAL_specular X-Plane's default is 0, where the exporter would write 1 for normal metalness
+        # and no shininess for panel parts (Baron screens)
         layer.specular_override, layer.specular = True, 0.0
     for directive, entries in obj.globals.items():
         for args in entries:

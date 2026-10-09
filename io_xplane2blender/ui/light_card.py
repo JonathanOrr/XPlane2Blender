@@ -143,6 +143,7 @@ class XPLANE_PT_light(Card, bpy.types.Panel):
                 "light:xplane.dataref",
             )
             col.prop(data, "color")
+            col.prop(x, "spill_dim")
             if data.type == "SPOT":
                 col.label(
                     text=f"Cone written as: {XPlaneLight.WIDTH_for_spill(data.spot_size):.5g}",

@@ -78,6 +78,7 @@ class TestImportRoundTrip(XPlaneTestCase):
                 self.assertLess(max_distance(expected, actual), 2e-3)
 
     def assert_lights_round_trip(self, body: str) -> None:
+        self.maxDiff = None
         text = obj_text(body, header="TEXTURE tex.png\n", vertices=HOUSE_VT, indices=HOUSE_IDX, tris="TRIS 0 6\n")
         path = write_file(self.folder.join("lights.obj"), text)
         built = import_obj_file(path, ImportOptions(make_exportable=True), ImportReport())
@@ -101,11 +102,12 @@ class TestImportRoundTrip(XPlaneTestCase):
         )
 
     def test_custom_spill_lights(self) -> None:
-        # Omni, and with a cone pointing down and sideways
+        # Omni, and with a cone pointing down and sideways; dimmed to off until its dataref brightens it (King Air)
         self.assert_lights_round_trip(
             "LIGHT_SPILL_CUSTOM 1 2 3 1 0.5 0.25 1 0.4 0 0 0 1 my/dataref\n"
             "LIGHT_SPILL_CUSTOM 0.5 1 -2 0.9 0.8 0.7 1 0.15 0 -1 0 0.6 my/other\n"
             "LIGHT_SPILL_CUSTOM -1 1 0 0.9 0.8 0.7 1 0.15 0.6 -0.8 0 0.75 none\n"
+            "LIGHT_SPILL_CUSTOM 0 1 0 0.92 0.91 0.69 0 0.08 0 -1 0 0.8 my/plugin_spill\n"
         )
 
     def test_x_plane_9_lights(self) -> None:

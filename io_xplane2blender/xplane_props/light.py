@@ -124,6 +124,14 @@ class XPlaneLightSettings(bpy.types.PropertyGroup):
         default=1.0,
         update=_changed("reach"),
     )
+    spill_dim: bpy.props.FloatProperty(
+        name="Dim",
+        description="The alpha of a Spill: 1 is full brightness, 0 is off until its dataref brightens it",
+        default=1.0,
+        min=0.0,
+        max=1.0,
+        precision=3,
+    )
     dataref: bpy.props.StringProperty(name="Dataref", description="An X-Plane Dataref")
     uv: bpy.props.FloatVectorProperty(
         name="Texture Coordinates",

@@ -24,17 +24,14 @@ class _LightSpillCustomParams:
     r: float
     g: float
     b: float
-
-    @property
-    def a(self):
-        return 1
-
     size: float
     dx: float
     dy: float
     dz: float
     width: float
     dataref: str
+    # Dims the light (the Spill's Dim)
+    a: float = 1.0
 
     def __str__(self):
         return " ".join(
