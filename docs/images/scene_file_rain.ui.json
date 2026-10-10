@@ -24,11 +24,10 @@
         "value": ""
        },
        {
-        "heading": "Heats",
         "items": [
          {
           "kind": "label",
-          "text": "Heats"
+          "text": "Heated Windows:"
          },
          {
           "kind": "prop",
@@ -80,11 +79,10 @@
         "value": ""
        },
        {
-        "heading": "Blades",
         "items": [
          {
           "kind": "label",
-          "text": "Blades"
+          "text": "Wiper Blades:"
          },
          {
           "kind": "prop",
@@ -98,31 +96,17 @@
        {
         "items": [
          {
-          "items": [
-           {
-            "kind": "label",
-            "text": "Bake Frames"
-           }
-          ],
-          "kind": "row"
+          "kind": "prop",
+          "prop": "wiper_bake_start",
+          "text": "Start Frame",
+          "value": 1
          },
          {
-          "items": [
-           {
-            "kind": "prop",
-            "prop": "wiper_bake_start",
-            "text": "",
-            "value": 1
-           },
-           {
-            "kind": "label",
-            "text": "to 255"
-           }
-          ],
-          "kind": "row"
+          "kind": "label",
+          "text": "To Frame 255"
          }
         ],
-        "kind": "split"
+        "kind": "row"
        },
        {
         "kind": "operator",

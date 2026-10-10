@@ -91,13 +91,8 @@
    {
     "items": [
      {
-      "items": [
-       {
-        "kind": "label",
-        "text": "Look In"
-       }
-      ],
-      "kind": "row"
+      "kind": "label",
+      "text": "Look In:"
      },
      {
       "items": [
@@ -150,33 +145,19 @@
    {
     "items": [
      {
-      "items": [
-       {
-        "kind": "label",
-        "text": "Match"
-       }
-      ],
-      "kind": "row"
+      "kind": "prop",
+      "prop": "match_case",
+      "text": "Match Case",
+      "value": true
      },
      {
-      "items": [
-       {
-        "kind": "prop",
-        "prop": "match_case",
-        "text": "Case",
-        "value": true
-       },
-       {
-        "kind": "prop",
-        "prop": "use_regex",
-        "text": "Regex",
-        "value": false
-       }
-      ],
-      "kind": "row"
+      "kind": "prop",
+      "prop": "use_regex",
+      "text": "Regex",
+      "value": false
      }
     ],
-    "kind": "split"
+    "kind": "row"
    },
    {
     "items": [

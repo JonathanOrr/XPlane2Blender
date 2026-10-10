@@ -33,7 +33,7 @@ used.
 | Mouse wheel step | setting | Drag in two directions, Slide by dragging, Push, Radio button, Step, Step and wrap around, Toggle, Drag the mouse sideways, Turn by dragging | How much one click of the mouse wheel changes the dataref. 0: the wheel does nothing |
 | Cursor | setting |  | The mouse cursor X-Plane shows over the object Choices: Four Arrows, Hand, Button, Rotate Small, Rotate Small Left, Rotate Small Right, Rotate Medium, Rotate Medium Left, Rotate Medium Right, Rotate Large, Rotate Large Left, Rotate Large Right, Up Down, Down, Up, Left Right, Left, Right, Arrow. |
 | Tooltip | setting | all but Blocks clicks | The text X-Plane shows while the mouse is over the object |
-| From Animation > Direction And Values | setting | Slide by dragging | Take the drag direction and the dataref values from the object's animation, instead of typing them in |
+| Direction and values from the animation | setting | Slide by dragging | Take the drag direction and the dataref values from the object's animation, instead of typing them in |
 | Dataref | setting | Slide by dragging, Push, Radio button, Step, Step and wrap around, Toggle, Drag the mouse sideways, Switch, up / down (dataref), Switch, left / right (dataref), Knob (dataref) | The dataref the control changes (the left / right one in Drag in two directions) |
 | Drag X | setting | Slide by dragging, Drag runs commands | How far the drag goes: along X in meters for a slide or Drag runs commands, the width of Drag in two directions, or the pixels of Drag the mouse sideways |
 | Drag Y | setting | Slide by dragging, Drag runs commands | How far the drag goes: along Y in meters for a slide or Drag runs commands, or the height of Drag in two directions |
@@ -65,9 +65,9 @@ used.
 | Left command | setting | Switch, left / right, two commands (command) | The command for the other way: counter-clockwise, down, left or back |
 | Step per click | setting | Switch, up / down (dataref), Switch, left / right (dataref), Knob (dataref) | How much each click changes the dataref |
 | Step while held | setting | Switch, up / down (dataref), Switch, left / right (dataref), Knob (dataref) | How much the dataref changes while the mouse is held down |
-| From Animation > Datarefs | setting | Slide by dragging, with detents, Turn by dragging, Turn by dragging, with detents | Use the datarefs the object's animation is keyed on, instead of typing them in |
+| Datarefs from the animation | setting | Slide by dragging, with detents, Turn by dragging, Turn by dragging, with detents | Use the datarefs the object's animation is keyed on, instead of typing them in |
 | Add Detent | button | Slide by dragging, with detents, Turn by dragging, with detents | Add a detent: a range where the lever moves freely, and how high it is lifted to get in |
-| Detent Dataref > Own Range | setting | Turn by dragging, with detents | The detent dataref goes from its value at rest to its value lifted as the lever is lifted (Laminar's levers use 0 to 1), and the detent heights are in its units. Off: it goes from 0 to the lift in meters |
+| Own detent dataref range | setting | Turn by dragging, with detents | The detent dataref goes from its value at rest to its value lifted as the lever is lifted (Laminar's levers use 0 to 1), and the detent heights are in its units. Off: it goes from 0 to the lift in meters |
 
 ### Moves
 
@@ -111,7 +111,7 @@ used.
 | Search | icon button |  | Search X-Plane's own list and the names this file already uses |
 | Off At | setting |  | The dataref value where the glow is off |
 | Full At | setting |  | The dataref value where the glow is full |
-| Full (nits) (on / off) | setting |  | Give the brightness in nits (cd/m²) |
+| Use Photometric Units | setting |  | Give the brightness in nits (cd/m²) |
 | Full (nits) | setting |  | How bright the night (LIT) texture is at its brightest, in nits (cd/m²) |
 
 ### Attachment Point
@@ -120,7 +120,7 @@ used.
 |---|---|---|---|
 | Is A | setting |  | What X-Plane uses the empty for Choices: None, Particle Emitter, Wheel, Magnet. |
 | Emitter | setting |  | Unique name used in the code and scripting, can be re-defined in Python sub-classes if needed |
-| Array Index (on / off) | setting |  | The emitter is one of an array of them, with an index |
+| Emitter Index Enabled | setting |  | The emitter is one of an array of them, with an index |
 | Array Index | setting |  | Which emitter of the array this is |
 | Gear | setting |  | Which landing gear of the aircraft, as numbered in Plane Maker |
 | Wheel | setting |  | Which wheel of that gear |
@@ -142,12 +142,12 @@ used.
 | Color | setting | Spill, Glow Sprite | Light color |
 | Dim | setting | Spill | The alpha of a Spill: 1 is full brightness, 0 is off until its dataref brightens it |
 | Size | setting | Glow Sprite | A Spill's reach in meters (the Blender light's Custom Distance), or a Glow Sprite's size |
-| Texture Left | setting | Glow Sprite | The part of the texture the glow is drawn from: left, top, right and bottom, from 0 to 1 |
+| Left | setting | Glow Sprite | The part of the texture the glow is drawn from: left, top, right and bottom, from 0 to 1 |
 | Top | setting | Glow Sprite | The part of the texture the glow is drawn from: left, top, right and bottom, from 0 to 1 |
 | Right | setting | Glow Sprite | The part of the texture the glow is drawn from: left, top, right and bottom, from 0 to 1 |
 | Bottom | setting | Glow Sprite | The part of the texture the glow is drawn from: left, top, right and bottom, from 0 to 1 |
 | Dataref | setting | Glow Sprite | The dataref that switches or dims the light |
-| Color > Typed | setting | Glow Sprite | Type the color as numbers instead of picking it, for values outside 0 to 1 (some halos use -1) |
+| Type The Color | setting | Glow Sprite | Type the color as numbers instead of picking it, for values outside 0 to 1 (some halos use -1) |
 | Alpha | setting | Glow Sprite | The energy this light would emit over its entire area if it wasn't limited by the spot angle, in units of radiant power (W) |
 | As Text | setting | Library Light, Manual | The light's parameters, in the order lights.txt gives them for this light |
 
@@ -161,11 +161,11 @@ used.
 
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
-| Glass > HUD | setting |  | The object is the glass of a head-up display (HUD) |
-| Glass > Rain Cannot Escape | setting |  | Rain does not run from this object onto the parts around it (TRIS_break) |
-| Draw Order (on / off) | setting |  | Choose where the object is written in the OBJ: heavier objects are written, and drawn, later |
+| HUD Glass | setting |  | The object is the glass of a head-up display (HUD) |
+| Rain Cannot Escape | setting |  | Rain does not run from this object onto the parts around it (TRIS_break) |
+| Override Weight | setting |  | Choose where the object is written in the OBJ: heavier objects are written, and drawn, later |
 | Draw Order | setting |  | Heavier is written later. Meshes are usually 0 to 8999, lines 9000 to 9999 and lights 10000 and up |
-| Export > As Its Own File | setting |  | Export this object and its children as their own OBJ file, from the object's origin |
+| Its Own File, From Its Own Origin | setting |  | Export this object and its children as their own OBJ file, from the object's origin |
 | Add Line | button |  | Add an OBJ line typed by hand, for anything without a setting of its own |
 | Add Animation Line | button |  | Add an OBJ line typed by hand that is written with the object's animation |
 
@@ -175,14 +175,14 @@ used.
 
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
-| Surface > Visible | setting |  | Draw the surface. Off: it is not drawn but can still be clicked, for invisible click zones |
-| Surface > Casts Shadows | setting |  | Objects with this material cast shadows |
-| Surface > Camera Cannot Pass Through | setting |  | X-Plane's camera cannot pass through the surface. Cockpit files only |
-| Transparency | setting |  | Choices: Smooth, Hard Edge, Cut Shadow. |
-| Screen | setting |  | Choices: None, 2D Panel, Avionics. |
-| Glow > Dimmed By A Dataref | setting |  | The night (LIT) texture's brightness follows a dataref, for every object with this material, instead of X-Plane's own lighting |
-| Max Nits (on / off) | setting | all but screen: None | Give the screen a real-world brightness |
-| Max Nits | setting | all but screen: None | The screen's real-world brightness at its brightest, in nits (cd/m²) |
+| Visible | setting |  | Draw the surface. Off: it is not drawn but can still be clicked, for invisible click zones |
+| Casts Shadows | setting |  | Objects with this material cast shadows |
+| Camera Cannot Pass Through | setting |  | X-Plane's camera cannot pass through the surface. Cockpit files only |
+| Transparency: | setting |  | Choices: Smooth, Hard Edge, Cut Shadow. |
+| Screen: | setting |  | Choices: None, 2D Panel, Avionics. |
+| Material Glow | setting |  | The night (LIT) texture's brightness follows a dataref, for every object with this material, instead of X-Plane's own lighting |
+| Use Cockpit Panel Luminance | setting | all but screen: None | Give the screen a real-world brightness |
+| Max Brightness (nits) | setting | all but screen: None | The screen's real-world brightness at its brightest, in nits (cd/m²) |
 | Device | setting | all but screen: None, screen: Panel Texture | Which of X-Plane's avionics devices the screen shows Choices: GNS430_1, GNS430_2, GNS530_1, GNS530_2, CDU739_1, CDU739_2, G1000_PFD1, G1000_MFD, G1000_PFD2, CDU815_1, CDU815_2, Primus_PFD_1, Primus_PFD_2, Primus_MFD_1, Primus_MFD_2, Primus_MFD_3, Primus_RMU_1, Primus_RMU_2, MCDU_1, MCDU_2, Plugin Device. |
 | Bus 1 | setting | all but screen: None, screen: Panel Texture | Electrical bus 1 powers the screen |
 | Bus 2 | setting | all but screen: None, screen: Panel Texture | Electrical bus 2 powers the screen |
@@ -191,7 +191,7 @@ used.
 | Bus 5 | setting | all but screen: None, screen: Panel Texture | Electrical bus 5 powers the screen |
 | Bus 6 | setting | all but screen: None, screen: Panel Texture | Electrical bus 6 powers the screen |
 | Brightness Channel | setting | all but screen: None, screen: Panel Texture | The brightness knob of the screen: a 0 based index of X-Plane's lighting channels (rheostats), or -1 for none (Laminar's G1000 screens use it). Material Glow does not change it |
-| Daylight > Gets Brighter | setting | all but screen: None, screen: Panel Texture | The screen brightens by itself to be readable in daylight. Off: it looks washed out in daylight |
+| Brighter In Daylight | setting | all but screen: None, screen: Panel Texture | The screen brightens by itself to be readable in daylight. Off: it looks washed out in daylight |
 | Cut Off Below | setting | transparency: Alpha Cutoff, transparency: Shadow | Alpha below this is not drawn, alpha above it is opaque |
 
 ### Advanced
@@ -201,7 +201,7 @@ used.
 | Hard Surface | setting |  | The aircraft can stand on the surface, and what kind it is (which sets its bumpiness). None: not solid Choices: None, Water, Concrete, Asphalt, Grass, Dirt, Gravel, Lakebed, Snow, Shoulder, Blastpad, Smooth. |
 | Draw On Top | setting |  | Draws the surface over others at the same place (X-Plane's polygon offset), for decals and labels that flicker. 0: off |
 | Add Line | button |  | Add an OBJ line typed by hand, for anything without a setting of its own |
-| Deck > Can Be Under It | setting | hard surface | The aircraft can also be under the surface, as under a deck |
+| Can Be Under It (deck) | setting | hard surface | The aircraft can also be under the surface, as under a deck |
 
 ## Bone tab
 
@@ -226,7 +226,7 @@ Nothing to set here in the demo scene.
 
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
-| Draw Order (on / off) | setting |  | Choose where the object is written in the OBJ: heavier objects are written, and drawn, later |
+| Override Weight | setting |  | Choose where the object is written in the OBJ: heavier objects are written, and drawn, later |
 | Draw Order | setting |  | Heavier is written later. Meshes are usually 0 to 8999, lines 9000 to 9999 and lights 10000 and up |
 | Add Line | button |  | Add an OBJ line typed by hand, for anything without a setting of its own |
 | Add Animation Line | button |  | Add an OBJ line typed by hand that is written with the object's animation |
@@ -239,7 +239,7 @@ Nothing to set here in the demo scene.
 |---|---|---|---|
 | X-Plane (on / off) | setting |  | Export everything in this collection as one OBJ file |
 | Saved As | setting |  | Unique name used in the code and scripting, can be re-defined in Python sub-classes if needed |
-| Is A | setting |  | Choices: Aircraft Part, Cockpit. |
+| Type: | setting |  | Choices: Aircraft Part, Cockpit. |
 | File Settings And Export | button |  | Show this file's settings in the Scene tab's X-Plane Export panel |
 
 ## Scene tab
@@ -256,18 +256,18 @@ Nothing to set here in the demo scene.
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
 | Saved As | setting |  | Unique name used in the code and scripting, can be re-defined in Python sub-classes if needed |
-| Is A | setting |  | Choices: Aircraft Part, Cockpit. |
+| Type: | setting |  | Choices: Aircraft Part, Cockpit. |
 | Day | setting |  | TEXTURE: the color (albedo) texture of every part of the file |
 | Night | setting |  | TEXTURE_LIT: the texture that glows at night, drawn over the day texture |
 | Normal And Shine | setting |  | How the file's normal map and shine are textured Choices: One Texture, Normal + Metal / Gloss Maps, Normal + Gloss Maps. |
 | Normal | setting | all but normal and shine: Normal + Metal / Gloss Maps, normal and shine: Normal + Gloss Maps | TEXTURE_NORMAL: the normal map, with the gloss in its alpha |
 | From Materials | button |  | Fill the file's empty texture slots with the images its materials use most. X-Plane draws a whole OBJ with one set of textures |
-| Glass > See-Through | setting |  | Draw the file as see-through glass, as clear as the day texture's alpha |
-| Normal Map > Has Metalness | setting |  | The normal map's blue is the metalness (base reflectance) |
-| Specular (on / off) | setting |  | Write this file's GLOBAL_specular, the shininess every part has unless its material says otherwise, including screens and panels, and the materials' Specular where it differs. Off: each material writes its own, panels none, and with Metalness In Normal Map the file is fully shiny (1) |
-| Specular | setting |  | GLOBAL_specular: 0 to 1. With Metalness In Normal Map it scales the normal map's shine |
-| Max Nits (on / off) | setting |  | Set the brightest the night (LIT) texture gets |
-| Max Nits | setting |  | The brightest the night (LIT) texture gets, in nits (cd/m²) |
+| See-Through Glass | setting |  | Draw the file as see-through glass, as clear as the day texture's alpha |
+| Metalness In Normal Map | setting |  | The normal map's blue is the metalness (base reflectance) |
+| Override Specular | setting |  | Write this file's GLOBAL_specular, the shininess every part has unless its material says otherwise, including screens and panels, and the materials' Specular where it differs. Off: each material writes its own, panels none, and with Metalness In Normal Map the file is fully shiny (1) |
+| Specular (whole file) | setting |  | GLOBAL_specular: 0 to 1. With Metalness In Normal Map it scales the normal map's shine |
+| Override Maximum Luminance | setting |  | Set the brightest the night (LIT) texture gets |
+| Max Glow (nits) | setting |  | The brightest the night (LIT) texture gets, in nits (cd/m²) |
 | Levels | setting |  | How many levels of detail the file has: each draws its objects between two distances Choices: None, 1, 2, 3, 4. |
 | Panel Texture | setting | all but Aircraft (Part) file | What the 2D panel screens of the file show Choices: Default, Emissive Panel Texture Only, Regions. |
 | Regions | setting | panel texture: Regions | How many regions of the panel texture the screens use Choices: None, 1, 2, 3, 4. |
@@ -283,23 +283,23 @@ Nothing to set here in the demo scene.
 |---|---|---|---|
 | Rain Scale | setting |  | Scales the rain drops to suit the resolution of the textures |
 | Texture | setting |  | The defrost texture, which marks the area each window heat clears |
-| Heats > Pilot Front Windshield | setting |  | The pilot front windshield is heated against frost |
-| Heats > Copilot Front Windshield | setting |  | The copilot front windshield is heated against frost |
-| Heats > Pilot Side Window | setting |  | The pilot side window is heated against frost |
-| Heats > Copilot Side Window | setting |  | The copilot side window is heated against frost |
+| Pilot Front Windshield | setting |  | The pilot front windshield is heated against frost |
+| Copilot Front Windshield | setting |  | The copilot front windshield is heated against frost |
+| Pilot Side Window | setting |  | The pilot side window is heated against frost |
+| Copilot Side Window | setting |  | The copilot side window is heated against frost |
 | Gradient Texture | setting |  | The wiper gradient texture, which Bake For makes |
 | Outside Glass | setting |  | The outside glass the wipers sweep (such as the windshield), for the baker |
-| Blades > Wiper 1 | setting |  | Export this wiper. The wipers are numbered from the first |
-| Bake Frames | setting |  | The first frame of the wiper animation to bake. The bake uses 255 frames |
+| Wiper 1 | setting |  | Export this wiper. The wipers are numbered from the first |
+| Start Frame | setting |  | The first frame of the wiper animation to bake. The bake uses 255 frames |
 | Bake For cockpit.obj | button |  | Bake the file's wiper gradient texture from the wipers' animation. It can take more than 30 minutes |
 | Seconds | setting | a defrost source and a wiper on | How many seconds it takes to clear the window, or a dataref that gives it |
 | On/Off Dataref | setting | a defrost source and a wiper on | The dataref that switches the window heat on and off |
 | Blade Object | setting | a defrost source and a wiper on | The wiper blade object, whose sweep the gradient texture is baked from |
 | Dataref | setting | a defrost source and a wiper on | The dataref that moves the wiper |
-| Moves From | setting | a defrost source and a wiper on | The dataref value where the wiper's sweep starts |
+| From | setting | a defrost source and a wiper on | The dataref value where the wiper's sweep starts |
 | To | setting | a defrost source and a wiper on | The dataref value where the wiper's sweep ends |
 | Blade Width | setting | a defrost source and a wiper on | Width of wiper as the percent of wiper animation arc that is covered by the blade at rest. Start low and increase until it looks right |
-| Blades > Wiper 2 | setting | a defrost source and a wiper on | Export this wiper. The wipers are numbered from the first |
+| Wiper 2 | setting | a defrost source and a wiper on | Export this wiper. The wipers are numbered from the first |
 
 ### Detail Textures
 
@@ -310,7 +310,7 @@ Nothing to set here in the demo scene.
 | Normal Detail 1 | setting |  | A normal map detail texture, repeated over the normal map |
 | Normal Detail 2 | setting |  | A normal map detail texture, repeated over the normal map |
 | Modulator | setting |  | A texture whose red sets, part by part, how strongly the detail textures show |
-| Mapping > Projected | setting | a detail texture set | Project the detail texture by position instead of the UVs |
+| Projected | setting | a detail texture set | Project the detail texture by position instead of the UVs |
 | Scale | setting | a detail texture set | How many times the detail texture repeats across the day texture |
 | Red | setting | a detail texture set | How much the day texture's red adds to the strength, for the RGB part of the detail texture |
 | Green | setting | a detail texture set | How much the day texture's green adds to the strength, for the RGB part of the detail texture |
@@ -331,20 +331,20 @@ Nothing to set here in the demo scene.
 
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
-| Particle Systems (.pss) | setting |  | The particle system file (.pss) the file's emitters use |
+| Particles (.pss) | setting |  | The particle system file (.pss) the file's emitters use |
 | Slung Load Weight (lb) | setting |  | Weight of the object in pounds, for use in the physics engine if the object is being carried by a plane or helicopter |
-| Debug Info > In This OBJ | setting |  | With the scene's Debug Info on, write debug comments into this OBJ and the export log |
+| Debug Info In This OBJ | setting |  | With the scene's Debug Info on, write debug comments into this OBJ and the export log |
 | Add Line | button |  | Add an OBJ line typed by hand, for anything without a setting of its own |
 
 ### Options
 
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
-| Export > Smaller Files (share vertices) | setting |  | Write each vertex once per file, for smaller OBJs. Normals that differ only by Blender's rounding are merged |
-| Export > Debug Info | setting |  | Write debug comments into the OBJs, and debug information to the console |
-| Developer > Tools | setting |  | Tools for people working on this add-on itself |
-| Debugging > Enable Breakpoints | setting |  | Stop at breakpoints in a running PyDev debug server (Eclipse with PyDev) |
-| Debugging > Dry Run | setting |  | Run the export without writing the OBJs |
+| Smaller Files (share vertices) | setting |  | Write each vertex once per file, for smaller OBJs. Normals that differ only by Blender's rounding are merged |
+| Debug Info | setting |  | Write debug comments into the OBJs, and debug information to the console |
+| Developer Tools | setting |  | Tools for people working on this add-on itself |
+| Enable Breakpoints | setting |  | Stop at breakpoints in a running PyDev debug server (Eclipse with PyDev) |
+| Dry Run | setting |  | Run the export without writing the OBJs |
 | Export To Fixtures Folder | button |  | Export the ticked files into fixtures |
 | Apply the 'Material' datablock to all objects | button |  | Give every object without a material the material named 'Material', made if missing |
 | Create Fixture Names From Roots | button |  | Name each export file 'test_' and its collection or object name |
@@ -379,8 +379,8 @@ Nothing to set here in the demo scene.
 | Add Pair | button |  | Add a find and replace pair |
 | Swap Find And Replace | icon button |  | Swap Find And Replace in every pair, to go back the other way (right to left instead of left to right) |
 | Objects | setting |  | Choices: Selected, Selected And Children, Whole Scene. |
-| Look In | setting |  | Choices: Commands, Datarefs, Light Levels, Tooltips, Custom Attributes. |
-| Case | setting |  | Datarefs and commands are case sensitive in X-Plane |
+| Look In: | setting |  | Choices: Commands, Datarefs, Light Levels, Tooltips, Custom Attributes. |
+| Match Case | setting |  | Datarefs and commands are case sensitive in X-Plane |
 | Regex | setting |  | Read Find as a regular expression, Replace may use \1 for groups |
 | Preview | setting |  |  |
 | Find And Replace | button |  | Replace text in the X-Plane settings (commands, datarefs, light levels, tooltips, custom attributes) of many objects |
@@ -391,7 +391,7 @@ Nothing to set here in the demo scene.
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
 | Table | setting |  | Choices: Clickable, Glow, Datarefs, Lights. |
-| Objects > Selected Only | setting |  | List only the selected objects |
+| Selected Only | setting |  | List only the selected objects |
 | Select Listed | button |  | Select every object the list shows, the search box applied, to work on them together: copy settings, find and replace, hide or move them |
 | Export CSV | button |  | Save the table as a CSV file for a spreadsheet |
 | Import CSV | button |  | Read a CSV file and apply its values to the objects with the same names |
@@ -420,28 +420,28 @@ The options in the side panel of the file browser.
 | Where | Option | What it does |
 |---|---|---|
 | File > Import > X-Plane Aircraft (.acf) | Livery | Which set of textures to use |
-| File > Import > X-Plane Aircraft (.acf) | Include > Damage Objects | Also import the objects that only show when a part breaks |
-| File > Import > X-Plane Aircraft (.acf) | Include > Part Attached Objects | Also import objects attached to wings, gear or the body. They are placed at the aircraft origin |
-| File > Import > X-Plane Aircraft (.acf) | Include > Not Drawn Objects | Also show the objects the aircraft file flags as drawn nowhere, for example placeholders and easter eggs |
-| File > Import > X-Plane Aircraft (.acf) | Bring In > Textures and Materials | Load the texture images and build shader nodes so it looks like it does in X-Plane |
-| File > Import > X-Plane Aircraft (.acf) | Bring In > Animations | Create the dataref animations and show/hide settings, keyed on the parts themselves |
-| File > Import > X-Plane Aircraft (.acf) | Bring In > Manipulators | Set up the clickable manipulators on the meshes that have them |
-| File > Import > X-Plane Aircraft (.acf) | Bring In > Lights | Create X-Plane lights as Blender lights |
-| File > Import > X-Plane Aircraft (.acf) | Bring In > All LODs | Import every level of detail instead of only the first |
-| File > Import > X-Plane Aircraft (.acf) | Bring In > Mark What X-Plane Hides | Draw a sphere around the show/hide parts that X-Plane would not draw with the datarefs at their default values, and leave them out of renders. They stay visible and are exported like any part |
-| File > Import > X-Plane Aircraft (.acf) | Then > Make Export Files | Tick each imported OBJ's collection as an export file, so Export writes them again. Their texture and export settings are filled in either way, you can tick a single collection later |
-| File > Import > X-Plane Aircraft (.acf) | Then > Show In Viewport | Switch the 3D viewport to the textured Material Preview, hide the dashed parent lines and frame everything. With many lights, Blender's own light gizmos are hidden (Overlays > Extras) and the X-Plane overlay marks the lights instead |
+| File > Import > X-Plane Aircraft (.acf) | Damage Objects | Also import the objects that only show when a part breaks |
+| File > Import > X-Plane Aircraft (.acf) | Part Attached Objects | Also import objects attached to wings, gear or the body. They are placed at the aircraft origin |
+| File > Import > X-Plane Aircraft (.acf) | Not Drawn Objects | Also show the objects the aircraft file flags as drawn nowhere, for example placeholders and easter eggs |
+| File > Import > X-Plane Aircraft (.acf) | Textures and Materials | Load the texture images and build shader nodes so it looks like it does in X-Plane |
+| File > Import > X-Plane Aircraft (.acf) | Animations | Create the dataref animations and show/hide settings, keyed on the parts themselves |
+| File > Import > X-Plane Aircraft (.acf) | Manipulators | Set up the clickable manipulators on the meshes that have them |
+| File > Import > X-Plane Aircraft (.acf) | Lights | Create X-Plane lights as Blender lights |
+| File > Import > X-Plane Aircraft (.acf) | All LODs | Import every level of detail instead of only the first |
+| File > Import > X-Plane Aircraft (.acf) | Mark What X-Plane Hides | Draw a sphere around the show/hide parts that X-Plane would not draw with the datarefs at their default values, and leave them out of renders. They stay visible and are exported like any part |
+| File > Import > X-Plane Aircraft (.acf) | Make Export Files | Tick each imported OBJ's collection as an export file, so Export writes them again. Their texture and export settings are filled in either way, you can tick a single collection later |
+| File > Import > X-Plane Aircraft (.acf) | Show In Viewport | Switch the 3D viewport to the textured Material Preview, hide the dashed parent lines and frame everything. With many lights, Blender's own light gizmos are hidden (Overlays > Extras) and the X-Plane overlay marks the lights instead |
 | File > Import > X-Plane Aircraft (.acf) | Night Light Strength | How bright the night (LIT) texture glows. 0 shows the daytime look |
 | File > Import > X-Plane Aircraft (.acf) | Light Strength | Switches the spill lights on, such as the cockpit annunciator and panel lights. They are dataref driven in X-Plane and off in the parked pose, so 0 keeps them from lighting the scene. 1 is the brightness the light's parameters ask for |
 | File > Import > X-Plane Aircraft (.acf) | Scale | Multiplies all sizes. X-Plane uses meters, like Blender's default |
-| File > Import > X-Plane Object (.obj) | Bring In > Textures and Materials | Load the texture images and build shader nodes so it looks like it does in X-Plane |
-| File > Import > X-Plane Object (.obj) | Bring In > Animations | Create the dataref animations and show/hide settings, keyed on the parts themselves |
-| File > Import > X-Plane Object (.obj) | Bring In > Manipulators | Set up the clickable manipulators on the meshes that have them |
-| File > Import > X-Plane Object (.obj) | Bring In > Lights | Create X-Plane lights as Blender lights |
-| File > Import > X-Plane Object (.obj) | Bring In > All LODs | Import every level of detail instead of only the first |
-| File > Import > X-Plane Object (.obj) | Bring In > Mark What X-Plane Hides | Draw a sphere around the show/hide parts that X-Plane would not draw with the datarefs at their default values, and leave them out of renders. They stay visible and are exported like any part |
-| File > Import > X-Plane Object (.obj) | Then > Make Export Files | Tick each imported OBJ's collection as an export file, so Export writes them again. Their texture and export settings are filled in either way, you can tick a single collection later |
-| File > Import > X-Plane Object (.obj) | Then > Show In Viewport | Switch the 3D viewport to the textured Material Preview, hide the dashed parent lines and frame everything. With many lights, Blender's own light gizmos are hidden (Overlays > Extras) and the X-Plane overlay marks the lights instead |
+| File > Import > X-Plane Object (.obj) | Textures and Materials | Load the texture images and build shader nodes so it looks like it does in X-Plane |
+| File > Import > X-Plane Object (.obj) | Animations | Create the dataref animations and show/hide settings, keyed on the parts themselves |
+| File > Import > X-Plane Object (.obj) | Manipulators | Set up the clickable manipulators on the meshes that have them |
+| File > Import > X-Plane Object (.obj) | Lights | Create X-Plane lights as Blender lights |
+| File > Import > X-Plane Object (.obj) | All LODs | Import every level of detail instead of only the first |
+| File > Import > X-Plane Object (.obj) | Mark What X-Plane Hides | Draw a sphere around the show/hide parts that X-Plane would not draw with the datarefs at their default values, and leave them out of renders. They stay visible and are exported like any part |
+| File > Import > X-Plane Object (.obj) | Make Export Files | Tick each imported OBJ's collection as an export file, so Export writes them again. Their texture and export settings are filled in either way, you can tick a single collection later |
+| File > Import > X-Plane Object (.obj) | Show In Viewport | Switch the 3D viewport to the textured Material Preview, hide the dashed parent lines and frame everything. With many lights, Blender's own light gizmos are hidden (Overlays > Extras) and the X-Plane overlay marks the lights instead |
 | File > Import > X-Plane Object (.obj) | Night Light Strength | How bright the night (LIT) texture glows. 0 shows the daytime look |
 | File > Import > X-Plane Object (.obj) | Light Strength | Switches the spill lights on, such as the cockpit annunciator and panel lights. They are dataref driven in X-Plane and off in the parked pose, so 0 keeps them from lighting the scene. 1 is the brightness the light's parameters ask for |
 | File > Import > X-Plane Object (.obj) | Scale | Multiplies all sizes. X-Plane uses meters, like Blender's default |

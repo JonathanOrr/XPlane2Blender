@@ -45,9 +45,9 @@ def _screen_layout(col, context, m) -> None:
         for bus in range(6):
             grid.prop(m, f"device_bus_{bus}", toggle=True)
         col.prop(m, "device_lighting_channel", text="Brightness Channel")
-        col.column(heading="Daylight").prop(m, "device_auto_adjust", text="Gets Brighter")
+        col.prop(m, "device_auto_adjust", text="Brighter In Daylight")
     if m.cockpit_feature != C.COCKPIT_FEATURE_NONE:
-        switched(col, m, "cockpit_feature_use_luminance", "cockpit_feature_luminance", "Max Nits")
+        switched(col, m, "cockpit_feature_use_luminance", "cockpit_feature_luminance", "Max Brightness (nits)")
 
 
 class XPLANE_PT_surface(_MaterialTab, bpy.types.Panel):
@@ -62,11 +62,10 @@ class XPLANE_PT_surface(_MaterialTab, bpy.types.Panel):
             layout.label(text=f"Shared by {users} meshes: changes apply to all", icon="LINKED")
         m = material.xplane
         col = layout.column()
-        sub = col.column(heading="Surface")
-        sub.prop(m, "draw", text="Visible")
+        col.prop(m, "draw", text="Visible")
         if m.draw:
-            sub.prop(m, "shadow_local", text="Casts Shadows")
-        sub.prop(m, "solid_camera", text="Camera Cannot Pass Through")
+            col.prop(m, "shadow_local", text="Casts Shadows")
+        col.prop(m, "solid_camera", text="Camera Cannot Pass Through")
         if not m.draw:
             col.label(text="Invisible, still clickable", icon="INFO")
         else:
@@ -80,7 +79,7 @@ class XPLANE_PT_surface(_MaterialTab, bpy.types.Panel):
         _screen_layout(col, context, m)
 
         col.separator()
-        col.column(heading="Glow").prop(m, "lightLevel", text="Dimmed By A Dataref")
+        col.prop(m, "lightLevel", text="Material Glow")
         if m.lightLevel:
             glow_layout(col.box().column(), m, "material:xplane.lightLevel_dataref")
 
@@ -95,7 +94,7 @@ class XPLANE_PT_surface_more(_MaterialTab, bpy.types.Panel):
         col = self.layout.column()
         col.prop(m, "surfaceType", text="Hard Surface")
         if m.surfaceType != C.SURFACE_TYPE_NONE:
-            col.column(heading="Deck").prop(m, "deck", text="Can Be Under It")
+            col.prop(m, "deck", text="Can Be Under It (deck)")
         col.prop(m, "poly_os", text="Draw On Top")
         custom_lines_layout(col, m, "material:xplane", animation=False)
 

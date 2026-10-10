@@ -13,13 +13,8 @@
      {
       "items": [
        {
-        "items": [
-         {
-          "kind": "label",
-          "text": "Is A"
-         }
-        ],
-        "kind": "row"
+        "kind": "label",
+        "text": "Type:"
        },
        {
         "items": [

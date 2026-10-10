@@ -12,28 +12,9 @@
     ],
     "draw": [
      {
-      "items": [
-       {
-        "items": [
-         {
-          "kind": "label",
-          "text": "Is A"
-         }
-        ],
-        "kind": "row"
-       },
-       {
-        "items": [
-         {
-          "kind": "menu",
-          "menu": "XPLANE_MT_light_kind",
-          "text": "Library Light, By Name"
-         }
-        ],
-        "kind": "row"
-       }
-      ],
-      "kind": "split"
+      "kind": "menu",
+      "menu": "XPLANE_MT_light_kind",
+      "text": "Library Light, By Name"
      },
      {
       "items": [

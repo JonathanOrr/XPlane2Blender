@@ -12,43 +12,28 @@
    {
     "items": [
      {
-      "heading": "Surface",
-      "items": [
-       {
-        "kind": "label",
-        "text": "Surface"
-       },
-       {
-        "kind": "prop",
-        "prop": "draw",
-        "text": "Visible",
-        "value": true
-       },
-       {
-        "kind": "prop",
-        "prop": "shadow_local",
-        "text": "Casts Shadows",
-        "value": true
-       },
-       {
-        "kind": "prop",
-        "prop": "solid_camera",
-        "text": "Camera Cannot Pass Through",
-        "value": false
-       }
-      ],
-      "kind": "column"
+      "kind": "prop",
+      "prop": "draw",
+      "text": "Visible",
+      "value": true
+     },
+     {
+      "kind": "prop",
+      "prop": "shadow_local",
+      "text": "Casts Shadows",
+      "value": true
+     },
+     {
+      "kind": "prop",
+      "prop": "solid_camera",
+      "text": "Camera Cannot Pass Through",
+      "value": false
      },
      {
       "items": [
        {
-        "items": [
-         {
-          "kind": "label",
-          "text": "Transparency"
-         }
-        ],
-        "kind": "row"
+        "kind": "label",
+        "text": "Transparency:"
        },
        {
         "items": [
@@ -82,13 +67,8 @@
      {
       "items": [
        {
-        "items": [
-         {
-          "kind": "label",
-          "text": "Screen"
-         }
-        ],
-        "kind": "row"
+        "kind": "label",
+        "text": "Screen:"
        },
        {
         "items": [
@@ -128,13 +108,8 @@
      {
       "items": [
        {
-        "items": [
-         {
-          "kind": "label",
-          "text": "Powered By"
-         }
-        ],
-        "kind": "row"
+        "kind": "label",
+        "text": "Powered By:"
        },
        {
         "items": [
@@ -192,28 +167,13 @@
       "value": 0
      },
      {
-      "heading": "Daylight",
-      "items": [
-       {
-        "kind": "label",
-        "text": "Daylight"
-       },
-       {
-        "kind": "prop",
-        "prop": "device_auto_adjust",
-        "text": "Gets Brighter",
-        "value": true
-       }
-      ],
-      "kind": "column"
+      "kind": "prop",
+      "prop": "device_auto_adjust",
+      "text": "Brighter In Daylight",
+      "value": true
      },
      {
-      "heading": "Max Nits",
       "items": [
-       {
-        "kind": "label",
-        "text": "Max Nits"
-       },
        {
         "kind": "prop",
         "prop": "cockpit_feature_use_luminance",
@@ -226,7 +186,7 @@
          {
           "kind": "prop",
           "prop": "cockpit_feature_luminance",
-          "text": "",
+          "text": "Max Brightness (nits)",
           "value": 1000
          }
         ],
@@ -236,20 +196,10 @@
       "kind": "row"
      },
      {
-      "heading": "Glow",
-      "items": [
-       {
-        "kind": "label",
-        "text": "Glow"
-       },
-       {
-        "kind": "prop",
-        "prop": "lightLevel",
-        "text": "Dimmed By A Dataref",
-        "value": false
-       }
-      ],
-      "kind": "column"
+      "kind": "prop",
+      "prop": "lightLevel",
+      "text": "Material Glow",
+      "value": false
      }
     ],
     "kind": "column"

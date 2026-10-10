@@ -20,7 +20,7 @@ How the add-on turns Blender into X-Plane and back, for when the guides are not 
   cone angle, `DX DY DZ` the direction) and the power from its candela or radius. The power the light has when on is
   stored on the light as `xplane_watts_when_on`.
 - `LIGHT_CUSTOM` is the exception: the exporter writes the Blender power as the light's alpha, and colors outside 0 to
-  1 (some halos use -1 as a placeholder) are typed in (**Color > Typed**).
+  1 (some halos use -1 as a placeholder) are typed in (**Type The Color**).
 - A `LIGHT_SPILL_CUSTOM`'s alpha is the Spill's **Dim** and its direction is written normalized.
 - Blender draws every light with a line to the ground and, for a spot, a circle whose size depends only on the spot's
   angle (10 m times the sine of half the angle), so hundreds of lights bury an aircraft. Only hiding them helps:
@@ -57,7 +57,7 @@ How the add-on turns Blender into X-Plane and back, for when the guides are not 
 - Triangles with no area are left out: they draw nothing, and Blender's normals around them change when a part is
   turned. Normals are kept exactly when the importer or the exporter turns a part.
 - Drag click zones are kept free of children and in the frame their animation turns in, which the exporter needs. A
-  drag rotate with a lift becomes **Turn by dragging, with detents** with **Detent Dataref > Own Range** on (Laminar's
+  drag rotate with a lift becomes **Turn by dragging, with detents** with **Own detent dataref range** on (Laminar's
   levers lift a dataref from 0 to 1); one with detent lines but no lift stays **Turn by dragging** and keeps them. A
   drag axis with `ATTR_axis_detented` becomes **Slide by dragging, with detents**.
 - Empties are drawn at a quarter of the largest part hanging on them (a few millimeters for a knob, at most 6 cm) and a

@@ -128,9 +128,9 @@ def glow_layout(layout, settings, target: str) -> None:
     layout.active = settings.lightLevel
     wrapped(layout, "The night (LIT) texture's brightness follows a dataref, like a backlight on a dimmer.")
     text_with_search(layout, settings, "lightLevel_dataref", "Dataref", "dataref", target)
-    col = layout.column(align=True)
-    col.prop(settings, "lightLevel_v1", text="Off At")
-    col.prop(settings, "lightLevel_v2", text="Full At")
+    row = compact_row(layout)
+    row.prop(settings, "lightLevel_v1", text="Off At")
+    row.prop(settings, "lightLevel_v2", text="Full At")
     switched(layout, settings, "lightLevel_photometric", "lightLevel_brightness", "Full (nits)")
 
 
