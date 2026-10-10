@@ -29,6 +29,9 @@ The options are in the side panel of the file browser:
 
 - Each OBJ becomes a collection, grouped under the aircraft's collection. The scene opens in the parked pose (gear
   down, flaps in and so on).
+- An OBJ's lights are in a collection of their own inside it, for example `cockpit lights`, so one click in the
+  outliner selects them all. Hiding that collection leaves them out of the export like anything hidden; to only tidy
+  the view, use the X-Plane **Lights** overlay instead.
 - An object set to "Prefill Only" in Plane Maker only hides the clouds behind it, and X-Plane never draws it. Its
   collection is named `... (prefill only, not drawn)`, for example the grey shell inside an airliner's cabin. It is
   still exported, under its own file name.

@@ -219,6 +219,18 @@ class PartsBuilder:
             settings.enable_rgb_override = True
             settings.rgb_override_values = rgb
 
+    def _lights_collection(self) -> bpy.types.Collection:
+        """
+        A file's lights in a collection of their own inside the file's, so that one click in the outliner selects or
+        hides them all. Hidden, they are not exported, like anything hidden
+        """
+        if self._lights is None:
+            # Not "Lights lights" for the A330's Lights.obj
+            plain = not self.stem.lower().endswith(("light", "lights"))
+            self._lights = bpy.data.collections.new(f"{self.stem} lights" if plain else f"{self.stem} (light objects)")
+            self.collection.children.link(self._lights)
+        return self._lights
+
     def _add_light(
         self, light: Light, parent, static: mathutils.Matrix, name: str
     ) -> None:
@@ -253,7 +265,7 @@ class PartsBuilder:
             blender_light, look.reach, blender_light.energy > 0, self.options.scale
         )
         obj = bpy.data.objects.new(self._clean(data_name), blender_light)
-        self.collection.objects.link(obj)
+        self._lights_collection().objects.link(obj)
         obj.parent = parent
         base = T.matrix_to_blender(matrix)
         if look.direction is not None:
