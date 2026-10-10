@@ -100,7 +100,7 @@ def parse_datarefs_txt(filepath: str) -> Union[List[DatarefInfoStruct], str]:
         return "..." + os.path.sep.join(pathlib.Path(filepath).parts[-3:])
 
     try:
-        with open(filepath) as dref_file:
+        with open(filepath, encoding="utf-8", errors="replace") as dref_file:
             file_contents = []
             for i, line in enumerate(dref_file):
                 if i == 0:
