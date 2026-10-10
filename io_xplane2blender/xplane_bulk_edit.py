@@ -17,7 +17,7 @@ from typing import Callable, Dict, Iterator, List, Optional, Sequence, Set, Tupl
 import bpy
 
 from . import xplane_scene_changes as scene_changes
-from .xplane_properties_panel import Properties, named
+from .xplane_properties_panel import Properties, compact_grid, compact_row
 from .xplane_scene_changes import Remembered
 
 KINDS = (
@@ -388,11 +388,11 @@ class XPLANE_PT_bulk_edit(Properties, bpy.types.Panel):
         row.operator(XPLANE_OT_bulk_pairs_swap.bl_idname, text="", icon="UV_SYNC_SELECT")
 
         layout.prop(s, "scope")
-        grid = named(layout, "Look In").grid_flow(columns=2, even_columns=True, align=True)
+        grid = compact_grid(layout, columns=2, even_columns=True, align=True)
         for identifier, _, _ in KINDS:
             grid.prop_enum(s, "kinds", identifier)
-        row = named(layout, "Match")
-        row.prop(s, "match_case", text="Case", toggle=True)
+        row = compact_row(layout)
+        row.prop(s, "match_case", toggle=True)
         row.prop(s, "use_regex", text="Regex", toggle=True)
 
         changes, skipped, problem = panel_plan(context)

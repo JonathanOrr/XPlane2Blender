@@ -1,25 +1,25 @@
 """
-What every X-Plane panel of the Properties editor shares: it draws like Blender's own panels. Every line has its name
-in the left column and its value in the right one: a setting, a checkbox (named by a heading, like Blender's "Show
-In"), a checkbox with the value it turns on, or a row of buttons. Only buttons that do something, help text, lists,
-the entries of a list, and dataref and command fields (named above them, as they are long) are as wide as the panel.
+What every X-Plane panel of the Properties editor shares: everything starts at the left edge, with no column of names.
+A checkbox has its name after it, a number has its name inside its field, a checkbox that turns a value on sits in
+front of that value, and a row of choice buttons has its name before it. Only text, file and menu fields have a name
+to their left, as Blender draws them.
 """
 
 import functools
 
 
-def _property_split(draw):
+def _flush_left(draw):
     @functools.wraps(draw)
-    def split(self, context):
-        self.layout.use_property_split = True
+    def flush(self, context):
+        self.layout.use_property_split = False
         self.layout.use_property_decorate = False
         draw(self, context)
 
-    return split
+    return flush
 
 
 class Properties:
-    """The base of a panel in the Properties editor, whose draw() is given the split layout"""
+    """The base of a panel in the Properties editor, whose draw() is given the flush left layout"""
 
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -27,44 +27,36 @@ class Properties:
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if "draw" in cls.__dict__:
-            cls.draw = _property_split(cls.__dict__["draw"])
+            cls.draw = _flush_left(cls.__dict__["draw"])
 
 
-# Where Blender's own split puts the right column
-SPLIT = 0.4
+# Where Blender starts a text, file or menu field after its name, less the gap a split leaves
+NAME_WIDTH = 0.235
 
 
 def named(layout, text: str, align: bool = True):
-    """A row of buttons or menus in the right column, with text in the left column like the name of a setting"""
-    split = layout.split(factor=SPLIT, align=align)
-    name = split.row()
-    name.alignment = "RIGHT"
-    name.label(text=text)
-    row = split.row(align=align)
-    row.use_property_split = False
-    return row
+    """A row of buttons with text before them, where Blender puts the name of a text or menu field"""
+    split = layout.split(factor=NAME_WIDTH, align=align)
+    # Blender writes a field's name with a colon
+    split.label(text=f"{text}:")
+    return split.row(align=align)
 
 
 def switched(layout, data, switch: str, value: str, text: str):
-    """A value with the checkbox that turns it on in front of it, named text in the left column"""
-    row = layout.row(heading=text, align=True)
+    """A value with the checkbox that turns it on in front of it, its name inside its field"""
+    row = layout.row(align=True)
     row.prop(data, switch, text="")
     sub = row.row(align=True)
     sub.active = getattr(data, switch)
-    sub.prop(data, value, text="")
+    sub.prop(data, value, text=text)
     return row
 
 
 def compact_row(layout, align: bool = True):
-    """A row of settings that carry their own names (buttons, or several settings side by side), so there is no
-    column of names to the left of them"""
-    row = layout.row(align=align)
-    row.use_property_split = False
-    return row
+    """A row of settings side by side"""
+    return layout.row(align=align)
 
 
 def compact_grid(layout, **kwargs):
-    """A grid of buttons, with their names inside them"""
-    grid = layout.grid_flow(**kwargs)
-    grid.use_property_split = False
-    return grid
+    """A grid of buttons"""
+    return layout.grid_flow(**kwargs)

@@ -169,7 +169,7 @@ class TestPanels(XPlaneTestCase):
         for collection in bpy.data.collections:
             scene_tab.XPLANE_UL_files.draw_item(ul, bpy.context, FakeLayout(), bpy.data, collection, 0, None, "", 0)
 
-    def test_every_panel_draws_in_blenders_split_layout(self) -> None:
+    def test_every_panel_draws_flush_left(self) -> None:
         from io_xplane2blender import xplane_bulk_edit, xplane_table
 
         mesh("knob")
@@ -181,7 +181,7 @@ class TestPanels(XPlaneTestCase):
             if layout is None:
                 continue
             drawn += 1
-            self.assertTrue(getattr(layout, "use_property_split", False), panel.__name__)
+            self.assertFalse(getattr(layout, "use_property_split", True), panel.__name__)
             self.assertFalse(getattr(layout, "use_property_decorate", True), panel.__name__)
         self.assertGreater(drawn, 10)
 

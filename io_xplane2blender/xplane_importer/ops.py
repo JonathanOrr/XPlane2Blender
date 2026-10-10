@@ -145,9 +145,9 @@ def _frame_everything(context, crowded: bool = False) -> None:
 
 
 def _draw_options(layout, op) -> None:
-    """The options of both import dialogs: checkboxes under a heading, values named in the left column"""
+    """The options of both import dialogs"""
     box = layout.box()
-    col = box.column(heading="Bring In")
+    box.label(text="Bring In", icon="IMPORT")
     for name in (
         "import_materials",
         "import_animations",
@@ -156,15 +156,14 @@ def _draw_options(layout, op) -> None:
         "all_lods",
         "hide_default_hidden",
     ):
-        col.prop(op, name)
+        box.prop(op, name)
     box = layout.box()
-    col = box.column(heading="Then")
-    col.prop(op, "make_exportable")
-    col.prop(op, "show_result")
-    col = box.column()
-    col.prop(op, "lit_strength")
-    col.prop(op, "light_strength")
-    col.prop(op, "scale")
+    box.label(text="Setup", icon="PREFERENCES")
+    box.prop(op, "make_exportable")
+    box.prop(op, "show_result")
+    box.prop(op, "lit_strength")
+    box.prop(op, "light_strength")
+    box.prop(op, "scale")
 
 
 class IMPORT_OT_xplane_report(bpy.types.Operator):
@@ -270,7 +269,6 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
         layout.use_property_decorate = False
         _draw_options(layout, self)
 
@@ -356,14 +354,13 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
 
     def draw(self, context):
         layout = self.layout
-        layout.use_property_split = True
         layout.use_property_decorate = False
         box = layout.box()
+        box.label(text="Aircraft", icon="OBJECT_DATA")
         box.prop(self, "livery")
-        col = box.column(heading="Include")
-        col.prop(self, "include_damage")
-        col.prop(self, "include_attached")
-        col.prop(self, "include_not_drawn")
+        box.prop(self, "include_damage")
+        box.prop(self, "include_attached")
+        box.prop(self, "include_not_drawn")
         _draw_options(layout, self)
 
 

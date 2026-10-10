@@ -15,13 +15,8 @@
        {
         "items": [
          {
-          "items": [
-           {
-            "kind": "label",
-            "text": "Is A"
-           }
-          ],
-          "kind": "row"
+          "kind": "label",
+          "text": "Type:"
          },
          {
           "items": [
@@ -107,44 +102,19 @@
        {
         "items": [
          {
-          "heading": "Glass",
-          "items": [
-           {
-            "kind": "label",
-            "text": "Glass"
-           },
-           {
-            "kind": "prop",
-            "prop": "blend_glass",
-            "text": "See-Through",
-            "value": false
-           }
-          ],
-          "kind": "column"
+          "kind": "prop",
+          "prop": "blend_glass",
+          "text": "See-Through Glass",
+          "value": false
          },
          {
-          "heading": "Normal Map",
-          "items": [
-           {
-            "kind": "label",
-            "text": "Normal Map"
-           },
-           {
-            "kind": "prop",
-            "prop": "normal_metalness",
-            "text": "Has Metalness",
-            "value": false
-           }
-          ],
-          "kind": "column"
+          "kind": "prop",
+          "prop": "normal_metalness",
+          "text": "Metalness In Normal Map",
+          "value": false
          },
          {
-          "heading": "Specular",
           "items": [
-           {
-            "kind": "label",
-            "text": "Specular"
-           },
            {
             "kind": "prop",
             "prop": "specular_override",
@@ -157,7 +127,7 @@
              {
               "kind": "prop",
               "prop": "specular",
-              "text": "",
+              "text": "Specular (whole file)",
               "value": 1.0
              }
             ],
@@ -167,12 +137,7 @@
           "kind": "row"
          },
          {
-          "heading": "Max Nits",
           "items": [
-           {
-            "kind": "label",
-            "text": "Max Nits"
-           },
            {
             "kind": "prop",
             "prop": "luminance_override",
@@ -185,7 +150,7 @@
              {
               "kind": "prop",
               "prop": "luminance",
-              "text": "",
+              "text": "Max Glow (nits)",
               "value": 1000
              }
             ],

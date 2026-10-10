@@ -21,13 +21,8 @@
        {
         "items": [
          {
-          "items": [
-           {
-            "kind": "label",
-            "text": "Holds"
-           }
-          ],
-          "kind": "row"
+          "kind": "label",
+          "text": "Holds:"
          },
          {
           "items": [

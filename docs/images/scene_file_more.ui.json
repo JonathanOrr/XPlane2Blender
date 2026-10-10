@@ -67,7 +67,7 @@
        {
         "kind": "prop",
         "prop": "particle_system_file",
-        "text": "Particle Systems (.pss)",
+        "text": "Particles (.pss)",
         "value": ""
        },
        {
@@ -77,20 +77,10 @@
         "value": 0.0
        },
        {
-        "heading": "Debug Info",
-        "items": [
-         {
-          "kind": "label",
-          "text": "Debug Info"
-         },
-         {
-          "kind": "prop",
-          "prop": "debug",
-          "text": "In This OBJ",
-          "value": true
-         }
-        ],
-        "kind": "column"
+        "kind": "prop",
+        "prop": "debug",
+        "text": "Debug Info In This OBJ",
+        "value": true
        },
        {
         "items": [
@@ -121,12 +111,7 @@
     "children": [],
     "draw": [
      {
-      "heading": "Export",
       "items": [
-       {
-        "kind": "label",
-        "text": "Export"
-       },
        {
         "kind": "prop",
         "prop": "optimize",
@@ -140,25 +125,15 @@
         "value": false
        },
        {
-        "heading": "Developer",
-        "items": [
-         {
-          "kind": "label",
-          "text": "Developer"
-         },
-         {
-          "kind": "prop",
-          "prop": "plugin_development",
-          "text": "Tools",
-          "value": false
-         }
-        ],
-        "kind": "column"
-       },
-       {
         "icon": "INFO",
         "kind": "label",
         "text": "Add-on <version>"
+       },
+       {
+        "kind": "prop",
+        "prop": "plugin_development",
+        "text": "Developer Tools",
+        "value": false
        }
       ],
       "kind": "column"
