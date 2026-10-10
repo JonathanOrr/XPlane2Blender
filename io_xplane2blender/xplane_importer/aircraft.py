@@ -35,20 +35,6 @@ def _placement_matrix(item: AcfObject) -> mathutils.Matrix:
     return matrix
 
 
-def _has_geometry(built) -> bool:
-    return any(o.type == "MESH" for o in built.objects)
-
-
-def _find_layer_collection(layer_collection, collection):
-    if layer_collection.collection == collection:
-        return layer_collection
-    for child in layer_collection.children:
-        found = _find_layer_collection(child, collection)
-        if found is not None:
-            return found
-    return None
-
-
 def import_aircraft(
     acf_path: str,
     options: Optional[ImportOptions] = None,
@@ -84,7 +70,6 @@ def import_aircraft(
             )
 
     skipped_damage = skipped_attached = 0
-    not_drawn = []
     for number, item in enumerate(acf.objects):
         if progress is not None:
             progress(number, len(acf.objects))
@@ -115,28 +100,12 @@ def import_aircraft(
             settle_frames=False,
         )
         if built is not None:
-            if (
-                item.flags == 0
-                and not options.include_not_drawn
-                and _has_geometry(built)
-            ):
-                # X-Plane draws nothing for these (an easter egg, a placeholder), so it is left out of the view layer
-                layer_collection = _find_layer_collection(
-                    bpy.context.view_layer.layer_collection, built.collection
-                )
-                if layer_collection is not None:
-                    layer_collection.exclude = True
-                not_drawn.append(stem)
             built.collection["xplane_acf_object"] = item.index
             built.collection["xplane_obj_flags"] = item.flags
             if item.hide_dataref:
                 built.collection["xplane_hide_dataref"] = item.hide_dataref
             if item.is_glass:
                 built.collection["xplane_glass"] = True
-    if not_drawn:
-        report.info(
-            f"Not drawn by X-Plane (flags 0), turned off in the view layer: {', '.join(not_drawn)}"
-        )
     if skipped_damage:
         report.info(
             f"{skipped_damage} damage object(s) were skipped (they only show when a part breaks)"

@@ -12,9 +12,6 @@ class ImportOptions:
     import_manipulators: bool = True
     import_lights: bool = True
     # Aircraft: what to skip
-    include_not_drawn: bool = (
-        False  # Objects the .acf flags as drawn nowhere (flags = 0)
-    )
     hide_default_hidden: bool = (
         True  # A sphere around what X-Plane hides at the default dataref values
     )

@@ -422,7 +422,6 @@ The options in the side panel of the file browser.
 | File > Import > X-Plane Aircraft (.acf) | Livery | Which set of textures to use |
 | File > Import > X-Plane Aircraft (.acf) | Damage Objects | Also import the objects that only show when a part breaks |
 | File > Import > X-Plane Aircraft (.acf) | Part Attached Objects | Also import objects attached to wings, gear or the body. They are placed at the aircraft origin |
-| File > Import > X-Plane Aircraft (.acf) | Not Drawn Objects | Also show the objects the aircraft file flags as drawn nowhere, for example placeholders and easter eggs |
 | File > Import > X-Plane Aircraft (.acf) | Textures and Materials | Load the texture images and build shader nodes so it looks like it does in X-Plane |
 | File > Import > X-Plane Aircraft (.acf) | Animations | Create the dataref animations and show/hide settings, keyed on the parts themselves |
 | File > Import > X-Plane Aircraft (.acf) | Manipulators | Set up the clickable manipulators on the meshes that have them |
