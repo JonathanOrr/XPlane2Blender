@@ -103,6 +103,7 @@ class ObjBuilder(PartsBuilder):
         self._unnamed = set()  # meshes that nothing in the file names
         self._exact: Dict[bpy.types.Object, mathutils.Matrix] = {}
         self._light_count = 0
+        self._lights: Optional[bpy.types.Collection] = None
 
     # ------------------------------------------------------------------------------------
     def build(self) -> BuiltObj:

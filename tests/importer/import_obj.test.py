@@ -541,6 +541,26 @@ class TestImportObj(XPlaneTestCase):
         self.assertEqual([round(v, 3) for v in custom.xplane.uv], [0.1, 0.2, 0.3, 0.4])
         self.assertEqual(self.report.lights_imported, 3)
 
+    def test_lights_have_a_collection_of_their_own_in_the_file(self) -> None:
+        # One click in the outliner selects or hides a file's lights; hidden, they are not exported, like anything
+        body = "TRIS 0 3\nLIGHT_NAMED beacon 1 2 3\nLIGHT_NAMED strobe 0 0 0\n"
+        built = self.do_import(obj_text(body, tris=None), make_exportable=True)
+        (lights,) = built.collection.children
+        self.assertEqual("thing lights", lights.name)
+        self.assertEqual(["beacon", "strobe"], sorted(o.name for o in lights.objects))
+        self.assertEqual([], [o.name for o in built.collection.objects if o.type == "LIGHT"])
+        self.assertFalse(lights.xplane.is_exportable_collection)
+        exported = self.exportExportableRoot(built.collection)
+        self.assertEqual(2, sum(line.split()[:1] == ["LIGHT_NAMED"] for line in exported.splitlines()))
+
+    def test_a_file_named_lights_does_not_get_a_lights_lights_collection(self) -> None:
+        built = self.do_import(obj_text("LIGHT_NAMED beacon 1 2 3\n", tris=None), name="Lights.obj")
+        self.assertEqual(["Lights (light objects)"], [c.name for c in built.collection.children])
+
+    def test_a_file_without_lights_has_no_lights_collection(self) -> None:
+        built = self.do_import(obj_text("TRIS 0 3\n", tris=None))
+        self.assertEqual([], list(built.collection.children))
+
     def test_lights_take_their_color_from_their_parameters(self) -> None:
         body = "LIGHT_PARAM airplane_landing_pm 1 2 3 0.2 0.4 0.6 0 200000cd 0 0 -1 0.5\n"
         built = self.do_import(obj_text(body, tris=None))
