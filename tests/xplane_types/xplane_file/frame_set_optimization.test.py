@@ -32,47 +32,38 @@ class TestFrameSetOptimization(XPlaneTestCase):
         # print("TIME", start, total)
 
     def test_cache_results(self) -> None:
+        from io_xplane2blender.xplane_types import xplane_file_keyframes as keyframes
         from io_xplane2blender.xplane_types.xplane_file import XPlaneFile
 
-        # This implementation detail is important enough to check,
-        # without it
-        bpy.context.window.scene = bpy.data.scenes["Scene_time_test"]
+        # The keyframes are scanned once per scene and reused by every OBJ of the export. Checked on the cache itself:
+        # comparing how long two exports take fails at random on busy machines
+        scene = bpy.data.scenes["Scene_time_test"]
+        bpy.context.window.scene = scene
 
         # Slight hack - I could have messed with the file names or simply stopped
         # files from being written
-        bpy.context.window.scene.xplane.plugin_development = True
-        bpy.context.window.scene.xplane.dev_export_as_dry_run = True
+        scene.xplane.plugin_development = True
+        scene.xplane.dev_export_as_dry_run = True
 
-        exportable_root = bpy.data.collections["time_test_1"]
-        start = time.perf_counter()
-        layer_props = bpy.data.collections["time_test_1"].xplane.layer
-        filename = layer_props.name if layer_props.name else exportable_root.name
+        def export(name: str) -> float:
+            start = time.perf_counter()
+            layer_props = bpy.data.collections[name].xplane.layer
+            xp_file = XPlaneFile(layer_props.name or name, layer_props)
+            xp_file.create_xplane_bone_hiearchy(bpy.data.collections[name])
+            xp_file.write()
+            return time.perf_counter() - start
 
-        xp_file = XPlaneFile(filename, layer_props)
-        xp_file.create_xplane_bone_hiearchy(exportable_root)
-        xp_file.write()
-        time_test_1_total = time.perf_counter() - start
-
-        exportable_root = bpy.data.collections["time_test_1"]
-        start = time.perf_counter()
-        layer_props = bpy.data.collections["time_test_2"].xplane.layer
-        filename = layer_props.name if layer_props.name else exportable_root.name
-
-        xp_file = XPlaneFile(filename, layer_props)
-        xp_file.create_xplane_bone_hiearchy(exportable_root)
-        xp_file.write()
-        time_test_2_total = time.perf_counter() - start
-
-        # print("t1", time_test_1_total, "t2", time_test_2_total)
-        self.assertLess(
-            time_test_2_total,
-            time_test_1_total,
-            msg=f"Time 1 '{time_test_1_total}s' > Time 2 '{time_test_2_total}s', is cache between OBJs working?",
+        time_test_1_total = export("time_test_1")
+        scanned = keyframes._all_keyframe_infos.get(scene.name)
+        self.assertIsNotNone(scanned, "the first OBJ scans the scene's keyframes")
+        export("time_test_2")
+        self.assertTrue(
+            keyframes._all_keyframe_infos[scene.name] is scanned, "the second OBJ reuses the scan instead of scanning again"
         )
         self.assertLess(
             time_test_1_total,
             3,
-            f"frame_set prescanning should never take more than 3 seconds long, tool {time_test_1_total} seconds",
+            f"frame_set prescanning should never take more than 3 seconds long, took {time_test_1_total} seconds",
         )
 
     def _edit_export_edit_export(self, suffix: str):
