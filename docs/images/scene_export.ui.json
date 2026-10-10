@@ -1,0 +1,258 @@
+[
+ {
+  "children": [
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "name",
+        "text": "Saved As",
+        "value": "cockpit"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "aircraft",
+          "prop": "export_type",
+          "text": "Aircraft Part"
+         },
+         {
+          "kind": "prop_enum",
+          "on": true,
+          "option": "cockpit",
+          "prop": "export_type",
+          "text": "Cockpit"
+         }
+        ],
+        "kind": "row"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "items": [
+       {
+        "icon": "TEXTURE",
+        "kind": "label",
+        "text": "Textures"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "texture",
+          "text": "Day",
+          "value": ""
+         },
+         {
+          "kind": "prop",
+          "prop": "texture_lit",
+          "text": "Night",
+          "value": ""
+         },
+         {
+          "kind": "prop",
+          "prop": "texture_normal",
+          "text": "Normal",
+          "value": ""
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.textures_from_materials",
+        "text": "From Materials"
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "items": [
+       {
+        "icon": "SHADING_TEXTURE",
+        "kind": "label",
+        "text": "Look"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "blend_glass",
+          "text": "See-Through Glass",
+          "value": false
+         },
+         {
+          "kind": "prop",
+          "prop": "normal_metalness",
+          "text": "Metalness In Normal Map",
+          "value": false
+         },
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "specular_override",
+            "text": "",
+            "value": false
+           },
+           {
+            "active": false,
+            "items": [
+             {
+              "kind": "prop",
+              "prop": "specular",
+              "text": "Specular (whole file)",
+              "value": 1.0
+             }
+            ],
+            "kind": "row"
+           }
+          ],
+          "kind": "row"
+         },
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "luminance_override",
+            "text": "",
+            "value": false
+           },
+           {
+            "active": false,
+            "items": [
+             {
+              "kind": "prop",
+              "prop": "luminance",
+              "text": "Max Glow (nits)",
+              "value": 1000
+             }
+            ],
+            "kind": "row"
+           }
+          ],
+          "kind": "row"
+         }
+        ],
+        "kind": "column"
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "items": [
+       {
+        "icon": "WINDOW",
+        "kind": "label",
+        "text": "Cockpit Panel"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "cockpit_panel_mode",
+          "text": "Panel Texture",
+          "value": "cockpit"
+         }
+        ],
+        "kind": "column"
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "items": [
+       {
+        "icon": "CON_DISTLIMIT",
+        "kind": "label",
+        "text": "Distances (Levels Of Detail)"
+       },
+       {
+        "kind": "prop",
+        "prop": "lods",
+        "text": "Levels",
+        "value": "0"
+       }
+      ],
+      "kind": "box"
+     }
+    ],
+    "draw_header": [
+     {
+      "kind": "label",
+      "text": "File: cockpit.obj"
+     }
+    ],
+    "kind": "panel",
+    "label": "",
+    "panel": "XPLANE_PT_file"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "X-Plane 12 Texture Maps",
+    "panel": "XPLANE_PT_file_texture_maps"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Rain, Defrost And Wipers",
+    "panel": "XPLANE_PT_file_rain"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Detail Textures",
+    "panel": "XPLANE_PT_file_decals"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Advanced",
+    "panel": "XPLANE_PT_file_more"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Options",
+    "panel": "XPLANE_PT_export_options"
+   }
+  ],
+  "draw": [
+   {
+    "items": 2,
+    "kind": "list",
+    "list": "XPLANE_UL_files"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.new_file",
+    "text": "New File From Selection"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "scene.export_to_relative_dir",
+      "text": "Export 2 Files"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "icon": "FILE_FOLDER",
+    "kind": "label",
+    "text": "To <demo folder>/"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane Export",
+  "panel": "XPLANE_PT_export"
+ }
+]

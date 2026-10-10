@@ -1,0 +1,62 @@
+[
+ {
+  "children": [],
+  "draw": [
+   {
+    "items": [
+     {
+      "expand": true,
+      "kind": "prop",
+      "prop": "table",
+      "text": "Table",
+      "value": "MANIPULATORS"
+     }
+    ],
+    "kind": "row"
+   },
+   {
+    "items": [
+     {
+      "kind": "prop",
+      "prop": "selected_only",
+      "text": "Selected Only",
+      "value": false
+     },
+     {
+      "kind": "label",
+      "text": "2 object(s)"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.table_select_listed",
+      "text": "Select Listed"
+     }
+    ],
+    "kind": "row"
+   },
+   {
+    "items": 12,
+    "kind": "list",
+    "list": "XPLANE_UL_object_table"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "xplane.table_export_csv",
+      "text": "Export CSV"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.table_import_csv",
+      "text": "Import CSV"
+     }
+    ],
+    "kind": "row"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane Tables",
+  "panel": "XPLANE_PT_table"
+ }
+]

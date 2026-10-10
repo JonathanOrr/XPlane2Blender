@@ -1,0 +1,121 @@
+[
+ {
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "menu",
+      "menu": "XPLANE_MT_control_kind",
+      "text": "Make Clickable As"
+     },
+     {
+      "kind": "menu",
+      "menu": "XPLANE_MT_animate",
+      "text": "Animate As"
+     },
+     {
+      "kind": "operator",
+      "operator": "scene.export_to_relative_dir",
+      "text": "Export"
+     },
+     {
+      "items": [
+       {
+        "items": [
+         {
+          "icon": "OVERLAY",
+          "kind": "label",
+          "text": "Show"
+         },
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "show_click_zones",
+            "text": "Click Zones",
+            "value": true
+           },
+           {
+            "kind": "prop",
+            "prop": "show_motion",
+            "text": "Motion",
+            "value": true
+           }
+          ],
+          "kind": "row"
+         },
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "show_lever",
+            "text": "Lever Handle",
+            "value": true
+           },
+           {
+            "kind": "prop",
+            "prop": "show_lights",
+            "text": "Lights",
+            "value": false
+           }
+          ],
+          "kind": "row"
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.tidy_viewport",
+          "text": "Tidy Empties And Cones"
+         },
+         {
+          "kind": "prop",
+          "prop": "show_extras",
+          "text": "Blender's Light Gizmos",
+          "value": true
+         }
+        ],
+        "kind": "column"
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "kind": "menu",
+      "menu": "XPLANE_MT_add",
+      "text": "Add"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.key_pose",
+      "text": "Key This Pose"
+     },
+     {
+      "kind": "menu",
+      "menu": "XPLANE_MT_move_to_file",
+      "text": "Move To File"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.check_in_viewport",
+      "text": "Check"
+     }
+    ],
+    "kind": "pie"
+   }
+  ],
+  "kind": "menu",
+  "label": "X-Plane",
+  "menu": "XPLANE_MT_pie"
+ },
+ {
+  "files": [
+   "viewport/draw.py",
+   "viewport/overlay.py",
+   "viewport/overlay_more.py",
+   "viewport/motion.py",
+   "viewport/lever.py",
+   "viewport/light_shapes.py"
+  ],
+  "kind": "sources",
+  "sha1": "090a1f2847b0b67894a36e6d37ac6c251d64aae9"
+ }
+]

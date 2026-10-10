@@ -1,0 +1,198 @@
+[
+ {
+  "children": [
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "texture_map_normal",
+        "text": "Normal",
+        "value": ""
+       },
+       {
+        "kind": "prop",
+        "prop": "texture_map_material_gloss",
+        "text": "Material / Gloss",
+        "value": ""
+       },
+       {
+        "kind": "prop",
+        "prop": "texture_map_gloss",
+        "text": "Gloss",
+        "value": ""
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "kind": "panel",
+    "label": "X-Plane 12 Texture Maps",
+    "panel": "XPLANE_PT_file_texture_maps"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "kind": "prop",
+      "prop": "rain_scale",
+      "text": "Rain Scale",
+      "value": 1.0
+     },
+     {
+      "items": [
+       {
+        "icon": "FREEZE",
+        "kind": "label",
+        "text": "Defrost (Thermal)"
+       },
+       {
+        "kind": "prop",
+        "prop": "thermal_texture",
+        "text": "Texture",
+        "value": ""
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "thermal_source_1_enabled",
+          "text": "Pilot Front Windshield",
+          "value": false
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "thermal_source_2_enabled",
+          "text": "Copilot Front Windshield",
+          "value": false
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "thermal_source_3_enabled",
+          "text": "Pilot Side Window",
+          "value": false
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "thermal_source_4_enabled",
+          "text": "Copilot Side Window",
+          "value": false
+         }
+        ],
+        "kind": "column"
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "items": [
+       {
+        "icon": "MOD_WAVE",
+        "kind": "label",
+        "text": "Wipers"
+       },
+       {
+        "kind": "prop",
+        "prop": "wiper_texture",
+        "text": "Gradient Texture",
+        "value": ""
+       },
+       {
+        "kind": "prop",
+        "prop": "wiper_ext_glass_object",
+        "text": "Outside Glass",
+        "value": ""
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "wiper_1_enabled",
+          "text": "Wiper 1",
+          "value": false
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "wiper_bake_start",
+          "text": "Start Frame",
+          "value": 1
+         },
+         {
+          "kind": "label",
+          "text": "To Frame 255"
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.bake_wiper_gradient_texture",
+        "set": {
+         "file": "cockpit",
+         "start": 1
+        },
+        "text": "Bake For cockpit.obj"
+       }
+      ],
+      "kind": "box"
+     }
+    ],
+    "kind": "panel",
+    "label": "Rain, Defrost And Wipers",
+    "panel": "XPLANE_PT_file_rain"
+   }
+  ],
+  "draw": [
+   {
+    "items": 2,
+    "kind": "list",
+    "list": "XPLANE_UL_files"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.new_file",
+    "text": "New File From Selection"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "scene.export_to_relative_dir",
+      "text": "Export 2 Files"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "icon": "FILE_FOLDER",
+    "kind": "label",
+    "text": "To <demo folder>/"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane Export",
+  "panel": "XPLANE_PT_export"
+ }
+]

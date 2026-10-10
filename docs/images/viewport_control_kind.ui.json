@@ -1,0 +1,234 @@
+[
+ {
+  "draw": [
+   {
+    "items": [
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "Runs commands"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "command"
+        },
+        "text": "Button"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "command_switch_up_down2"
+        },
+        "text": "Switch, up / down"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "command_switch_left_right2"
+        },
+        "text": "Switch, left / right"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "command_knob2"
+        },
+        "text": "Knob"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "command_switch_up_down"
+        },
+        "text": "Switch, up / down, two commands"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "command_switch_left_right"
+        },
+        "text": "Switch, left / right, two commands"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "command_knob"
+        },
+        "text": "Knob, two commands"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "command_axis"
+        },
+        "text": "Drag runs commands"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "Sets a dataref"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "toggle"
+        },
+        "text": "Toggle"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "push"
+        },
+        "text": "Push"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "radio"
+        },
+        "text": "Radio button"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "delta"
+        },
+        "text": "Step"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "wrap"
+        },
+        "text": "Step and wrap around"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "axis_knob"
+        },
+        "text": "Knob"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "axis_switch_up_down"
+        },
+        "text": "Switch, up / down"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "axis_switch_left_right"
+        },
+        "text": "Switch, left / right"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "Dragged"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "drag_rotate"
+        },
+        "text": "Turn by dragging"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "drag_rotate_detent"
+        },
+        "text": "Turn by dragging, with detents"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "drag_axis"
+        },
+        "text": "Slide by dragging"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "drag_axis_detent"
+        },
+        "text": "Slide by dragging, with detents"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "drag_xy"
+        },
+        "text": "Drag in two directions"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "drag_axis_pix"
+        },
+        "text": "Drag the mouse sideways"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "Other"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "noop"
+        },
+        "text": "Blocks clicks"
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "kind": "row"
+   }
+  ],
+  "kind": "menu",
+  "label": "Kind Of Control",
+  "menu": "XPLANE_MT_control_kind"
+ }
+]

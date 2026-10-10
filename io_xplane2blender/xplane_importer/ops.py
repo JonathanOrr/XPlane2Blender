@@ -25,7 +25,7 @@ def _option_properties():
         ),
         "import_animations": bpy.props.BoolProperty(
             name="Animations",
-            description="Create the dataref animations and show/hide settings (keyframes on Empties)",
+            description="Create the dataref animations and show/hide settings, keyed on the parts themselves",
             default=True,
         ),
         "import_manipulators": bpy.props.BoolProperty(

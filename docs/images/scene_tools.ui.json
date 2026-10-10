@@ -1,0 +1,45 @@
+[
+ {
+  "children": [],
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "prop",
+      "prop": "show_click_zones",
+      "text": "Click Zones",
+      "value": false
+     },
+     {
+      "kind": "prop",
+      "prop": "click_labels",
+      "text": "",
+      "value": "OFF"
+     }
+    ],
+    "kind": "row"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.lights_preview",
+    "set": {
+     "selected_only": false
+    },
+    "text": "Preview Every Light As In X-Plane"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.tidy_viewport",
+    "text": "Tidy Empties And Light Cones"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.workspace",
+    "text": "Open The X-Plane Workspace"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane Tools",
+  "panel": "XPLANE_PT_tools"
+ }
+]

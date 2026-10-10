@@ -1,0 +1,70 @@
+[
+ {
+  "draw": [
+   {
+    "kind": "label",
+    "text": "X-Plane"
+   },
+   {
+    "items": [
+     {
+      "kind": "prop",
+      "prop": "show_click_zones",
+      "text": "Click Zones",
+      "value": true
+     },
+     {
+      "kind": "prop",
+      "prop": "click_labels",
+      "text": "",
+      "value": "ALL"
+     }
+    ],
+    "kind": "row"
+   },
+   {
+    "items": [
+     {
+      "kind": "prop",
+      "prop": "show_motion",
+      "text": "Motion",
+      "value": true
+     },
+     {
+      "kind": "prop",
+      "prop": "show_lever",
+      "text": "Lever Handle",
+      "value": true
+     },
+     {
+      "kind": "prop",
+      "prop": "show_lights",
+      "text": "Lights",
+      "value": false
+     },
+     {
+      "kind": "prop",
+      "prop": "show_unfinished",
+      "text": "Unfinished",
+      "value": false
+     }
+    ],
+    "kind": "grid"
+   }
+  ],
+  "function": "io_xplane2blender.viewport.overlay.overlay_popover",
+  "kind": "function"
+ },
+ {
+  "files": [
+   "viewport/draw.py",
+   "viewport/overlay.py",
+   "viewport/overlay_more.py",
+   "viewport/motion.py",
+   "viewport/lever.py",
+   "viewport/light_shapes.py"
+  ],
+  "kind": "sources",
+  "sha1": "090a1f2847b0b67894a36e6d37ac6c251d64aae9"
+ }
+]

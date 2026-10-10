@@ -1,0 +1,262 @@
+[
+ {
+  "children": [
+   {
+    "children": [],
+    "draw": [
+     {
+      "kind": "menu",
+      "menu": "XPLANE_MT_control_kind",
+      "text": "Button"
+     },
+     {
+      "items": [
+       {
+        "items": [
+         {
+          "icon": "INFO",
+          "kind": "label",
+          "text": "Runs a command while it is held down"
+         }
+        ],
+        "kind": "column"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "items": [
+       {
+        "items": [
+         {
+          "kind": "label",
+          "text": "Command"
+         },
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "command",
+            "text": "",
+            "value": "sim/lights/landing_lights_toggle"
+           },
+           {
+            "kind": "operator",
+            "operator": "xplane.search",
+            "set": {
+             "kind": "command",
+             "target": "object:xplane.manip.command"
+            },
+            "text": ""
+           }
+          ],
+          "kind": "row"
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "kind": "prop",
+        "prop": "cursor",
+        "text": "Cursor",
+        "value": "button"
+       },
+       {
+        "kind": "prop",
+        "prop": "tooltip",
+        "text": "Tooltip",
+        "value": "Landing lights"
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "draw_header": [
+     {
+      "kind": "prop",
+      "prop": "enabled",
+      "text": "",
+      "value": true
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Clickable",
+    "panel": "XPLANE_PT_click"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_push_button",
+        "text": "Button"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_switch",
+        "text": "Switch"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_range",
+        "text": "Knob / Lever"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "items": [
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "path",
+          "text": "",
+          "value": "CMND=sim/lights/landing_lights_toggle"
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.search",
+          "set": {
+           "kind": "dataref",
+           "target": "object:xplane.datarefs[0].path"
+          },
+          "text": ""
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.remove_dataref",
+          "set": {
+           "index": 0,
+           "target": "object"
+          },
+          "text": ""
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "items": [
+         {
+          "kind": "operator",
+          "operator": "xplane.go_to_frame",
+          "set": {
+           "frame": 1.0
+          },
+          "text": "0"
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.go_to_frame",
+          "set": {
+           "frame": 11.0
+          },
+          "text": "1"
+         }
+        ],
+        "kind": "grid"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "value",
+          "text": "At",
+          "value": 0.0
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.key_pose",
+          "set": {
+           "index": 0,
+           "target": "object"
+          },
+          "text": "Key Pose"
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "kind": "prop",
+        "prop": "loop",
+        "text": "Repeats Every",
+        "value": 0.0
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.add_dataref",
+      "set": {
+       "anim_type": "transform",
+       "target": "object"
+      },
+      "text": "Add Dataref"
+     }
+    ],
+    "kind": "panel",
+    "label": "Moves",
+    "panel": "XPLANE_PT_motion"
+   },
+   {
+    "closed": true,
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Shows / Hides",
+    "panel": "XPLANE_PT_visibility"
+   },
+   {
+    "closed": true,
+    "draw_header": [
+     {
+      "kind": "prop",
+      "prop": "lightLevel",
+      "text": "",
+      "value": false
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Glow",
+    "panel": "XPLANE_PT_glow"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Advanced",
+    "panel": "XPLANE_PT_more"
+   }
+  ],
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "label",
+      "text": "Button \u00b7 Moves"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "xplane.show_file",
+      "set": {
+       "collection": "cockpit"
+      },
+      "text": "In cockpit.obj"
+     }
+    ],
+    "kind": "row"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane",
+  "panel": "XPLANE_PT_object"
+ }
+]
