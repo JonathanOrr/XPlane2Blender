@@ -70,6 +70,7 @@ def import_aircraft(
             )
 
     skipped_damage = skipped_attached = 0
+    prefill_only = []
     for number, item in enumerate(acf.objects):
         if progress is not None:
             progress(number, len(acf.objects))
@@ -106,6 +107,14 @@ def import_aircraft(
                 built.collection["xplane_hide_dataref"] = item.hide_dataref
             if item.is_glass:
                 built.collection["xplane_glass"] = True
+            if item.is_prefill_only:
+                # Still exported (the OBJ is named by the file settings, not the collection), but named for what it is
+                built.collection.name = f"{stem} (prefill only, not drawn)"
+                prefill_only.append(stem)
+    if prefill_only:
+        report.info(
+            f"Prefill Only, never drawn by X-Plane (it hides the clouds behind it): {', '.join(prefill_only)}"
+        )
     if skipped_damage:
         report.info(
             f"{skipped_damage} damage object(s) were skipped (they only show when a part breaks)"

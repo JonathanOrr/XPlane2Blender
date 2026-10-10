@@ -29,6 +29,9 @@ The options are in the side panel of the file browser:
 
 - Each OBJ becomes a collection, grouped under the aircraft's collection. The scene opens in the parked pose (gear
   down, flaps in and so on).
+- An object set to "Prefill Only" in Plane Maker only hides the clouds behind it, and X-Plane never draws it. Its
+  collection is named `... (prefill only, not drawn)`, for example the grey shell inside an airliner's cabin. It is
+  still exported, under its own file name.
 - The parts carry their own animations: the pivot is the part's origin and the dataref and keys are on the part, so a
   knob is one object you select and click. An Empty is only made where one is needed, for example a ` frame` Empty
   holding the tilt of a panel, so that the keys of every button in it are along the panel's own axes.
