@@ -37,7 +37,7 @@ selected ones, with their children, or the whole scene). The panel lists every c
 - **Find And Replace** changes the objects in place.
 - **Duplicate And Replace** copies the selection, changes the copies only and lets you move them, like Shift+D: copy
   the captain's MCDU once and the first officer's is done.
-- Pairs are applied in order. **Match Case** is on by default, X-Plane's names are case sensitive, and **Regex** allows
+- Pairs are applied in order. **Match > Case** is on by default, X-Plane's names are case sensitive, and **Regex** allows
   regular expressions with `\1` groups.
 - A material or light that objects outside the selection also use is left alone, so changing one side never changes
   the other.

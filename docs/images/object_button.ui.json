@@ -5,9 +5,28 @@
     "children": [],
     "draw": [
      {
-      "kind": "menu",
-      "menu": "XPLANE_MT_control_kind",
-      "text": "Button"
+      "items": [
+       {
+        "items": [
+         {
+          "kind": "label",
+          "text": "Acts As"
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "items": [
+         {
+          "kind": "menu",
+          "menu": "XPLANE_MT_control_kind",
+          "text": "Button"
+         }
+        ],
+        "kind": "row"
+       }
+      ],
+      "kind": "split"
      },
      {
       "items": [

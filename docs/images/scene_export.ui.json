@@ -15,21 +15,35 @@
        {
         "items": [
          {
-          "kind": "prop_enum",
-          "on": false,
-          "option": "aircraft",
-          "prop": "export_type",
-          "text": "Aircraft Part"
+          "items": [
+           {
+            "kind": "label",
+            "text": "Is A"
+           }
+          ],
+          "kind": "row"
          },
          {
-          "kind": "prop_enum",
-          "on": true,
-          "option": "cockpit",
-          "prop": "export_type",
-          "text": "Cockpit"
+          "items": [
+           {
+            "kind": "prop_enum",
+            "on": false,
+            "option": "aircraft",
+            "prop": "export_type",
+            "text": "Aircraft Part"
+           },
+           {
+            "kind": "prop_enum",
+            "on": true,
+            "option": "cockpit",
+            "prop": "export_type",
+            "text": "Cockpit"
+           }
+          ],
+          "kind": "row"
          }
         ],
-        "kind": "row"
+        "kind": "split"
        }
       ],
       "kind": "column"
@@ -93,19 +107,44 @@
        {
         "items": [
          {
-          "kind": "prop",
-          "prop": "blend_glass",
-          "text": "See-Through Glass",
-          "value": false
-         },
-         {
-          "kind": "prop",
-          "prop": "normal_metalness",
-          "text": "Metalness In Normal Map",
-          "value": false
-         },
-         {
+          "heading": "Glass",
           "items": [
+           {
+            "kind": "label",
+            "text": "Glass"
+           },
+           {
+            "kind": "prop",
+            "prop": "blend_glass",
+            "text": "See-Through",
+            "value": false
+           }
+          ],
+          "kind": "column"
+         },
+         {
+          "heading": "Normal Map",
+          "items": [
+           {
+            "kind": "label",
+            "text": "Normal Map"
+           },
+           {
+            "kind": "prop",
+            "prop": "normal_metalness",
+            "text": "Has Metalness",
+            "value": false
+           }
+          ],
+          "kind": "column"
+         },
+         {
+          "heading": "Specular",
+          "items": [
+           {
+            "kind": "label",
+            "text": "Specular"
+           },
            {
             "kind": "prop",
             "prop": "specular_override",
@@ -118,7 +157,7 @@
              {
               "kind": "prop",
               "prop": "specular",
-              "text": "Specular (whole file)",
+              "text": "",
               "value": 1.0
              }
             ],
@@ -128,7 +167,12 @@
           "kind": "row"
          },
          {
+          "heading": "Max Nits",
           "items": [
+           {
+            "kind": "label",
+            "text": "Max Nits"
+           },
            {
             "kind": "prop",
             "prop": "luminance_override",
@@ -141,7 +185,7 @@
              {
               "kind": "prop",
               "prop": "luminance",
-              "text": "Max Glow (nits)",
+              "text": "",
               "value": 1000
              }
             ],

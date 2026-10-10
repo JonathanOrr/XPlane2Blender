@@ -128,11 +128,19 @@ class Recorder:
         return child
 
     # ---- containers
-    def row(self, **kwargs) -> "Recorder":
-        return self._child("row")
+    def _headed(self, kind: str, heading: str = "") -> "Recorder":
+        child = self._child(kind)
+        if heading:
+            # Blender draws a heading in the left column, as the name of the first checkbox
+            child.node["heading"] = heading
+            child.label(text=heading)
+        return child
 
-    def column(self, **kwargs) -> "Recorder":
-        return self._child("column")
+    def row(self, heading: str = "", **kwargs) -> "Recorder":
+        return self._headed("row", heading)
+
+    def column(self, heading: str = "", **kwargs) -> "Recorder":
+        return self._headed("column", heading)
 
     def box(self) -> "Recorder":
         return self._child("box")
@@ -178,6 +186,8 @@ class Recorder:
             item["_name"] = rna.name
             if rna.type == "ENUM" and not rna.is_enum_flag:
                 item["_choices"] = [e.name for e in rna.enum_items]
+            if rna.type == "BOOLEAN":
+                item["_checkbox"] = True
         if rna is not None and rna.type == "ENUM" and kwargs.get("expand"):
             item["expand"] = True
         self._add(item)

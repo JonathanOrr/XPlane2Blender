@@ -24,40 +24,30 @@
         "value": ""
        },
        {
+        "heading": "Heats",
         "items": [
+         {
+          "kind": "label",
+          "text": "Heats"
+         },
          {
           "kind": "prop",
           "prop": "thermal_source_1_enabled",
           "text": "Pilot Front Windshield",
           "value": false
-         }
-        ],
-        "kind": "column"
-       },
-       {
-        "items": [
+         },
          {
           "kind": "prop",
           "prop": "thermal_source_2_enabled",
           "text": "Copilot Front Windshield",
           "value": false
-         }
-        ],
-        "kind": "column"
-       },
-       {
-        "items": [
+         },
          {
           "kind": "prop",
           "prop": "thermal_source_3_enabled",
           "text": "Pilot Side Window",
           "value": false
-         }
-        ],
-        "kind": "column"
-       },
-       {
-        "items": [
+         },
          {
           "kind": "prop",
           "prop": "thermal_source_4_enabled",
@@ -90,7 +80,12 @@
         "value": ""
        },
        {
+        "heading": "Blades",
         "items": [
+         {
+          "kind": "label",
+          "text": "Blades"
+         },
          {
           "kind": "prop",
           "prop": "wiper_1_enabled",
@@ -103,17 +98,31 @@
        {
         "items": [
          {
-          "kind": "prop",
-          "prop": "wiper_bake_start",
-          "text": "Start Frame",
-          "value": 1
+          "items": [
+           {
+            "kind": "label",
+            "text": "Bake Frames"
+           }
+          ],
+          "kind": "row"
          },
          {
-          "kind": "label",
-          "text": "To Frame 255"
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "wiper_bake_start",
+            "text": "",
+            "value": 1
+           },
+           {
+            "kind": "label",
+            "text": "to 255"
+           }
+          ],
+          "kind": "row"
          }
         ],
-        "kind": "row"
+        "kind": "split"
        },
        {
         "kind": "operator",

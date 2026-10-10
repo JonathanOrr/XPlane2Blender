@@ -169,10 +169,15 @@
           "value": 1.0
          }
         ],
-        "kind": "row"
+        "kind": "column"
        },
        {
+        "heading": "Full (nits)",
         "items": [
+         {
+          "kind": "label",
+          "text": "Full (nits)"
+         },
          {
           "kind": "prop",
           "prop": "lightLevel_photometric",
@@ -185,7 +190,7 @@
            {
             "kind": "prop",
             "prop": "lightLevel_brightness",
-            "text": "Full (nits)",
+            "text": "",
             "value": 1000
            }
           ],
@@ -217,28 +222,70 @@
      {
       "items": [
        {
-        "kind": "prop",
-        "prop": "hud_glass",
-        "text": "HUD Glass",
-        "value": false
+        "heading": "Glass",
+        "items": [
+         {
+          "kind": "label",
+          "text": "Glass"
+         },
+         {
+          "kind": "prop",
+          "prop": "hud_glass",
+          "text": "HUD",
+          "value": false
+         },
+         {
+          "kind": "prop",
+          "prop": "rain_cannot_escape",
+          "text": "Rain Cannot Escape",
+          "value": false
+         }
+        ],
+        "kind": "column"
        },
        {
-        "kind": "prop",
-        "prop": "rain_cannot_escape",
-        "text": "Rain Cannot Escape",
-        "value": false
+        "heading": "Draw Order",
+        "items": [
+         {
+          "kind": "label",
+          "text": "Draw Order"
+         },
+         {
+          "kind": "prop",
+          "prop": "override_weight",
+          "text": "",
+          "value": false
+         },
+         {
+          "active": false,
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "weight",
+            "text": "",
+            "value": 0
+           }
+          ],
+          "kind": "row"
+         }
+        ],
+        "kind": "row"
        },
        {
-        "kind": "prop",
-        "prop": "override_weight",
-        "text": "Draw Order",
-        "value": false
-       },
-       {
-        "kind": "prop",
-        "prop": "isExportableRoot",
-        "text": "Its Own File, From Its Own Origin",
-        "value": false
+        "heading": "Export",
+        "items": [
+         {
+          "kind": "label",
+          "text": "Export"
+         },
+         {
+          "kind": "prop",
+          "prop": "isExportableRoot",
+          "text": "As Its Own File",
+          "value": false
+         }
+        ],
+        "kind": "column"
        },
        {
         "items": [

@@ -11,7 +11,7 @@ from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender import xplane_light_tools
 from io_xplane2blender.viewport.settings import view_settings
 
-from .common import Properties, compact_row, wrapped
+from .common import Properties, compact_row, named, wrapped
 from .ops_file import (
     XPLANE_OT_check,
     XPLANE_OT_new_file,
@@ -92,8 +92,9 @@ class XPLANE_PT_export(_SceneTab, bpy.types.Panel):
 def _developer_layout(layout, scene) -> None:
     x = scene.xplane
     col = layout.column()
-    col.prop(x, "dev_enable_breakpoints")
-    col.prop(x, "dev_export_as_dry_run")
+    sub = col.column(heading="Debugging")
+    sub.prop(x, "dev_enable_breakpoints")
+    sub.prop(x, "dev_export_as_dry_run")
     op = col.operator("scene.export_to_relative_dir", text="Export To Fixtures Folder", icon="EXPORT")
     op.initial_dir = "fixtures"
     col.operator("scene.dev_apply_default_material_to_all")
@@ -115,13 +116,13 @@ class XPLANE_PT_export_options(_SceneTab, bpy.types.Panel):
 
     def draw(self, context):
         x = context.scene.xplane
-        col = self.layout.column()
+        col = self.layout.column(heading="Export")
         col.prop(x, "optimize", text="Smaller Files (share vertices)")
         col.prop(x, "debug", text="Debug Info")
         if x.debug:
             col.prop(x, "log")
+        col.column(heading="Developer").prop(x, "plugin_development", text="Tools")
         col.label(text=f"Add-on {xplane_helpers.VerStruct.current()}", icon="INFO")
-        col.prop(x, "plugin_development")
         if x.plugin_development:
             _developer_layout(col.box(), context.scene)
 
@@ -195,7 +196,7 @@ class XPLANE_PT_collection(Properties, bpy.types.Panel):
         col = layout.column()
         col.active = collection.xplane.is_exportable_collection
         col.prop(layer, "name", text="Saved As")
-        row = compact_row(col)
+        row = named(col, "Is A")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_AIRCRAFT, text="Aircraft Part")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_COCKPIT, text="Cockpit")
         op = layout.operator(XPLANE_OT_show_file.bl_idname, text="File Settings And Export", icon="SCENE_DATA")

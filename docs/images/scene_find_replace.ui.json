@@ -91,59 +91,92 @@
    {
     "items": [
      {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "COMMANDS",
-      "prop": "kinds",
-      "text": "Commands"
+      "items": [
+       {
+        "kind": "label",
+        "text": "Look In"
+       }
+      ],
+      "kind": "row"
      },
      {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "DATAREFS",
-      "prop": "kinds",
-      "text": "Datarefs"
-     },
-     {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "LIGHT_LEVELS",
-      "prop": "kinds",
-      "text": "Light Levels"
-     },
-     {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "TOOLTIPS",
-      "prop": "kinds",
-      "text": "Tooltips"
-     },
-     {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "CUSTOM",
-      "prop": "kinds",
-      "text": "Custom Attributes"
+      "items": [
+       {
+        "items": [
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "COMMANDS",
+          "prop": "kinds",
+          "text": "Commands"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "DATAREFS",
+          "prop": "kinds",
+          "text": "Datarefs"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "LIGHT_LEVELS",
+          "prop": "kinds",
+          "text": "Light Levels"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "TOOLTIPS",
+          "prop": "kinds",
+          "text": "Tooltips"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "CUSTOM",
+          "prop": "kinds",
+          "text": "Custom Attributes"
+         }
+        ],
+        "kind": "grid"
+       }
+      ],
+      "kind": "row"
      }
     ],
-    "kind": "grid"
+    "kind": "split"
    },
    {
     "items": [
      {
-      "kind": "prop",
-      "prop": "match_case",
-      "text": "Match Case",
-      "value": true
+      "items": [
+       {
+        "kind": "label",
+        "text": "Match"
+       }
+      ],
+      "kind": "row"
      },
      {
-      "kind": "prop",
-      "prop": "use_regex",
-      "text": "Regex",
-      "value": false
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "match_case",
+        "text": "Case",
+        "value": true
+       },
+       {
+        "kind": "prop",
+        "prop": "use_regex",
+        "text": "Regex",
+        "value": false
+       }
+      ],
+      "kind": "row"
      }
     ],
-    "kind": "row"
+    "kind": "split"
    },
    {
     "items": [

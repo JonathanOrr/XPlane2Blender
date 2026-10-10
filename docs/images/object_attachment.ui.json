@@ -21,23 +21,33 @@
        {
         "items": [
          {
-          "kind": "label",
-          "text": "Holds"
+          "items": [
+           {
+            "kind": "label",
+            "text": "Holds"
+           }
+          ],
+          "kind": "row"
          },
          {
-          "kind": "prop",
-          "prop": "magnet_type_is_xpad",
-          "text": "Tablet",
-          "value": true
-         },
-         {
-          "kind": "prop",
-          "prop": "magnet_type_is_flashlight",
-          "text": "Flashlight",
-          "value": false
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "magnet_type_is_xpad",
+            "text": "Tablet",
+            "value": true
+           },
+           {
+            "kind": "prop",
+            "prop": "magnet_type_is_flashlight",
+            "text": "Flashlight",
+            "value": false
+           }
+          ],
+          "kind": "row"
          }
         ],
-        "kind": "row"
+        "kind": "split"
        }
       ],
       "kind": "column"
