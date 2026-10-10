@@ -110,6 +110,10 @@ class TestEverySettingHasAPlace(XPlaneTestCase):
                     x.manip.autodetect_settings_opt_in = opt_in
                     x.manip.autodetect_datarefs = autodetect
                     self.draw()
+        x.manip.type = C.MANIP_DEVICE
+        for device in (C.DEVICE_GNS430_1, C.DEVICE_PLUGIN):
+            x.manip.device_name = device
+            self.draw()
         for feature in (C.COCKPIT_FEATURE_NONE, C.COCKPIT_FEATURE_PANEL, C.COCKPIT_FEATURE_DEVICE):
             for blend in (C.BLEND_ON, C.BLEND_OFF):
                 for device in (C.DEVICE_GNS430_1, C.DEVICE_PLUGIN):

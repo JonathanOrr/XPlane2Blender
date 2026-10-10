@@ -213,6 +213,7 @@ CONTROL_KINDS: Dict[str, ControlKind] = collections.OrderedDict((
     (C.MANIP_DRAG_XY,                     ControlKind("Drag in two directions", "Dragged", "Dragging left/right and up/down sets two datarefs (yokes, sticks)", C.MANIP_CURSOR_FOUR_ARROWS)),
     (C.MANIP_DRAG_AXIS_PIX,               ControlKind("Drag the mouse sideways", "Dragged", "Dragging the mouse left and right changes a dataref, however the object is turned", C.MANIP_CURSOR_LEFT_RIGHT)),
     (C.MANIP_NOOP,                        ControlKind("Blocks clicks", "Other", "Does nothing, and stops clicks reaching what is behind it", C.MANIP_CURSOR_ARROW)),
+    (C.MANIP_DEVICE,                      ControlKind("Touch screen", "Other", "Clicks go to an avionics device's screen, as touches. The mesh needs the shape and UVs of the screen", C.MANIP_CURSOR_HAND)),
 ))
 # fmt: on
 
@@ -237,6 +238,7 @@ class Field:
     prop: str
     label: str
     kind: str = "value"  # "value", "dataref", "command" or "bool"
+    optional: bool = False  # Left empty, nothing is missing
 
 
 def manip_fields(manip) -> List[Field]:
@@ -248,7 +250,14 @@ def manip_fields(manip) -> List[Field]:
     if t in _TWO_COMMANDS:
         plus, minus = _TWO_COMMANDS[t]
         fields += [Field("positive_command", plus, "command"), Field("negative_command", minus, "command")]
-    if t in _TWO_COMMANDS or t in _ONE_COMMAND or t == C.MANIP_NOOP:
+    if t == C.MANIP_NOOP:
+        return [Field("noop_label", "Label dataref", "dataref", optional=True)]
+    if t == C.MANIP_DEVICE:
+        fields.append(Field("device_name", "Device"))
+        if manip.device_name == C.DEVICE_PLUGIN:
+            fields.append(Field("plugin_device", "Device ID", "text"))
+        return fields
+    if t in _TWO_COMMANDS or t in _ONE_COMMAND:
         if t == C.MANIP_COMMAND_AXIS:
             fields += [Field("dx", "Drag X"), Field("dy", "Drag Y"), Field("dz", "Drag Z")]
         return fields
@@ -402,7 +411,8 @@ def problems(obj: bpy.types.Object, scene: bpy.types.Scene, check_file: bool = T
     if obj.type == "MESH":
         if x.manip.enabled:
             for field in manip_fields(x.manip):
-                if field.kind in ("command", "dataref") and not getattr(x.manip, field.prop).strip():
+                typed = field.kind in ("command", "dataref", "text") and not field.optional
+                if typed and not getattr(x.manip, field.prop).strip():
                     found.append(f"Clickable: no {field.label.lower()} yet")
         if not any(slot.material for slot in obj.material_slots):
             found.append("No material: exported with the default look")

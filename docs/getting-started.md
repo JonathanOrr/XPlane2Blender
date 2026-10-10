@@ -60,5 +60,5 @@ whether it is an **Aircraft Part** or the **Cockpit** (the cockpit OBJ is the on
 ## What Happens To Unfinished Work
 
 You can export at any time. Settings you have started but not finished (a light with no X-Plane light chosen yet, a
-mesh without a material) are left out of the OBJ instead of stopping the export, and the status bar says how many. See
+button with no command, a mesh without a material) are left out of the OBJ instead of stopping the export, and the status bar says how many. See
 [Files And Export](files-and-export.md#exporting-work-in-progress).

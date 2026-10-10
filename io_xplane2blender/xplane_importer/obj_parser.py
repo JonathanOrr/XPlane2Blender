@@ -201,9 +201,12 @@ def parse_obj(text: str, path: str = "") -> ObjFile:
             if comment:
                 last_comment = comment
             continue
-        # Trailing comments
+        # Trailing comments. A click zone's tooltip runs to the end of the line and may have a # in it ("Door #2"),
+        # unless the # starts its first value: then the rest is commented out (Laminar's PA-18 has that)
         hash_at = stripped.find("#")
-        if hash_at > 0:
+        if hash_at > 0 and (
+            not stripped.startswith("ATTR_manip_") or stripped[:hash_at].split()[1:] == []
+        ):
             stripped = stripped[:hash_at].rstrip()
         parts = stripped.split()
         name = parts[0]

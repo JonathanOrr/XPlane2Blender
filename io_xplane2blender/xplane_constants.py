@@ -124,6 +124,31 @@ DEVICE_MCDU_1 = "MCDU_1"
 DEVICE_MCDU_2 = "MCDU_2"
 DEVICE_PLUGIN = "Plugin Device"
 
+# Screens (ATTR_cockpit_device) and touch screens (ATTR_manip_device) pick from these
+DEVICES = (
+    DEVICE_GNS430_1,
+    DEVICE_GNS430_2,
+    DEVICE_GNS530_1,
+    DEVICE_GNS530_2,
+    DEVICE_CDU739_1,
+    DEVICE_CDU739_2,
+    DEVICE_G1000_PFD1,
+    DEVICE_G1000_MFD,
+    DEVICE_G1000_PFD2,
+    DEVICE_CDU815_1,
+    DEVICE_CDU815_2,
+    DEVICE_Primus_PFD_1,
+    DEVICE_Primus_PFD_2,
+    DEVICE_Primus_MFD_1,
+    DEVICE_Primus_MFD_2,
+    DEVICE_Primus_MFD_3,
+    DEVICE_Primus_RMU_1,
+    DEVICE_Primus_RMU_2,
+    DEVICE_MCDU_1,
+    DEVICE_MCDU_2,
+    DEVICE_PLUGIN,
+)
+
 MANIP_DRAG_XY = "drag_xy"
 MANIP_DRAG_AXIS = "drag_axis"
 MANIP_COMMAND = "command"
@@ -158,6 +183,8 @@ MANIP_DRAG_ROTATE_DETENT = "drag_rotate_detent"
 MANIP_COMMAND_KNOB2 = "command_knob2"
 MANIP_COMMAND_SWITCH_LEFT_RIGHT2 = "command_switch_left_right2"
 MANIP_COMMAND_SWITCH_UP_DOWN2 = "command_switch_up_down2"
+# X-Plane 12.1: clicks on the mesh go to an avionics device's touch screen
+MANIP_DEVICE = "device"
 
 MANIPULATORS_MOUSE_WHEEL = (
     MANIP_DRAG_XY,

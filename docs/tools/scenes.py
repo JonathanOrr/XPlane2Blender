@@ -242,6 +242,18 @@ def overlays_on() -> None:
     view.show_lights = False
 
 
+def touch_screen() -> None:
+    """The primary flight display made a touch screen of the G1000 PFD it shows"""
+    from io_xplane2blender import xplane_constants as C
+
+    manip = bpy.data.objects["primary flight display"].xplane.manip
+    manip.enabled = True
+    manip.type = C.MANIP_DEVICE
+    manip.device_name = C.DEVICE_G1000_PFD1
+    manip.cursor = C.MANIP_CURSOR_HAND
+    manip.tooltip = "PFD"
+
+
 def cards() -> None:
     """The landing light button with a glow and a show / hide, as a backlit button on a powered bus"""
     from io_xplane2blender import xplane_constants as C

@@ -94,6 +94,8 @@ def main_manip_setting(manip) -> str:
         return "command"
     if manip.type in TWO_COMMAND_TYPES:
         return "positive_command"
+    if manip.type == "device":
+        return "plugin_device" if manip.device_name == "Plugin Device" else "device_name"
     return "dataref1"
 
 
@@ -108,6 +110,8 @@ def searchable_texts(obj: bpy.types.Object, table: str) -> Iterable[str]:
             m.dataref1,
             m.dataref2,
             m.tooltip,
+            m.device_name if m.type == "device" else "",
+            m.plugin_device,
         )
     if table == "LIGHT_LEVELS":
         return (obj.xplane.lightLevel_dataref,)

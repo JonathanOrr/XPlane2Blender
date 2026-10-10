@@ -33,6 +33,7 @@ MANIP_TYPE_ITEMS = [
     (MANIP_COMMAND_SWITCH_LEFT_RIGHT2, "Command Switch Left Right 2", "Command Switch Left Right 2"),
     (MANIP_DRAG_ROTATE, "Drag Rotate", "Drag Rotate"),
     (MANIP_DRAG_ROTATE_DETENT, "Drag Rotate With Detents", "Drag Rotate With Detents"),
+    (MANIP_DEVICE, "Device", "Device"),
 ]
 
 CURSOR_ITEMS = [
@@ -147,6 +148,21 @@ class XPlaneManipulatorSettings(bpy.types.PropertyGroup):
         name="Dataref 2",
         description="The second dataref: the up / down one in Drag in two directions, or the one the lever is lifted by"
         " for detents",
+    )
+    device_name: bpy.props.EnumProperty(
+        name="Device",
+        description="The avionics device whose touch screen gets the clicks. The mesh must have the shape and UVs of"
+        " the device's screen",
+        default=DEVICE_GNS430_1,
+        items=[(device, device, device) for device in DEVICES],
+    )
+    noop_label: bpy.props.StringProperty(
+        name="Label Dataref",
+        description="A dataref written after a click blocker, as Laminar do to tell which instrument it covers."
+        " X-Plane ignores it",
+    )
+    plugin_device: bpy.props.StringProperty(
+        name="Device ID", description="The device ID your plugin created the avionics device with"
     )
     step: _value("Step", "The dataref changes in steps of this size", 1.0)
     click_step: _value("Click Step", "How much each click changes the dataref")
