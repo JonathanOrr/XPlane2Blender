@@ -57,7 +57,7 @@ def _option_properties():
         ),
         "lit_strength": bpy.props.FloatProperty(
             name="Night Light Strength",
-            description="How bright the _LIT texture glows. 0 shows the daytime look",
+            description="How bright the night (LIT) texture glows. 0 shows the daytime look",
             default=0.0,
             min=0.0,
             soft_max=10.0,

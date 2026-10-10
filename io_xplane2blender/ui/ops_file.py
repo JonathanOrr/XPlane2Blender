@@ -163,7 +163,7 @@ class XPLANE_OT_textures_from_materials(bpy.types.Operator):
             return {"CANCELLED"}
         filled = I.textures_from_materials(owner)
         if filled:
-            names = (k.replace("texture_", "").replace("texture", "day") for k in filled)
+            names = (owner.xplane.layer.bl_rna.properties[k].name for k in filled)
             self.report({"INFO"}, "Filled: " + ", ".join(names))
         else:
             self.report({"INFO"}, "Nothing to fill: the slots are set, or the materials have no image textures")

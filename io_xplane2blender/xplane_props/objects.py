@@ -12,24 +12,26 @@ from .manipulator import XPlaneManipulatorSettings
 
 
 class XPlaneEmitter(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty(name="Emitter Name", description="The name of the emitter, coming from the .pss file")
-    index: bpy.props.IntProperty(name="Emitter Index", description="The index in the emitter's array", min=0)
+    name: bpy.props.StringProperty(name="Emitter Name", description="The emitter's name in the particle system file (.pss)")
+    index: bpy.props.IntProperty(name="Emitter Index", description="Which emitter of the array this is", min=0)
     index_enabled: bpy.props.BoolProperty(
-        name="Emitter Index Enabled", description="Enables the emitter array index", default=False
+        name="Emitter Index Enabled", description="The emitter is one of an array of them, with an index", default=False
     )
 
 
 class XPlaneMagnet(bpy.types.PropertyGroup):
-    debug_name: bpy.props.StringProperty(name="Debug Name", description="Human readable name for debugging purposes")
-    magnet_type_is_xpad: bpy.props.BoolProperty(name="xpad", description="Sets the type to include 'xpad'")
+    debug_name: bpy.props.StringProperty(name="Debug Name", description="A name for it in X-Plane's debug output")
+    magnet_type_is_xpad: bpy.props.BoolProperty(name="xpad", description="A mount for X-Plane's VR tablet")
     magnet_type_is_flashlight: bpy.props.BoolProperty(
-        name="flashlight", description="Sets the type to include 'flashlight'"
+        name="flashlight", description="A mount for X-Plane's VR flashlight"
     )
 
 
 class XPlaneWheel(bpy.types.PropertyGroup):
-    gear_index: bpy.props.IntProperty(name="Gear Index", min=0, default=0)
-    wheel_index: bpy.props.IntProperty(name="Wheel Index", min=0, default=0)
+    gear_index: bpy.props.IntProperty(
+        name="Gear Index", description="Which landing gear of the aircraft, as numbered in Plane Maker", min=0, default=0
+    )
+    wheel_index: bpy.props.IntProperty(name="Wheel Index", description="Which wheel of that gear", min=0, default=0)
 
 
 class XPlaneEmpty(bpy.types.PropertyGroup):
@@ -44,9 +46,9 @@ class XPlaneEmpty(bpy.types.PropertyGroup):
     )
     special_type: bpy.props.EnumProperty(
         name="Empty Special Type",
-        description="Type XPlane2Blender item this is",
+        description="What X-Plane uses the empty for",
         items=[
-            (EMPTY_USAGE_NONE, "None", "Empty has no special use", 0),
+            (EMPTY_USAGE_NONE, "None", "Nothing: the empty only holds or moves other objects", 0),
             (EMPTY_USAGE_EMITTER_PARTICLE, "Particle Emitter", "A particle emitter", 1),
             (EMPTY_USAGE_WHEEL, "Wheel", "A wheel", 2),
             (EMPTY_USAGE_MAGNET, "Magnet", "A mounting point on a yoke where a VR tablet can be attached", 3),
@@ -58,13 +60,12 @@ def _weight_props() -> dict:
     return {
         "override_weight": bpy.props.BoolProperty(
             name="Override Weight",
-            description="If checked you can override the internal weight of the object. Heavier objects will be"
-            " written later in OBJ",
+            description="Choose where the object is written in the OBJ: heavier objects are written, and drawn, later",
             default=False,
         ),
         "weight": bpy.props.IntProperty(
             name="Weight",
-            description="Usual weights are: Meshes 0-8999, Lines 9000 - 9999, Lights > = 10000",
+            description="Heavier is written later. Meshes are usually 0 to 8999, lines 9000 to 9999 and lights 10000 and up",
             default=0,
             min=0,
         ),
@@ -91,19 +92,19 @@ class XPlaneObjectSettings(bpy.types.PropertyGroup):
     """bpy.types.Object.xplane"""
 
     hud_glass: bpy.props.BoolProperty(
-        name="HUD Glass", description="Object is the glass of a HUD display", default=False
+        name="HUD Glass", description="The object is the glass of a head-up display (HUD)", default=False
     )
     rain_cannot_escape: bpy.props.BoolProperty(
-        name="Rain Cannot Escape", description="Rain cannot escape from the object", default=False
+        name="Rain Cannot Escape", description="Rain does not run from this object onto the parts around it (TRIS_break)", default=False
     )
     override_lods: bpy.props.BoolProperty(
         name="Override LODs",
-        description="Overrides any parent's LOD buckets for this object and its children",
+        description="Choose the levels of detail of this object and its children, instead of their parent's",
         default=False,
     )
     lod: bpy.props.BoolVectorProperty(
         name="Levels Of Detail",
-        description="Define in wich LODs this object will be used. If none is checked it will be used in all",
+        description="The levels of detail the object is drawn in. None ticked: all of them",
         default=(False, False, False, False),
         size=MAX_LODS - 1,
     )
@@ -116,7 +117,7 @@ class XPlaneObjectSettings(bpy.types.PropertyGroup):
     )
     isExportableRoot: bpy.props.BoolProperty(
         name="Root Object",
-        description="Activate to export this object and all its children into it's own .obj file",
+        description="Export this object and its children as their own OBJ file, from the object's origin",
         default=False,
     )
     layer: bpy.props.PointerProperty(

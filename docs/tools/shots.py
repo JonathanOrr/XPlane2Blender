@@ -112,11 +112,11 @@ SHOTS: List[Shot] = [
         height=1100,
     ),
     Shot(
-        "scene_file_maps_rain",
+        "scene_file_rain",
         "SCENE",
         ("XPLANE_PT_export",),
         select="glareshield panel",
-        open=("XPLANE_PT_file_texture_maps", "XPLANE_PT_file_rain"),
+        open=("XPLANE_PT_file_rain",),
         hide=(
             "XPLANE_PT_file",
             "XPLANE_PT_file_decals",
@@ -134,7 +134,7 @@ SHOTS: List[Shot] = [
             "XPLANE_PT_file_more",
             "XPLANE_PT_export_options",
         ),
-        hide=("XPLANE_PT_file", "XPLANE_PT_file_texture_maps", "XPLANE_PT_file_rain"),
+        hide=("XPLANE_PT_file", "XPLANE_PT_file_rain"),
     ),
     Shot(
         "scene_unfinished",

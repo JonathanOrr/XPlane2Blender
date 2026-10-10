@@ -54,7 +54,18 @@
           "prop": "texture_lit",
           "text": "Night",
           "value": ""
-         },
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "kind": "prop",
+        "prop": "normal_maps",
+        "text": "Normal And Shine",
+        "value": "ONE"
+       },
+       {
+        "items": [
          {
           "kind": "prop",
           "prop": "texture_normal",
@@ -192,12 +203,6 @@
     "kind": "panel",
     "label": "",
     "panel": "XPLANE_PT_file"
-   },
-   {
-    "closed": true,
-    "kind": "panel",
-    "label": "X-Plane 12 Texture Maps",
-    "panel": "XPLANE_PT_file_texture_maps"
    },
    {
     "closed": true,

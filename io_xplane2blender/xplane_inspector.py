@@ -167,6 +167,9 @@ def textures_from_materials(owner: FileOwner) -> Dict[str, str]:
     layer = owner.xplane.layer
     filled = {}
     for key, counter in counts.items():
+        if key == "texture_normal":
+            # The separate maps' normal map is the same image
+            key = C.NORMAL_MAPS_TEXTURES[layer.normal_maps][0][1]
         if not getattr(layer, key):
             path = counter.most_common(1)[0][0]
             setattr(layer, key, path)

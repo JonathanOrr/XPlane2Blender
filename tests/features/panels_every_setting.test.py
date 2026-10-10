@@ -78,6 +78,9 @@ class TestEverySettingHasAPlace(XPlaneTestCase):
                     setattr(layer, f"decal{i}_projected", projected)
                     setattr(layer, f"normal_decal{i}_projected", projected)
                 self.draw()
+        for way in C.NORMAL_MAPS_TEXTURES:
+            layer.normal_maps = way
+            self.draw()
         bpy.context.scene.xplane.debug = True
         bpy.context.scene.xplane.plugin_development = True
         self.draw()

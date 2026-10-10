@@ -16,23 +16,23 @@ THERMAL_SOURCES = (
 
 class XPlaneThermalSourceSettings(bpy.types.PropertyGroup):
     defrost_time: bpy.props.StringProperty(
-        name="Defrost Time", description="Defrost time in seconds (Can be a dataref)"
+        name="Defrost Time", description="How many seconds it takes to clear the window, or a dataref that gives it"
     )
     dataref_on_off: bpy.props.StringProperty(
-        name="Thermal On/Off Dataref", description="Dataref that controls source on/off"
+        name="Thermal On/Off Dataref", description="The dataref that switches the window heat on and off"
     )
 
 
 class XPlaneWiperSettings(bpy.types.PropertyGroup):
     object_name: bpy.props.StringProperty(
         name="Blender Wiper Object",
-        description="Name of wiper object, used in creation of wiper gradient texture",
+        description="The wiper blade object, whose sweep the gradient texture is baked from",
     )
     dataref: bpy.props.StringProperty(
-        name="Wiper animation dref", description="The dataref that controls the motion of the wiper object"
+        name="Wiper animation dref", description="The dataref that moves the wiper"
     )
-    start: bpy.props.FloatProperty(name="Wiper Dataref Start", description="Start dataref value of Wiper animation")
-    end: bpy.props.FloatProperty(name="Wiper Dataref End", description="End dataref value of Wiper animation")
+    start: bpy.props.FloatProperty(name="Wiper Dataref Start", description="The dataref value where the wiper's sweep starts")
+    end: bpy.props.FloatProperty(name="Wiper Dataref End", description="The dataref value where the wiper's sweep ends")
     nominal_width: bpy.props.FloatProperty(
         name="Wiper Thickness",
         description="Width of wiper as the percent of wiper animation arc that is covered by the blade at rest."
@@ -47,21 +47,21 @@ class XPlaneWiperSettings(bpy.types.PropertyGroup):
 class XPlaneRainSettings(bpy.types.PropertyGroup):
     rain_scale: bpy.props.FloatProperty(
         name="Rain Scale",
-        description="Scales the visual output of rain to match texture resolution",
+        description="Scales the rain drops to suit the resolution of the textures",
         default=1.0,
         min=0.1,
         max=1.0,
     )
     thermal_texture: bpy.props.StringProperty(
-        name="Thermal Texture", description="File path to the thermal texture", subtype="FILE_PATH"
+        name="Thermal Texture", description="The defrost texture, which marks the area each window heat clears", subtype="FILE_PATH"
     )
     wiper_ext_glass_object: bpy.props.StringProperty(
         name="Exterior Glass Object",
-        description="Name of Object to be used as exterior glass (such as a Windshield) by the baker",
+        description="The outside glass the wipers sweep (such as the windshield), for the baker",
     )
     wiper_texture: bpy.props.StringProperty(
         name="Wiper Gradient Texture",
-        description="File path to the wiper gradient texture (click 'Make Wiper Gradient Texture' to make)",
+        description="The wiper gradient texture, which Bake For makes",
         subtype="FILE_PATH",
     )
 
@@ -74,12 +74,16 @@ def _numbered_props() -> dict:
             name=f"{where} Thermal Source",
             description=f"Thermal Source for the {where.lower()}",
         )
-        props[f"thermal_source_{i}_enabled"] = bpy.props.BoolProperty(name=f"Enable {where} Thermal Source")
+        props[f"thermal_source_{i}_enabled"] = bpy.props.BoolProperty(
+            name=f"Enable {where} Thermal Source", description=f"The {where.lower()} is heated against frost"
+        )
     for i in range(1, 5):
         props[f"wiper_{i}"] = bpy.props.PointerProperty(
             type=XPlaneWiperSettings, name=f"Wiper {i}", description="Wiper parameters"
         )
-        props[f"wiper_{i}_enabled"] = bpy.props.BoolProperty(name=f"Enable Wiper {i}")
+        props[f"wiper_{i}_enabled"] = bpy.props.BoolProperty(
+            name=f"Enable Wiper {i}", description="Export this wiper. The wipers are numbered from the first"
+        )
     return props
 
 

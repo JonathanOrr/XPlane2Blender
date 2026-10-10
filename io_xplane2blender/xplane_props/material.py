@@ -53,24 +53,23 @@ class XPlaneMaterialSettings(bpy.types.PropertyGroup):
 
     draw: bpy.props.BoolProperty(
         name="Draw Objects With This Material",
-        description="If turned off, objects with this material won't be drawn",
+        description="Draw the surface. Off: it is not drawn but can still be clicked, for invisible click zones",
         default=True,
     )
     # The name is from X-Plane 10, when it replaced an older on/off setting
     blend_v1000: bpy.props.EnumProperty(
         name="Blend",
-        description="Controls texture alpha/blending",
+        description="How the day texture's alpha is drawn",
         default=BLEND_ON,
         items=[
-            (BLEND_OFF, "Alpha Cutoff", "Textures alpha channel will be used to cutoff areas above the Alpha cutoff ratio"),
-            (BLEND_ON, "Alpha Blend", "Textures alpha channel will blended"),
-            (BLEND_SHADOW, "Shadow", "In shadow mode, shadows are not blended but primary drawing is"),
+            (BLEND_OFF, "Alpha Cutoff", "Alpha below Cut Off Below is not drawn, the rest is opaque"),
+            (BLEND_ON, "Alpha Blend", "The alpha blends with what is behind"),
+            (BLEND_SHADOW, "Shadow", "Drawn blended, but its shadow is cut at Cut Off Below"),
         ],
     )
     blendRatio: bpy.props.FloatProperty(
         name="Alpha Cutoff Ratio",
-        description="Levels in the texture below this level are rendered as fully transparent and levels above this"
-        " level are fully opaque",
+        description="Alpha below this is not drawn, alpha above it is opaque",
         default=0.5,
         step=0.1,
         precision=2,
@@ -78,11 +77,12 @@ class XPlaneMaterialSettings(bpy.types.PropertyGroup):
         max=1.0,
     )
     shadow_local: bpy.props.BoolProperty(
-        name="Cast Shadows", description="If enabled, objects with this material cast shadows", default=True
+        name="Cast Shadows", description="Objects with this material cast shadows", default=True
     )
     poly_os: bpy.props.IntProperty(
         name="Polygon Offset",
-        description="Draws the surface on top of the ones under it (X-Plane's polygon offset), for decals and labels that flicker. Leave at 0 for default behaviour",
+        description="Draws the surface over others at the same place (X-Plane's polygon offset), for decals and labels"
+        " that flicker. 0: off",
         default=0,
         step=1,
         min=0,
@@ -90,46 +90,45 @@ class XPlaneMaterialSettings(bpy.types.PropertyGroup):
 
     surfaceType: bpy.props.EnumProperty(
         name="Surface Type",
-        description="Controls the bumpiness of material in X-Plane",
+        description="The aircraft can stand on the surface, and what kind it is (which sets its bumpiness). None: not solid",
         default=SURFACE_TYPE_NONE,
         items=[(identifier, name, name) for identifier, name in SURFACES],
     )
-    deck: bpy.props.BoolProperty(name="Deck", description="Allows the user to fly under the surface", default=False)
+    deck: bpy.props.BoolProperty(name="Deck", description="The aircraft can also be under the surface, as under a deck", default=False)
     solid_camera: bpy.props.BoolProperty(
         name="Camera Collision",
-        description="X-Plane's camera will be prevented from moving through objects with this material. Only allowed"
-        " in Cockpit type exports",
+        description="X-Plane's camera cannot pass through the surface. Cockpit files only",
         default=False,
     )
 
     cockpit_feature: bpy.props.EnumProperty(
         name="Cockpit Feature",
-        description="What cockpit feature to enable",
+        description="Show the cockpit's 2D panel or an avionics device on the surface",
         items=[
-            (COCKPIT_FEATURE_NONE, "None", "Material uses no advanced cockpit features"),
-            (COCKPIT_FEATURE_PANEL, "Panel Texture", "Material uses Panel Texture"),
-            (COCKPIT_FEATURE_DEVICE, "Cockpit Device", "Material uses Device Texture"),
+            (COCKPIT_FEATURE_NONE, "None", "An ordinary surface"),
+            (COCKPIT_FEATURE_PANEL, "Panel Texture", "Shows the cockpit's 2D panel, by the object's UVs"),
+            (COCKPIT_FEATURE_DEVICE, "Cockpit Device", "Shows one of X-Plane's avionics devices, or a plugin's"),
         ],
     )
     cockpit_region: bpy.props.EnumProperty(
         name="Cockpit Region",
-        description="Cockpit region to use",
+        description="Which region of the cockpit panel texture it shows",
         default="0",
         items=[("0", "None", "None")] + [(str(i),) * 3 for i in range(1, MAX_COCKPIT_REGIONS + 1)],
     )
     cockpit_feature_use_luminance: bpy.props.BoolProperty(
-        name="Use Cockpit Panel Luminance", description="Use cockpit panel luminance feature"
+        name="Use Cockpit Panel Luminance", description="Give the screen a real-world brightness"
     )
     cockpit_feature_luminance: bpy.props.IntProperty(
         name="Cockpit Panel Maximum Luminance",
-        description="Real world maximum brightness of the panel, in nts",
+        description="The screen's real-world brightness at its brightest, in nits (cd/m²)",
         min=1,
         max=60000,
         default=1000,
     )
     device_name: bpy.props.EnumProperty(
         name="Cockpit Device Name",
-        description="GPS device name",
+        description="Which of X-Plane's avionics devices the screen shows",
         default=DEVICE_GNS430_1,
         items=[(device, device, device) for device in DEVICES],
     )
@@ -137,14 +136,13 @@ class XPlaneMaterialSettings(bpy.types.PropertyGroup):
     device_lighting_channel: bpy.props.IntProperty(
         name="Rheostat Lighting Channel",
         description="The brightness knob of the screen: a 0 based index of X-Plane's lighting channels (rheostats), or -1 for"
-        " none (Laminar's G1000 screens use it). Not affected by 'Light Level'",
+        " none (Laminar's G1000 screens use it). Material Glow does not change it",
         default=0,
         min=-1,
     )
     device_auto_adjust: bpy.props.BoolProperty(
         name="Auto-adjust for daytime readability",
-        description="If true, the screen brightens automatically to be readable in the day. Otherwise it is"
-        " 'washed out' in daylight",
+        description="The screen brightens by itself to be readable in daylight. Off: it looks washed out in daylight",
         default=True,
     )
     customAttributes: bpy.props.CollectionProperty(
@@ -158,7 +156,7 @@ add_props(
     XPlaneMaterialSettings,
     {
         **{
-            f"device_bus_{i}": bpy.props.BoolProperty(name=f"Bus {i + 1}", description=f"System bus {i + 1}")
+            f"device_bus_{i}": bpy.props.BoolProperty(name=f"Bus {i + 1}", description=f"Electrical bus {i + 1} powers the screen")
             for i in range(6)
         },
         **light_level_props("material"),

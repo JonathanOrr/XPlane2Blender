@@ -9,6 +9,7 @@ from io_xplane2blender import xplane_helpers
 from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender import xplane_light_tools
 from io_xplane2blender.xplane_ops import getDatarefValuePath, removeDatarefFCurve
+from io_xplane2blender.xplane_props.light import LIGHT_TYPE_ITEMS
 
 from .state import selected_or_active
 
@@ -105,6 +106,14 @@ class XPLANE_OT_add_dataref(bpy.types.Operator):
         )
     )
     target: bpy.props.EnumProperty(items=TARGETS, default="object")
+
+    @classmethod
+    def description(cls, context, properties):
+        return {
+            C.ANIM_TYPE_TRANSFORM: "Add a dataref that moves it: pose it and key the pose at dataref values",
+            C.ANIM_TYPE_SHOW: "Show it only while a dataref is in a range",
+            C.ANIM_TYPE_HIDE: "Hide it while a dataref is in a range",
+        }[properties.anim_type]
 
     def execute(self, context):
         owner, _, _ = animated(context, self.target)
@@ -222,6 +231,10 @@ class XPLANE_OT_set_light_kind(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO", "INTERNAL"}
 
     kind: bpy.props.StringProperty()
+
+    @classmethod
+    def description(cls, context, properties):
+        return next((h for k, _, h, _ in LIGHT_TYPE_ITEMS if k == properties.kind), "")
 
     def execute(self, context):
         lights = [o for o in selected_or_active(context) if o.type == "LIGHT"]

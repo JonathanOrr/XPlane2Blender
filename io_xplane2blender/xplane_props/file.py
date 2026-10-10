@@ -14,20 +14,20 @@ from .rain import XPlaneRainSettings
 class XPlaneCockpitRegion(bpy.types.PropertyGroup):
     # BAD NAME ALERT: Should have been called "bottom", see #416
     top: bpy.props.IntProperty(
-        name="Bottom", description="Bottom of cockpit region", default=0, min=0, max=2048
+        name="Bottom", description="The region's bottom edge on the panel texture, in pixels", default=0, min=0, max=2048
     )
-    left: bpy.props.IntProperty(name="Left", description="Left of cockpit region", default=0, min=0, max=2048)
+    left: bpy.props.IntProperty(name="Left", description="The region's left edge on the panel texture, in pixels", default=0, min=0, max=2048)
     width: bpy.props.IntProperty(
-        name="Width", description="Width of cockpit region in powers of 2", default=1, min=1, max=11
+        name="Width", description="The region's width in pixels, as a power of 2", default=1, min=1, max=11
     )
     height: bpy.props.IntProperty(
-        name="Height", description="Height of cockpit region in powers of 2", default=1, min=1, max=11
+        name="Height", description="The region's height in pixels, as a power of 2", default=1, min=1, max=11
     )
 
 
 class XPlaneLOD(bpy.types.PropertyGroup):
-    near: bpy.props.IntProperty(name="Near", description="Near distance (inclusive) in meters", default=0, min=0)
-    far: bpy.props.IntProperty(name="Far", description="Far distance (exclusive) in meters", default=0, min=0)
+    near: bpy.props.IntProperty(name="Near", description="Drawn from this distance, in meters", default=0, min=0)
+    far: bpy.props.IntProperty(name="Far", description="Drawn up to this distance, in meters", default=0, min=0)
 
     def __str__(self) -> str:
         return f"({self.near}, {self.far})"
@@ -35,6 +35,22 @@ class XPlaneLOD(bpy.types.PropertyGroup):
 
 def _texture(name: str, description: str):
     return bpy.props.StringProperty(subtype="FILE_PATH", name=name, description=description)
+
+
+def _get_normal_maps(self) -> int:
+    """Files from before the choice existed use the textures they have"""
+    stored = self.get("normal_maps")
+    if stored is not None:
+        return stored
+    if self.texture_normal or not (
+        self.texture_map_normal or self.texture_map_material_gloss or self.texture_map_gloss
+    ):
+        return 0
+    return 2 if self.texture_map_gloss and not self.texture_map_material_gloss else 1
+
+
+def _set_normal_maps(self, value: int) -> None:
+    self["normal_maps"] = value
 
 
 class XPlaneLayer(bpy.types.PropertyGroup):
@@ -52,46 +68,73 @@ class XPlaneLayer(bpy.types.PropertyGroup):
             self.lod.add()
 
     name: bpy.props.StringProperty(
-        name="Name", description="This name will be used as a filename hint for OBJ file(s)"
+        name="Name", description="The OBJ's file name, or a path relative to the .blend file"
     )
     # Blender saves the position in this list. Scenery types were 2 and 3; files using them are
     # converted when opened
     export_type: bpy.props.EnumProperty(
         name="Type",
-        description="What kind of thing are you going to export?",
+        description="An aircraft part, or the cockpit OBJ",
         default=EXPORT_TYPE_AIRCRAFT,
         items=[
-            (EXPORT_TYPE_AIRCRAFT, "Aircraft (Part)", "Aircraft (Part)"),
-            (EXPORT_TYPE_COCKPIT, "Cockpit", "Cockpit"),
+            (EXPORT_TYPE_AIRCRAFT, "Aircraft (Part)", "A part of the aircraft, seen from outside and inside"),
+            (EXPORT_TYPE_COCKPIT, "Cockpit", "The cockpit OBJ: clickable parts, panel textures and camera collision"),
         ],
     )
     debug: bpy.props.BoolProperty(
         name="Debug This OBJ",
-        description="If this and the scene's Debug are checked, debug information for this OBJ will be written to"
-        " the export log and the OBJ",
+        description="With the scene's Debug Info on, write debug comments into this OBJ and the export log",
         default=True,
     )
 
-    texture: _texture("Texture", "Texture to use for objects on this layer")
-    texture_lit: _texture("Night Texture", "Night Texture to use for objects on this layer")
-    texture_normal: _texture("Normal/Specular Texture", "Normal/Specular Texture to use for objects on this layer")
-    texture_map_normal: _texture("Normal Texture", "XY normal texture to use for objects on this layer")
-    texture_map_material_gloss: _texture(
-        "Material/Gloss Texture", "Material/Gloss texture to use for objects on this layer"
+    texture: _texture("Day Texture", "TEXTURE: the color (albedo) texture of every part of the file")
+    texture_lit: _texture("Night Texture", "TEXTURE_LIT: the texture that glows at night, drawn over the day texture")
+    normal_maps: bpy.props.EnumProperty(
+        name="Normal And Shine",
+        description="How the file's normal map and shine are textured",
+        items=[
+            (
+                NORMAL_MAPS_ONE,
+                "One Texture",
+                "TEXTURE_NORMAL: red and green are the normal, alpha the gloss and, with Metalness In Normal Map,"
+                " blue the metalness",
+                0,
+            ),
+            (
+                NORMAL_MAPS_MATERIAL_GLOSS,
+                "Normal + Metal / Gloss Maps",
+                "X-Plane 12's separate maps: TEXTURE_MAP normal and TEXTURE_MAP material_gloss, red the metalness"
+                " and green the gloss",
+                1,
+            ),
+            (
+                NORMAL_MAPS_GLOSS,
+                "Normal + Gloss Maps",
+                "X-Plane 12's separate maps: TEXTURE_MAP normal and TEXTURE_MAP gloss, red the gloss",
+                2,
+            ),
+        ],
+        get=_get_normal_maps,
+        set=_set_normal_maps,
     )
-    texture_map_gloss: _texture("Gloss Texture", "Gloss texture to use for objects on this layer")
+    texture_normal: _texture("Normal Texture", "TEXTURE_NORMAL: the normal map, with the gloss in its alpha")
+    texture_map_normal: _texture("Normal Map", "TEXTURE_MAP normal: the normal map, in red and green")
+    texture_map_material_gloss: _texture(
+        "Metal / Gloss Map", "TEXTURE_MAP material_gloss: the metalness in red and the gloss in green"
+    )
+    texture_map_gloss: _texture("Gloss Map", "TEXTURE_MAP gloss: the gloss, in red")
     normal_metalness: bpy.props.BoolProperty(
         name="Normal Metalness",
-        description="The normal map's blue channel will be used for base reflectance",
+        description="The normal map's blue is the metalness (base reflectance)",
         default=False,
     )
     blend_glass: bpy.props.BoolProperty(
         name="Blend Glass",
-        description="The alpha channel of the albedo (day texture) will be used to create translucent rendering",
+        description="Draw the file as see-through glass, as clear as the day texture's alpha",
         default=False,
     )
     luminance_override: bpy.props.BoolProperty(
-        name="Override Maximum Luminance", description="Override maximum luminance for LIT texture", default=False
+        name="Override Maximum Luminance", description="Set the brightest the night (LIT) texture gets", default=False
     )
     specular_override: bpy.props.BoolProperty(
         name="Override Specular",
@@ -109,7 +152,7 @@ class XPlaneLayer(bpy.types.PropertyGroup):
     )
     luminance: bpy.props.IntProperty(
         name="Maximum Luminance",
-        description="The overriden maximum luminance value for the LIT texture, in nts",
+        description="The brightest the night (LIT) texture gets, in nits (cd/m²)",
         min=1,
         max=60000,
         default=1000,
@@ -117,22 +160,22 @@ class XPlaneLayer(bpy.types.PropertyGroup):
 
     cockpit_panel_mode: bpy.props.EnumProperty(
         name="Panel Texture Mode",
-        description="Panel Texture Mode, affects all Materials using Panel",
+        description="What the 2D panel screens of the file show",
         items=[
-            (PANEL_COCKPIT, "Default", "Full Panel Texture: Albedo, Lit, and Normal"),
+            (PANEL_COCKPIT, "Default", "The whole panel texture: day, night and normal"),
             (
                 PANEL_COCKPIT_LIT_ONLY,
                 "Emissive Panel Texture Only",
-                "Only emissive panel texture will be dynamic. Great for computer displays",
+                "Only the night (emissive) panel texture changes, good for computer screens",
             ),
-            (PANEL_COCKPIT_REGION, "Regions", "Uses regions of panel texture"),
+            (PANEL_COCKPIT_REGION, "Regions", "Parts (regions) of the panel texture"),
         ],
         default=PANEL_COCKPIT,
     )
     # BAD NAME ALERT! regions (plural) is the enum, region (singular) is the collection
     cockpit_regions: bpy.props.EnumProperty(
         name="Cockpit Regions",
-        description="Number of Cockpit regions to use",
+        description="How many regions of the panel texture the screens use",
         default="0",
         items=[("0", "None", "None")] + [(str(i),) * 3 for i in range(1, MAX_COCKPIT_REGIONS + 1)],
         update=update_cockpit_regions,
@@ -143,7 +186,7 @@ class XPlaneLayer(bpy.types.PropertyGroup):
     # lods (plural) is the enum, lod (singular) is the collection
     lods: bpy.props.EnumProperty(
         name="Levels of Detail",
-        description="Levels of detail",
+        description="How many levels of detail the file has: each draws its objects between two distances",
         default="0",
         items=[("0", "None", "None")] + [(str(i),) * 3 for i in range(1, MAX_LODS)],
         update=update_lods,
@@ -152,7 +195,7 @@ class XPlaneLayer(bpy.types.PropertyGroup):
 
     particle_system_file: bpy.props.StringProperty(
         name="Particle System Definition File",
-        description="Relative file path to a .pss that defines particles",
+        description="The particle system file (.pss) the file's emitters use",
         subtype="FILE_PATH",
     )
     rain: bpy.props.PointerProperty(
@@ -170,7 +213,7 @@ class XPlaneLayer(bpy.types.PropertyGroup):
     )
     customAttributes: bpy.props.CollectionProperty(
         name="Custom X-Plane Header Attributes",
-        description="User defined header attributes for the X-Plane file",
+        description="OBJ lines typed by hand for the file",
         type=XPlaneCustomAttribute,
     )
 
@@ -181,7 +224,7 @@ add_props(XPlaneLayer, decal_props())
 class XPlaneCollectionSettings(bpy.types.PropertyGroup):
     is_exportable_collection: bpy.props.BoolProperty(
         name="Root Collection",
-        description="Activate to export all this collection's children as an .obj file",
+        description="Export everything in this collection as one OBJ file",
         default=False,
     )
     layer: bpy.props.PointerProperty(

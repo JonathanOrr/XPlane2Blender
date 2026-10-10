@@ -20,8 +20,15 @@ Under the list are the settings of the chosen file (or the active object's file)
 
 - **Saved As**: the OBJ's name, and **Aircraft Part** or **Cockpit**. The cockpit OBJ is the one with clickable parts,
   panel textures and camera collision.
-- **Textures**: the **Day**, **Night** and **Normal** textures. X-Plane draws a whole OBJ with one set of textures;
-  **From Materials** fills the empty slots with the images its materials use most.
+- **Textures**: the **Day** and **Night** textures, and how the normal map and shine come in (**Normal And Shine**):
+  - **One Texture**: a **Normal** texture with the normal in red and green and the gloss in alpha (and the metalness in
+    blue with **Metalness In Normal Map**).
+  - **Normal + Metal / Gloss Maps**: X-Plane 12's separate **Normal** map and a **Metal / Gloss** map, the metalness
+    in red and the gloss in green.
+  - **Normal + Gloss Maps**: the separate **Normal** map and a **Gloss** map, the gloss in red.
+
+  Only the textures of the chosen way are shown and exported, so a file can never mix them. X-Plane draws a whole OBJ
+  with one set of textures; **From Materials** fills the empty slots with the images its materials use most.
 - **Look**: **See-Through Glass**, **Metalness In Normal Map**, **Specular (whole file)** (the shininess every part has
   unless its material says otherwise) and **Max Glow (nits)**, the brightest the night texture gets.
 - **Cockpit Panel**: which **Panel Texture** the 2D panel screens show, and its **Regions**.
@@ -29,9 +36,8 @@ Under the list are the settings of the chosen file (or the active object's file)
 
 The sections below them are closed until you need them:
 
-![X-Plane 12 Texture Maps and Rain, Defrost And Wipers](images/scene_file_maps_rain.png)
+![Rain, Defrost And Wipers](images/scene_file_rain.png)
 
-- **X-Plane 12 Texture Maps**: the **Normal**, **Material / Gloss** and **Gloss** maps.
 - **Rain, Defrost And Wipers**: **Rain Scale**, the **Defrost (Thermal)** texture with the windows it defrosts, and the
   **Wipers**: their **Gradient Texture**, the **Outside Glass** object, each wiper, and **Bake For** the file, which
   bakes the gradient texture from the wipers' animation between **Start Frame** and the last frame.

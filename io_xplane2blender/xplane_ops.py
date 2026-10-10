@@ -192,10 +192,16 @@ class BONE_OT_remove_xplane_dataref_keyframe(bpy.types.Operator):
 class SCENE_OT_export_to_relative_dir(bpy.types.Operator):
     bl_label = "Export OBJs"
     bl_idname = "scene.export_to_relative_dir"
-    bl_description = "Exports OBJs relative to the .blend file"
+    bl_description = "Export the ticked files next to the .blend file, or below it at their Saved As paths"
 
     # initial_dir that will be prepended to the path.
     initial_dir: bpy.props.StringProperty()
+
+    @classmethod
+    def description(cls, context, properties):
+        if properties.initial_dir:
+            return f"Export the ticked files into {properties.initial_dir}"
+        return cls.bl_description
 
     def execute(self, context):
         bpy.ops.export.xplane_obj(filepath=self.initial_dir, export_is_relative=True)

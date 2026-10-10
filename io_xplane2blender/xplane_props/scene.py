@@ -12,21 +12,22 @@ class XPlaneSceneSettings(bpy.types.PropertyGroup):
 
     debug: bpy.props.BoolProperty(
         name="Print Debug Info To Output, OBJ",
-        description="If checked debug information will be printed to the console and into OBJ files",
+        description="Write debug comments into the OBJs, and debug information to the console",
         default=False,
     )
     log: bpy.props.BoolProperty(
         name="Create Log File",
-        description="If checked the debug information will be written to a log file",
+        description="Also write the debug information to a log file",
         default=False,
     )
     optimize: bpy.props.BoolProperty(
         name="Optimize",
-        description="If checked file size will be optimized. However this can increase export time slightly",
+        description="Write each vertex once per file, for smaller OBJs. Normals that differ only by Blender's rounding"
+        " are merged",
         default=False,
     )
     wiper_bake_start: bpy.props.IntProperty(
-        name="Start Frame", description="Start of keyframe range for baking wiper gradient texture", min=1, default=1
+        name="Start Frame", description="The first frame of the wiper animation to bake. The bake uses 255 frames", min=1, default=1
     )
 
     plugin_development: bpy.props.BoolProperty(
@@ -36,16 +37,15 @@ class XPlaneSceneSettings(bpy.types.PropertyGroup):
     )
     dev_enable_breakpoints: bpy.props.BoolProperty(
         name="Enable Breakpoints",
-        description="Allows use of Eclipse breakpoints (must have PyDev, Eclipse installed and configured to use and"
-        " Pydev Debug Server running!)",
+        description="Stop at breakpoints in a running PyDev debug server (Eclipse with PyDev)",
         default=False,
     )
     dev_export_as_dry_run: bpy.props.BoolProperty(
-        name="Dry Run", description="Run exporter without actually writing .objs to disk", default=False
+        name="Dry Run", description="Run the export without writing the OBJs", default=False
     )
     dev_fake_xplane2blender_version: bpy.props.StringProperty(
         name="Fake XPlane2Blender Version",
-        description="The Fake XPlane2Blender Version to re-run the upgrader with",
+        description="Re-run the updater as if the file was last saved by this version",
     )
 
     # Every version of the add-on the .blend file has been opened with, from the earliest

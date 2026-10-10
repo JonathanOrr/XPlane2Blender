@@ -86,6 +86,26 @@ class TestInspector(XPlaneTestCase):
         self.assertEqual("//kept_NML.png", layer.texture_normal)
         self.assertEqual({"texture", "texture_lit"}, set(filled))
 
+    def test_the_normal_map_fills_the_chosen_way(self) -> None:
+        cockpit = bpy.data.collections["Cockpit"]
+        material = textured_material("panel", "//panel.png")
+        tree = material.node_tree
+        bsdf = next(n for n in tree.nodes if n.type == "BSDF_PRINCIPLED")
+        image = tree.nodes.new("ShaderNodeTexImage")
+        image.image = bpy.data.images.new("//panel_NML.png", 4, 4)
+        image.image.filepath = "//panel_NML.png"
+        normal_map = tree.nodes.new("ShaderNodeNormalMap")
+        tree.links.new(image.outputs["Color"], normal_map.inputs["Color"])
+        tree.links.new(normal_map.outputs["Normal"], bsdf.inputs["Normal"])
+        mesh("part", "Cockpit").data.materials.append(material)
+        layer = cockpit.xplane.layer
+        layer.normal_maps = C.NORMAL_MAPS_MATERIAL_GLOSS
+
+        I.textures_from_materials(cockpit)
+
+        self.assertEqual("//panel_NML.png", layer.texture_map_normal)
+        self.assertEqual("", layer.texture_normal)
+
     def test_coffee_cup_from_nothing_to_obj(self) -> None:
         # The newcomer's path: a textured mesh, New File From Selection, Export
         cup = mesh("coffee cup", "Spare")

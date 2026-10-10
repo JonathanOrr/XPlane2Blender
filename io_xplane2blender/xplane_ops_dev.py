@@ -16,7 +16,7 @@ from io_xplane2blender.xplane_utils import xplane_lights_txt_parser
 class SCENE_OT_dev_apply_default_material_to_all(bpy.types.Operator):
     bl_label = "Apply the 'Material' datablock to all objects"
     bl_idname = "scene.dev_apply_default_material_to_all"
-    bl_description = "Applies the 'Material' datablock to all without a material. If 'Material' does not exist, it will be created"
+    bl_description = "Give every object without a material the material named 'Material', made if missing"
 
     def execute(self, context):
         mat = test_creation_helpers.create_material_default()
@@ -92,9 +92,7 @@ class SCENE_OT_dev_create_lights_txt_summary(bpy.types.Operator):
 class SCENE_OT_dev_root_names_from_objects(bpy.types.Operator):
     bl_label = "Create Fixture Names From Roots"
     bl_idname = "scene.dev_root_names_from_objects"
-    bl_description = (
-        "Changes each exportable root's Name property to 'test_' + root.name"
-    )
+    bl_description = "Name each export file 'test_' and its collection or object name"
 
     name_prefix = "test_"
 
@@ -109,9 +107,7 @@ class SCENE_OT_dev_root_names_from_objects(bpy.types.Operator):
 class SCENE_OT_dev_rerun_updater(bpy.types.Operator):
     bl_label = "Re-run Updater"
     bl_idname = "scene.dev_rerun_updater"
-    bl_description = (
-        "Re-runs the updater. This does not undo an update that happened on load!"
-    )
+    bl_description = "Run the updater again. It does not undo an update made when the file was opened"
 
     def execute(self, context):
         logger = xplane_helpers.logger
