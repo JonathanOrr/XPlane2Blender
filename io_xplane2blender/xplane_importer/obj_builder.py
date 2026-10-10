@@ -440,6 +440,13 @@ class ObjBuilder(PartsBuilder):
                 found = named(obj.texture_maps[kind])
                 if found:
                     setattr(layer, attribute, found)
+        if obj.texture_maps and not obj.texture_normal:
+            layer.normal_maps = (
+                xplane_constants.NORMAL_MAPS_GLOSS
+                if "gloss" in obj.texture_maps
+                and "material_gloss" not in obj.texture_maps
+                else xplane_constants.NORMAL_MAPS_MATERIAL_GLOSS
+            )
         if obj.has_normal_metalness:
             layer.normal_metalness = True
         if "BLEND_GLASS" in obj.globals:

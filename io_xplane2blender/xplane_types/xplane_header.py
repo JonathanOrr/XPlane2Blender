@@ -8,6 +8,7 @@ import bpy
 from ..xplane_constants import (
     EMPTY_USAGE_EMITTER_PARTICLE,
     EMPTY_USAGE_EMITTER_SOUND,
+    NORMAL_MAPS_TEXTURES,
 )
 from ..xplane_helpers import effective_normal_metalness, logger
 from . import xplane_header_decals, xplane_header_rain
@@ -38,14 +39,7 @@ ATTRIBUTES = (
     "POINT_COUNTS",
 )
 
-TEXTURES = (
-    ("TEXTURE", "texture"),
-    ("TEXTURE_LIT", "texture_lit"),
-    ("TEXTURE_NORMAL", "texture_normal"),
-    ("TEXTURE_MAP normal", "texture_map_normal"),
-    ("TEXTURE_MAP material_gloss", "texture_map_material_gloss"),
-    ("TEXTURE_MAP gloss", "texture_map_gloss"),
-)
+TEXTURES = (("TEXTURE", "texture"), ("TEXTURE_LIT", "texture_lit"))
 
 
 class XPlaneHeader:
@@ -82,7 +76,8 @@ class XPlaneHeader:
         if options.slungLoadWeight > 0:
             self.attributes["slung_load_weight"].setValue(options.slungLoadWeight)
 
-        for name, prop in TEXTURES:
+        # Only the normal and shine textures of the file's choice: the others may still hold paths from before
+        for name, prop in TEXTURES + NORMAL_MAPS_TEXTURES[options.normal_maps]:
             path = getattr(options, prop)
             if path:
                 try:

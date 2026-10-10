@@ -78,6 +78,20 @@ EMPTY_USAGE_WHEEL = "wheel"
 EXPORT_TYPE_AIRCRAFT = "aircraft"
 EXPORT_TYPE_COCKPIT = "cockpit"
 
+# How a file's normal map and shine are textured: one texture, or X-Plane 12's separate maps
+NORMAL_MAPS_ONE = "ONE"
+NORMAL_MAPS_MATERIAL_GLOSS = "MATERIAL_GLOSS"
+NORMAL_MAPS_GLOSS = "GLOSS"
+# The file settings each way exports, with the OBJ line it writes
+NORMAL_MAPS_TEXTURES = {
+    NORMAL_MAPS_ONE: (("TEXTURE_NORMAL", "texture_normal"),),
+    NORMAL_MAPS_MATERIAL_GLOSS: (
+        ("TEXTURE_MAP normal", "texture_map_normal"),
+        ("TEXTURE_MAP material_gloss", "texture_map_material_gloss"),
+    ),
+    NORMAL_MAPS_GLOSS: (("TEXTURE_MAP normal", "texture_map_normal"), ("TEXTURE_MAP gloss", "texture_map_gloss")),
+}
+
 ANIM_TYPE_TRANSFORM = "transform"
 ANIM_TYPE_SHOW = "show"
 ANIM_TYPE_HIDE = "hide"

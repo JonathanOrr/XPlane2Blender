@@ -33,6 +33,37 @@ def _operator_tip(idname: str) -> str:
         return ""
 
 
+def _operator_class(idname: str) -> Optional[type]:
+    def subclasses(cls):
+        for sub in cls.__subclasses__():
+            yield sub
+            yield from subclasses(sub)
+
+    return next(
+        (
+            c
+            for c in subclasses(bpy.types.Operator)
+            if getattr(c, "bl_idname", "") == idname and "description" in vars(c)
+        ),
+        None,
+    )
+
+
+def _operator_tip_for(idname: str, values: Dict[str, Any]) -> Optional[str]:
+    """The tooltip of a button whose operator words it by the button's properties (its description classmethod)"""
+    cls = _operator_class(idname)
+    if cls is None:
+        return None
+    defaults = {
+        p.identifier: getattr(p, "default", None)
+        for p in getattr(bpy.ops, idname.partition(".")[0])
+        .__getattr__(idname.partition(".")[2])
+        .get_rna_type()
+        .properties
+    }
+    return cls.description(bpy.context, types.SimpleNamespace(**{**defaults, **values}))
+
+
 def _menu_label(idname: str) -> str:
     cls = getattr(bpy.types, idname, None)
     return getattr(cls, "bl_label", idname) if cls else idname
@@ -61,6 +92,9 @@ class _OperatorProperties:
 
     def __setattr__(self, name: str, value: Any) -> None:
         self._node.setdefault("set", {})[name] = _value(value)
+        tip = _operator_tip_for(self._node["operator"], self._node["set"])
+        if tip:
+            self._node["_tip"] = tip
 
     def __getattr__(self, name: str) -> Any:
         return self._node.get("set", {}).get(name)
@@ -189,7 +223,7 @@ class Recorder:
                 "kind": "operator",
                 "operator": idname,
                 "text": text if text is not None else _operator_label(idname),
-                "_tip": _operator_tip(idname),
+                "_tip": _operator_tip_for(idname, {}) or _operator_tip(idname),
                 "_name": _operator_label(idname),
             }
         )

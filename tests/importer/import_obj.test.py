@@ -200,6 +200,16 @@ class TestImportObj(XPlaneTestCase):
         self.assertEqual(bsdf.inputs["Metallic"].links[0].from_node.bl_idname, "ShaderNodeMapRange")
         self.assertTrue(bsdf.inputs["Roughness"].links)
 
+    def test_separate_maps_choose_the_files_normal_and_shine(self) -> None:
+        for header, way in (
+            ("TEXTURE_MAP normal n.png\nTEXTURE_MAP gloss g.png\n", xplane_constants.NORMAL_MAPS_GLOSS),
+            ("TEXTURE_MAP normal n.png\nTEXTURE_MAP material_gloss m.png\n", xplane_constants.NORMAL_MAPS_MATERIAL_GLOSS),
+            ("TEXTURE_NORMAL n.png\n", xplane_constants.NORMAL_MAPS_ONE),
+        ):
+            with self.subTest(way=way):
+                built = self.do_import(obj_text("", header="TEXTURE tex.png\n" + header), name=f"{way}.obj")
+                self.assertEqual(built.collection.xplane.layer.normal_maps, way)
+
     def test_global_specular_is_the_default_shininess(self) -> None:
         built = self.do_import(obj_text("", header="GLOBAL_specular 0.6\n"))
         self.assertAlmostEqual(self.meshes(built)[0].data.materials[0].specular_intensity, 0.6, places=4)

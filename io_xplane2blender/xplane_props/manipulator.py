@@ -65,13 +65,13 @@ def _value(name: str, description: str, default: float = 0.0):
 class XPlaneManipulatorSettings(bpy.types.PropertyGroup):
     autodetect_datarefs: bpy.props.BoolProperty(
         name="Autodetect Datarefs",
-        description="If checked, dataref(s) for this manipulator will be taken from its mesh's animations",
+        description="Use the datarefs the object's animation is keyed on, instead of typing them in",
         default=True,
     )
     # This is meant for making old manipulator types smarter, not new manipulator types
     autodetect_settings_opt_in: bpy.props.BoolProperty(
         name="Autodetect Settings",
-        description="Use new algorithms to autodetect certain manipulator settings from animation data",
+        description="Take the drag direction and the dataref values from the object's animation, instead of typing them in",
         default=False,
     )
     axis_detent_ranges: bpy.props.CollectionProperty(
@@ -80,54 +80,82 @@ class XPlaneManipulatorSettings(bpy.types.PropertyGroup):
         type=XPlaneAxisDetentRange,
     )
     enabled: bpy.props.BoolProperty(
-        name="Manipulator", description="If checked, this object will be treated as a manipulator", default=False
+        name="Manipulator", description="Make the object clickable in X-Plane", default=False
     )
     type: bpy.props.EnumProperty(
-        name="Manipulator Type", description="The type of the manipulator", items=MANIP_TYPE_ITEMS
+        name="Manipulator Type", description="What clicking or dragging the object does", items=MANIP_TYPE_ITEMS
     )
     tooltip: bpy.props.StringProperty(
-        name="Manipulator Tooltip", description="The tooltip will be displayed when hovering over the object"
+        name="Manipulator Tooltip", description="The text X-Plane shows while the mouse is over the object"
     )
     cursor: bpy.props.EnumProperty(
         name="Manipulator Cursor",
-        description="The mouse cursor type when hovering over the object",
+        description="The mouse cursor X-Plane shows over the object",
         default=MANIP_CURSOR_HAND,
         items=CURSOR_ITEMS,
     )
-    dx: _value("Drag X", "X-Drag axis length")
-    dy: _value("Drag Y", "Y-Drag axis length")
-    dz: _value("Drag Z", "Z-Drag axis length")
-    v1: _value("Value 1", "Value 1")
-    v2: _value("Value 2", "Value 2")
-    v1_min: _value("Value 1 Min", "Value 1 min")
-    v1_max: _value("Value 1 Max", "Value 1 max")
-    v2_min: _value("Value 2 Min", "Value 2 min")
-    v2_max: _value("Value 2 Max", "Value 2 max")
+    dx: _value(
+        "Drag X",
+        "How far the drag goes: along X in meters for a slide or Drag runs commands, the width of Drag in two"
+        " directions, or the pixels of Drag the mouse sideways",
+    )
+    dy: _value(
+        "Drag Y",
+        "How far the drag goes: along Y in meters for a slide or Drag runs commands, or the height of Drag in two"
+        " directions",
+    )
+    dz: _value("Drag Z", "How far the drag goes along Z, in meters, for a slide or Drag runs commands")
+    v1: _value("Value 1", "The dataref value at the start of the drag, or the lowest value of a stepped switch or knob")
+    v2: _value("Value 2", "The dataref value at the end of the drag, or the highest value of a stepped switch or knob")
+    v1_min: _value(
+        "Value 1 Min", "The lowest value of a Step, or where the left / right dataref starts in Drag in two directions"
+    )
+    v1_max: _value(
+        "Value 1 Max", "The highest value of a Step, or where the left / right dataref ends in Drag in two directions"
+    )
+    v2_min: _value(
+        "Value 2 Min",
+        "Where the up / down dataref starts in Drag in two directions, or the detent dataref with the lever at rest",
+    )
+    v2_max: _value(
+        "Value 2 Max",
+        "Where the up / down dataref ends in Drag in two directions, or the detent dataref with the lever lifted",
+    )
     detent_dataref_range: bpy.props.BoolProperty(
         name="Own Detent Dataref Range",
-        description="Drag Rotate With Detents: the detent dataref goes from Value 2 Min to Value 2 Max as the lever is"
-        " lifted (Laminar's levers use 0 to 1), and detent heights are in its units. Off: it goes from 0 to the lift"
-        " in meters",
+        description="The detent dataref goes from its value at rest to its value lifted as the lever is lifted"
+        " (Laminar's levers use 0 to 1), and the detent heights are in its units. Off: it goes from 0 to the lift in"
+        " meters",
         default=False,
     )
-    v_down: _value("Value On Mouse Down", "Value to set dataref on mouse down")
-    v_up: _value("Value On Mouse Up", "Value to set dataref on mouse up")
-    v_hold: _value("Value On Mouse Hold", "Value to set dataref on mouse hold")
-    v_on: _value("On Value", "On value")
-    v_off: _value("Off Value", "Off value")
-    command: bpy.props.StringProperty(name="Command", description="The command to fire when manipulator is used")
-    positive_command: bpy.props.StringProperty(name="Positive Command", description="Positive command")
-    negative_command: bpy.props.StringProperty(name="Negative Command", description="Negative command")
-    dataref1: bpy.props.StringProperty(name="Dataref 1", description="Dataref 1")
-    dataref2: bpy.props.StringProperty(name="Dataref 2", description="Dataref 2")
-    step: _value("Step", "Dataref increment", 1.0)
-    click_step: _value("Click Step", "Value change on click")
-    hold_step: _value("Hold Step", "Value change on hold")
-    wheel_delta: _value("Wheel Delta", "Value change on mouse wheel tick")
+    v_down: _value(
+        "Value On Mouse Down",
+        "The value the dataref is set to when the object is clicked (and held, for Push), or added on each click for"
+        " a Step",
+    )
+    v_up: _value("Value On Mouse Up", "The value the dataref is set to when the mouse is released")
+    v_hold: _value("Value On Mouse Hold", "The value added to the dataref while the mouse is held down")
+    v_on: _value("On Value", "The dataref value when the toggle is on")
+    v_off: _value("Off Value", "The dataref value when the toggle is off")
+    command: bpy.props.StringProperty(name="Command", description="The command X-Plane runs when the object is clicked (for a Button, while it is held)")
+    positive_command: bpy.props.StringProperty(name="Positive Command", description="The command for one way: clockwise, up, right or forward")
+    negative_command: bpy.props.StringProperty(name="Negative Command", description="The command for the other way: counter-clockwise, down, left or back")
+    dataref1: bpy.props.StringProperty(
+        name="Dataref 1", description="The dataref the control changes (the left / right one in Drag in two directions)"
+    )
+    dataref2: bpy.props.StringProperty(
+        name="Dataref 2",
+        description="The second dataref: the up / down one in Drag in two directions, or the one the lever is lifted by"
+        " for detents",
+    )
+    step: _value("Step", "The dataref changes in steps of this size", 1.0)
+    click_step: _value("Click Step", "How much each click changes the dataref")
+    hold_step: _value("Hold Step", "How much the dataref changes while the mouse is held down")
+    wheel_delta: _value("Wheel Delta", "How much one click of the mouse wheel changes the dataref. 0: the wheel does nothing")
     exp: _value(
         "Exp",
-        "Power of an exponential curve that controls the speed at which the dataref changes. Higher numbers cause a"
-        " more “non-linear” response, where small drags are very precise and large drags are very fast",
+        "How the dataref speeds up with the drag: higher numbers make small drags precise and large drags fast."
+        " 1: even",
         1.0,
     )
 

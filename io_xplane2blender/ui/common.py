@@ -43,6 +43,15 @@ class XPLANE_OT_list_add(bpy.types.Operator):
 
     target: bpy.props.StringProperty(options={"HIDDEN"})
 
+    @classmethod
+    def description(cls, context, properties):
+        what = properties.target.rpartition(".")[2]
+        return {
+            "customAttributes": "Add an OBJ line typed by hand, for anything without a setting of its own",
+            "customAnimAttributes": "Add an OBJ line typed by hand that is written with the object's animation",
+            "axis_detent_ranges": "Add a detent: a range where the lever moves freely, and how high it is lifted to get in",
+        }.get(what, "Add an entry")
+
     def execute(self, context):
         owner, attr = resolve(context, self.target)
         if owner is None:

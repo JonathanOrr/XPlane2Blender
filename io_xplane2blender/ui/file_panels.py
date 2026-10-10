@@ -23,6 +23,14 @@ class _FilePanel(Properties):
         return active_file(context) is not None
 
 
+_MAP_LABELS = {
+    "texture_normal": "Normal",
+    "texture_map_normal": "Normal",
+    "texture_map_material_gloss": "Metal / Gloss",
+    "texture_map_gloss": "Gloss",
+}
+
+
 def _cockpit_panel_layout(layout, layer) -> None:
     box = layout.box()
     box.label(text="Cockpit Panel", icon="WINDOW")
@@ -63,7 +71,10 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
         col = box.column(align=True)
         col.prop(layer, "texture", text="Day")
         col.prop(layer, "texture_lit", text="Night")
-        col.prop(layer, "texture_normal", text="Normal")
+        box.prop(layer, "normal_maps", text="Normal And Shine")
+        col = box.column(align=True)
+        for _, prop in C.NORMAL_MAPS_TEXTURES[layer.normal_maps]:
+            col.prop(layer, prop, text=_MAP_LABELS[prop])
         box.operator(XPLANE_OT_textures_from_materials.bl_idname, icon="MATERIAL")
 
         box = layout.box()
@@ -95,22 +106,9 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
             row.prop(lod, "far")
 
 
-class XPLANE_PT_file_texture_maps(_FilePanel, bpy.types.Panel):
-    bl_label = "X-Plane 12 Texture Maps"
-    bl_order = 2
-    bl_options = {"DEFAULT_CLOSED"}
-
-    def draw(self, context):
-        layer = active_file(context).xplane.layer
-        col = self.layout.column(align=True)
-        col.prop(layer, "texture_map_normal", text="Normal")
-        col.prop(layer, "texture_map_material_gloss", text="Material / Gloss")
-        col.prop(layer, "texture_map_gloss", text="Gloss")
-
-
 class XPLANE_PT_file_rain(_FilePanel, bpy.types.Panel):
     bl_label = "Rain, Defrost And Wipers"
-    bl_order = 3
+    bl_order = 2
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -159,7 +157,7 @@ class XPLANE_PT_file_rain(_FilePanel, bpy.types.Panel):
 
 class XPLANE_PT_file_decals(_FilePanel, bpy.types.Panel):
     bl_label = "Detail Textures"
-    bl_order = 4
+    bl_order = 3
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -168,7 +166,7 @@ class XPLANE_PT_file_decals(_FilePanel, bpy.types.Panel):
 
 class XPLANE_PT_file_more(_FilePanel, bpy.types.Panel):
     bl_label = "Advanced"
-    bl_order = 5
+    bl_order = 4
     bl_options = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -182,7 +180,6 @@ class XPLANE_PT_file_more(_FilePanel, bpy.types.Panel):
 
 classes = (
     XPLANE_PT_file,
-    XPLANE_PT_file_texture_maps,
     XPLANE_PT_file_rain,
     XPLANE_PT_file_decals,
     XPLANE_PT_file_more,

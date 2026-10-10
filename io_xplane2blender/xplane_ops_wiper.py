@@ -27,7 +27,7 @@ def _root(name: str, context):
 class XPLANE_OT_bake_wiper_gradient_texture(bpy.types.Operator):
     bl_label = "Make Wiper Gradient Texture"
     bl_idname = "xplane.bake_wiper_gradient_texture"
-    bl_description = "Makes the Wiper Gradient Texture from the Rain Settings of the active collection (may take more than 30 minutes)"
+    bl_description = "Bake the file's wiper gradient texture from the wipers' animation. It can take more than 30 minutes"
 
     # The file to bake for; without one, the active object's or collection's
     file: bpy.props.StringProperty(options={"HIDDEN"})

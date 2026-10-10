@@ -269,12 +269,18 @@ def _sections() -> List[Section]:
             ]
             + [
                 (
+                    f"normal and shine: {_enum_name(layer, 'normal_maps', way)}",
+                    _set("collection/cockpit:xplane.layer.normal_maps", way),
+                )
+                for way in _enum_items(layer, "normal_maps")
+            ]
+            + [
+                (
                     "two levels of detail",
                     _set("collection/cockpit:xplane.layer.lods", "2"),
                 )
             ],
         ),
-        ("Scene tab", "XPLANE_PT_file_texture_maps", "glareshield panel", {}, none),
         (
             "Scene tab",
             "XPLANE_PT_file_rain",

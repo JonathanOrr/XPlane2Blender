@@ -180,30 +180,6 @@ class XPlaneFile(XPlaneFileTree):
         # Only this file's errors count, an earlier file's errors must not stop this one
         return logger.errorCount() <= self.errors_at_start
 
-    def validateOptions(self) -> bool:
-        if self.options.texture_normal and self.options.texture_map_normal:
-            logger.error(
-                f'"Normal / Specular" and "Normal" provided in "{self.options.name}", use only one.'
-            )
-        if self.options.texture_normal and self.options.texture_map_material_gloss:
-            logger.error(
-                f'"Normal / Specular" and "Material / Gloss" provided in "{self.options.name}", use only one.'
-            )
-        if self.options.texture_normal and self.options.texture_map_gloss:
-            logger.error(
-                f'"Normal / Specular" and "Gloss" provided in "{self.options.name}", use only one.'
-            )
-        if self.options.texture_map_material_gloss and self.options.texture_map_gloss:
-            logger.error(
-                f'"Material / Gloss" and "Gloss" provided in "{self.options.name}", use only one.'
-            )
-
-        # Only this file's errors count, an earlier file's errors must not stop this one
-        if logger.errorCount() > self.errors_at_start:
-            return False
-
-        return True
-
     def getMaterials(self) -> List[bpy.types.Material]:
         """
         Returns a list of the materials used in the OBJ, or an empty list if none found
@@ -238,8 +214,6 @@ class XPlaneFile(XPlaneFileTree):
         self.mesh.collectXPlaneObjects(self.get_xplane_objects())
 
         if not self.validateMaterials():
-            return ""
-        if not self.validateOptions():
             return ""
 
         self.reference_material = xplane_material_utils.reference_material(

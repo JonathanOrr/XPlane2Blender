@@ -109,6 +109,10 @@ class XPLANE_OT_add_light(bpy.types.Operator):
 
     kind: bpy.props.EnumProperty(items=[(k, label, h) for k, label, h in LIGHT_KINDS[:3]])
 
+    @classmethod
+    def description(cls, context, properties):
+        return next((f"Add at the 3D cursor: {h[0].lower()}{h[1:]}" for k, _, h in LIGHT_KINDS if k == properties.kind), "")
+
     def execute(self, context):
         data = bpy.data.lights.new(light_kind_label(self.kind).lower(), "POINT" if self.kind == C.LIGHT_CUSTOM else "SPOT")
         data.xplane.type = self.kind
@@ -127,6 +131,10 @@ class XPLANE_OT_add_attachment(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     kind: bpy.props.EnumProperty(items=ATTACHMENTS)
+
+    @classmethod
+    def description(cls, context, properties):
+        return next((f"Add an empty at the 3D cursor: {h[0].lower()}{h[1:]}" for k, _, h in ATTACHMENTS if k == properties.kind), "")
 
     def execute(self, context):
         obj = bpy.data.objects.new(self.kind.replace("_", " "), None)

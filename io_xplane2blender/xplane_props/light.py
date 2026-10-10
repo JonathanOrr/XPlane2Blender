@@ -56,27 +56,26 @@ class XPlaneLightSettings(bpy.types.PropertyGroup):
 
     type: bpy.props.EnumProperty(
         name="Type",
-        description="Defines the type of the light in X-Plane",
+        description="What X-Plane light it becomes",
         default=LIGHT_AUTOMATIC,
         items=LIGHT_TYPE_ITEMS,
     )
     name: bpy.props.StringProperty(
-        name="Name", description="Name from lights.txt, see the summary for more detail"
+        name="Name", description="The light's name in X-Plane's lights.txt"
     )
     params: bpy.props.StringProperty(
         name="Parameters",
-        description="The additional parameters vary in number and definition based on the particular parameterized"
-        " light selected",
+        description="The light's parameters, in the order lights.txt gives them for this light",
         update=_changed(None),
     )
     enable_rgb_override: bpy.props.BoolProperty(
         name="Enable RGB Picker Override",
-        description="Used instead of the Blender color picker to input any RGB values. Useful for certain datarefs",
+        description="Type the color as numbers instead of picking it, for values outside 0 to 1 (some halos use -1)",
         default=False,
     )
     rgb_override_values: bpy.props.FloatVectorProperty(
         name="RGB Override Values",
-        description="The values that will be used instead of the RGB picker",
+        description="The red, green and blue written for the light",
         default=(0.0, 0.0, 0.0),
         subtype="NONE",
         unit="NONE",
@@ -99,7 +98,7 @@ class XPlaneLightSettings(bpy.types.PropertyGroup):
     )
     param_index: bpy.props.IntProperty(
         name="Dataref Index",
-        description="Index in light's associated array dataref",
+        description="The index in the light's array dataref",
         min=0,
         max=127,
     )
@@ -110,8 +109,8 @@ class XPlaneLightSettings(bpy.types.PropertyGroup):
     )
     param_size: bpy.props.FloatProperty(
         name="Light Size",
-        description="Spill size uses meters, and is how far it reaches (the Blender light's Custom Distance); billboard"
-        " size uses arbitrary scales - bigger is brighter",
+        description="A spill's reach in meters (the Blender light's Custom Distance); a glow's size, where bigger is"
+        " brighter",
         default=1.0,
         min=LIGHT_PARAM_SIZE_MIN,
         precision=3,
@@ -119,8 +118,7 @@ class XPlaneLightSettings(bpy.types.PropertyGroup):
     )
     size: bpy.props.FloatProperty(
         name="Size",
-        description="Size parameter for Custom Lights. For a Spill it is how far it reaches in meters (the Blender"
-        " light's Custom Distance)",
+        description="A Spill's reach in meters (the Blender light's Custom Distance), or a Glow Sprite's size",
         default=1.0,
         update=_changed("reach"),
     )
@@ -132,10 +130,12 @@ class XPlaneLightSettings(bpy.types.PropertyGroup):
         max=1.0,
         precision=3,
     )
-    dataref: bpy.props.StringProperty(name="Dataref", description="An X-Plane Dataref")
+    dataref: bpy.props.StringProperty(
+        name="Dataref", description="The dataref that switches or dims the light"
+    )
     uv: bpy.props.FloatVectorProperty(
         name="Texture Coordinates",
-        description="The texture coordinates in the following order: left,top,right,bottom (fractions from 0 to 1)",
+        description="The part of the texture the glow is drawn from: left, top, right and bottom, from 0 to 1",
         default=(0.0, 0.0, 1.0, 1.0),
         min=0.0,
         max=1.0,
