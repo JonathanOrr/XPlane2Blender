@@ -13,21 +13,35 @@
      {
       "items": [
        {
-        "kind": "prop_enum",
-        "on": false,
-        "option": "aircraft",
-        "prop": "export_type",
-        "text": "Aircraft Part"
+        "items": [
+         {
+          "kind": "label",
+          "text": "Is A"
+         }
+        ],
+        "kind": "row"
        },
        {
-        "kind": "prop_enum",
-        "on": true,
-        "option": "cockpit",
-        "prop": "export_type",
-        "text": "Cockpit"
+        "items": [
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "aircraft",
+          "prop": "export_type",
+          "text": "Aircraft Part"
+         },
+         {
+          "kind": "prop_enum",
+          "on": true,
+          "option": "cockpit",
+          "prop": "export_type",
+          "text": "Cockpit"
+         }
+        ],
+        "kind": "row"
        }
       ],
-      "kind": "row"
+      "kind": "split"
      }
     ],
     "kind": "column"

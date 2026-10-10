@@ -144,6 +144,29 @@ def _frame_everything(context, crowded: bool = False) -> None:
                 pass
 
 
+def _draw_options(layout, op) -> None:
+    """The options of both import dialogs: checkboxes under a heading, values named in the left column"""
+    box = layout.box()
+    col = box.column(heading="Bring In")
+    for name in (
+        "import_materials",
+        "import_animations",
+        "import_manipulators",
+        "import_lights",
+        "all_lods",
+        "hide_default_hidden",
+    ):
+        col.prop(op, name)
+    box = layout.box()
+    col = box.column(heading="Then")
+    col.prop(op, "make_exportable")
+    col.prop(op, "show_result")
+    col = box.column()
+    col.prop(op, "lit_strength")
+    col.prop(op, "light_strength")
+    col.prop(op, "scale")
+
+
 class IMPORT_OT_xplane_report(bpy.types.Operator):
     """What an import did, and what it could not do"""
 
@@ -249,24 +272,7 @@ class IMPORT_OT_xplane_obj(bpy.types.Operator, ImportHelper):
         layout = self.layout
         layout.use_property_split = True
         layout.use_property_decorate = False
-        box = layout.box()
-        box.label(text="Bring in", icon="IMPORT")
-        for name in (
-            "import_materials",
-            "import_animations",
-            "import_manipulators",
-            "import_lights",
-            "all_lods",
-            "hide_default_hidden",
-        ):
-            box.prop(self, name)
-        box = layout.box()
-        box.label(text="Setup", icon="PREFERENCES")
-        box.prop(self, "make_exportable")
-        box.prop(self, "lit_strength")
-        box.prop(self, "light_strength")
-        box.prop(self, "scale")
-        box.prop(self, "show_result")
+        _draw_options(layout, self)
 
 
 _livery_items_cache = {}
@@ -353,29 +359,12 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
         layout.use_property_split = True
         layout.use_property_decorate = False
         box = layout.box()
-        box.label(text="Aircraft", icon="OBJECT_DATA")
         box.prop(self, "livery")
-        box.prop(self, "include_damage")
-        box.prop(self, "include_attached")
-        box.prop(self, "include_not_drawn")
-        box = layout.box()
-        box.label(text="Bring in", icon="IMPORT")
-        for name in (
-            "import_materials",
-            "import_animations",
-            "import_manipulators",
-            "import_lights",
-            "all_lods",
-            "hide_default_hidden",
-        ):
-            box.prop(self, name)
-        box = layout.box()
-        box.label(text="Setup", icon="PREFERENCES")
-        box.prop(self, "make_exportable")
-        box.prop(self, "lit_strength")
-        box.prop(self, "light_strength")
-        box.prop(self, "scale")
-        box.prop(self, "show_result")
+        col = box.column(heading="Include")
+        col.prop(self, "include_damage")
+        col.prop(self, "include_attached")
+        col.prop(self, "include_not_drawn")
+        _draw_options(layout, self)
 
 
 _classes = (IMPORT_OT_xplane_obj, IMPORT_OT_xplane_aircraft, IMPORT_OT_xplane_report)

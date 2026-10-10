@@ -12,82 +12,112 @@
    {
     "items": [
      {
-      "kind": "prop",
-      "prop": "draw",
-      "text": "Visible",
-      "value": true
-     },
-     {
-      "kind": "label",
-      "text": "Transparency"
+      "heading": "Surface",
+      "items": [
+       {
+        "kind": "label",
+        "text": "Surface"
+       },
+       {
+        "kind": "prop",
+        "prop": "draw",
+        "text": "Visible",
+        "value": true
+       },
+       {
+        "kind": "prop",
+        "prop": "shadow_local",
+        "text": "Casts Shadows",
+        "value": true
+       },
+       {
+        "kind": "prop",
+        "prop": "solid_camera",
+        "text": "Camera Cannot Pass Through",
+        "value": false
+       }
+      ],
+      "kind": "column"
      },
      {
       "items": [
        {
-        "kind": "prop_enum",
-        "on": true,
-        "option": "on",
-        "prop": "blend_v1000",
-        "text": "Smooth"
+        "items": [
+         {
+          "kind": "label",
+          "text": "Transparency"
+         }
+        ],
+        "kind": "row"
        },
        {
-        "kind": "prop_enum",
-        "on": false,
-        "option": "off",
-        "prop": "blend_v1000",
-        "text": "Hard Edge"
-       },
-       {
-        "kind": "prop_enum",
-        "on": false,
-        "option": "shadow",
-        "prop": "blend_v1000",
-        "text": "Cut Shadow"
+        "items": [
+         {
+          "kind": "prop_enum",
+          "on": true,
+          "option": "on",
+          "prop": "blend_v1000",
+          "text": "Smooth"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "off",
+          "prop": "blend_v1000",
+          "text": "Hard Edge"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "shadow",
+          "prop": "blend_v1000",
+          "text": "Cut Shadow"
+         }
+        ],
+        "kind": "row"
        }
       ],
-      "kind": "row"
-     },
-     {
-      "kind": "prop",
-      "prop": "shadow_local",
-      "text": "Casts Shadows",
-      "value": true
-     },
-     {
-      "kind": "prop",
-      "prop": "solid_camera",
-      "text": "Camera Cannot Pass Through",
-      "value": false
-     },
-     {
-      "kind": "label",
-      "text": "Screen"
+      "kind": "split"
      },
      {
       "items": [
        {
-        "kind": "prop_enum",
-        "on": false,
-        "option": "none",
-        "prop": "cockpit_feature",
-        "text": "None"
+        "items": [
+         {
+          "kind": "label",
+          "text": "Screen"
+         }
+        ],
+        "kind": "row"
        },
        {
-        "kind": "prop_enum",
-        "on": false,
-        "option": "panel",
-        "prop": "cockpit_feature",
-        "text": "2D Panel"
-       },
-       {
-        "kind": "prop_enum",
-        "on": true,
-        "option": "device",
-        "prop": "cockpit_feature",
-        "text": "Avionics"
+        "items": [
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "none",
+          "prop": "cockpit_feature",
+          "text": "None"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "panel",
+          "prop": "cockpit_feature",
+          "text": "2D Panel"
+         },
+         {
+          "kind": "prop_enum",
+          "on": true,
+          "option": "device",
+          "prop": "cockpit_feature",
+          "text": "Avionics"
+         }
+        ],
+        "kind": "row"
        }
       ],
-      "kind": "row"
+      "kind": "split"
      },
      {
       "kind": "prop",
@@ -96,49 +126,64 @@
       "value": "G1000_PFD1"
      },
      {
-      "kind": "label",
-      "text": "Powered By"
-     },
-     {
       "items": [
        {
-        "kind": "prop",
-        "prop": "device_bus_0",
-        "text": "Bus 1",
-        "value": true
+        "items": [
+         {
+          "kind": "label",
+          "text": "Powered By"
+         }
+        ],
+        "kind": "row"
        },
        {
-        "kind": "prop",
-        "prop": "device_bus_1",
-        "text": "Bus 2",
-        "value": false
-       },
-       {
-        "kind": "prop",
-        "prop": "device_bus_2",
-        "text": "Bus 3",
-        "value": false
-       },
-       {
-        "kind": "prop",
-        "prop": "device_bus_3",
-        "text": "Bus 4",
-        "value": false
-       },
-       {
-        "kind": "prop",
-        "prop": "device_bus_4",
-        "text": "Bus 5",
-        "value": false
-       },
-       {
-        "kind": "prop",
-        "prop": "device_bus_5",
-        "text": "Bus 6",
-        "value": false
+        "items": [
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "device_bus_0",
+            "text": "Bus 1",
+            "value": true
+           },
+           {
+            "kind": "prop",
+            "prop": "device_bus_1",
+            "text": "Bus 2",
+            "value": false
+           },
+           {
+            "kind": "prop",
+            "prop": "device_bus_2",
+            "text": "Bus 3",
+            "value": false
+           },
+           {
+            "kind": "prop",
+            "prop": "device_bus_3",
+            "text": "Bus 4",
+            "value": false
+           },
+           {
+            "kind": "prop",
+            "prop": "device_bus_4",
+            "text": "Bus 5",
+            "value": false
+           },
+           {
+            "kind": "prop",
+            "prop": "device_bus_5",
+            "text": "Bus 6",
+            "value": false
+           }
+          ],
+          "kind": "grid"
+         }
+        ],
+        "kind": "row"
        }
       ],
-      "kind": "grid"
+      "kind": "split"
      },
      {
       "kind": "prop",
@@ -147,13 +192,28 @@
       "value": 0
      },
      {
-      "kind": "prop",
-      "prop": "device_auto_adjust",
-      "text": "Brighter In Daylight",
-      "value": true
+      "heading": "Daylight",
+      "items": [
+       {
+        "kind": "label",
+        "text": "Daylight"
+       },
+       {
+        "kind": "prop",
+        "prop": "device_auto_adjust",
+        "text": "Gets Brighter",
+        "value": true
+       }
+      ],
+      "kind": "column"
      },
      {
+      "heading": "Max Nits",
       "items": [
+       {
+        "kind": "label",
+        "text": "Max Nits"
+       },
        {
         "kind": "prop",
         "prop": "cockpit_feature_use_luminance",
@@ -166,7 +226,7 @@
          {
           "kind": "prop",
           "prop": "cockpit_feature_luminance",
-          "text": "Max Brightness (nits)",
+          "text": "",
           "value": 1000
          }
         ],
@@ -176,10 +236,20 @@
       "kind": "row"
      },
      {
-      "kind": "prop",
-      "prop": "lightLevel",
-      "text": "Material Glow",
-      "value": false
+      "heading": "Glow",
+      "items": [
+       {
+        "kind": "label",
+        "text": "Glow"
+       },
+       {
+        "kind": "prop",
+        "prop": "lightLevel",
+        "text": "Dimmed By A Dataref",
+        "value": false
+       }
+      ],
+      "kind": "column"
      }
     ],
     "kind": "column"

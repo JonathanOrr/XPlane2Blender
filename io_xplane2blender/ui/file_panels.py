@@ -8,7 +8,7 @@ from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender.xplane_props.rain import THERMAL_SOURCES as THERMAL_LABELS
 
-from .common import Properties, custom_lines_layout, compact_row
+from .common import Properties, compact_row, custom_lines_layout, named, switched
 from .file_decals import decals_layout
 from .ops_file import XPLANE_OT_textures_from_materials
 from .state import active_file
@@ -62,7 +62,7 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
         layer = active_file(context).xplane.layer
         col = layout.column()
         col.prop(layer, "name", text="Saved As")
-        row = compact_row(col)
+        row = named(col, "Is A")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_AIRCRAFT, text="Aircraft Part")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_COCKPIT, text="Cockpit")
 
@@ -80,18 +80,10 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
         box = layout.box()
         box.label(text="Look", icon="SHADING_TEXTURE")
         col = box.column()
-        col.prop(layer, "blend_glass", text="See-Through Glass")
-        col.prop(layer, "normal_metalness", text="Metalness In Normal Map")
-        row = compact_row(col)
-        row.prop(layer, "specular_override", text="")
-        sub = row.row()
-        sub.active = layer.specular_override
-        sub.prop(layer, "specular", text="Specular (whole file)")
-        row = compact_row(col)
-        row.prop(layer, "luminance_override", text="")
-        sub = row.row()
-        sub.active = layer.luminance_override
-        sub.prop(layer, "luminance", text="Max Glow (nits)")
+        col.column(heading="Glass").prop(layer, "blend_glass", text="See-Through")
+        col.column(heading="Normal Map").prop(layer, "normal_metalness", text="Has Metalness")
+        switched(col, layer, "specular_override", "specular", "Specular")
+        switched(col, layer, "luminance_override", "luminance", "Max Nits")
 
         if layer.export_type == C.EXPORT_TYPE_COCKPIT:
             _cockpit_panel_layout(layout, layer)
@@ -100,8 +92,7 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
         box.label(text="Distances (Levels Of Detail)", icon="CON_DISTLIMIT")
         box.prop(layer, "lods", text="Levels")
         for i, lod in enumerate(layer.lod[: int(layer.lods)]):
-            row = compact_row(box)
-            row.label(text=f"{i + 1}")
+            row = named(box, f"Level {i + 1}")
             row.prop(lod, "near")
             row.prop(lod, "far")
 
@@ -120,11 +111,12 @@ class XPLANE_PT_file_rain(_FilePanel, bpy.types.Panel):
         box = layout.box()
         box.label(text="Defrost (Thermal)", icon="FREEZE")
         box.prop(rain, "thermal_texture", text="Texture")
+        heats = box.column(heading="Heats")
         for i, label in enumerate(THERMAL_LABELS, start=1):
             source = getattr(rain, f"thermal_source_{i}")
-            col = box.column(align=True)
-            col.prop(rain, f"thermal_source_{i}_enabled", text=label)
+            heats.prop(rain, f"thermal_source_{i}_enabled", text=label)
             if getattr(rain, f"thermal_source_{i}_enabled"):
+                col = heats.column(align=True)
                 col.prop(source, "defrost_time", text="Seconds")
                 col.prop(source, "dataref_on_off", text="On/Off Dataref")
 
@@ -132,24 +124,25 @@ class XPLANE_PT_file_rain(_FilePanel, bpy.types.Panel):
         box.label(text="Wipers", icon="MOD_WAVE")
         box.prop(rain, "wiper_texture", text="Gradient Texture")
         box.prop(rain, "wiper_ext_glass_object", text="Outside Glass")
+        blades = box.column(heading="Blades")
         for i in range(1, 5):
-            col = box.column(align=True)
-            col.prop(rain, f"wiper_{i}_enabled", text=f"Wiper {i}")
+            blades.prop(rain, f"wiper_{i}_enabled", text=f"Wiper {i}")
             if not getattr(rain, f"wiper_{i}_enabled"):
                 # Wipers are numbered from the first: the export stops at the first one turned off
                 break
             wiper = getattr(rain, f"wiper_{i}")
+            col = blades.column(align=True)
             col.prop(wiper, "object_name", text="Blade Object")
             col.prop(wiper, "dataref", text="Dataref")
-            row = compact_row(col)
-            row.prop(wiper, "start", text="From")
-            row.prop(wiper, "end", text="To")
+            sub = col.column(align=True)
+            sub.prop(wiper, "start", text="Moves From")
+            sub.prop(wiper, "end", text="To")
             col.prop(wiper, "nominal_width", text="Blade Width")
 
         scene = context.scene
-        row = compact_row(box, align=False)
-        row.prop(scene.xplane, "wiper_bake_start")
-        row.label(text=f"To Frame {scene.xplane.wiper_bake_start + 254}")
+        row = named(box, "Bake Frames")
+        row.prop(scene.xplane, "wiper_bake_start", text="")
+        row.label(text=f"to {scene.xplane.wiper_bake_start + 254}")
         op = box.operator("xplane.bake_wiper_gradient_texture", text=f"Bake For {I.file_name(owner)}")
         op.start = scene.xplane.wiper_bake_start
         op.file = owner.name
@@ -174,7 +167,7 @@ class XPLANE_PT_file_more(_FilePanel, bpy.types.Panel):
         col = self.layout.column()
         col.prop(layer, "particle_system_file", text="Particle Systems (.pss)")
         col.prop(layer, "slungLoadWeight", text="Slung Load Weight (lb)")
-        col.prop(layer, "debug", text="Debug Info In This OBJ")
+        col.column(heading="Debug Info").prop(layer, "debug", text="In This OBJ")
         custom_lines_layout(col, layer, "file:xplane.layer", animation=False, reset=False)
 
 

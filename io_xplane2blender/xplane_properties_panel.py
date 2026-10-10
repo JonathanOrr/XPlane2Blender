@@ -1,6 +1,8 @@
 """
-What every X-Plane panel of the Properties editor shares: it draws like Blender's own panels, the name of a setting to
-the left and its value to the right, and rows of buttons or of several settings keep their names inside them.
+What every X-Plane panel of the Properties editor shares: it draws like Blender's own panels. Every line has its name
+in the left column and its value in the right one: a setting, a checkbox (named by a heading, like Blender's "Show
+In"), a checkbox with the value it turns on, or a row of buttons. Only buttons that do something, help text, lists,
+the entries of a list, and dataref and command fields (named above them, as they are long) are as wide as the panel.
 """
 
 import functools
@@ -26,6 +28,31 @@ class Properties:
         super().__init_subclass__(**kwargs)
         if "draw" in cls.__dict__:
             cls.draw = _property_split(cls.__dict__["draw"])
+
+
+# Where Blender's own split puts the right column
+SPLIT = 0.4
+
+
+def named(layout, text: str, align: bool = True):
+    """A row of buttons or menus in the right column, with text in the left column like the name of a setting"""
+    split = layout.split(factor=SPLIT, align=align)
+    name = split.row()
+    name.alignment = "RIGHT"
+    name.label(text=text)
+    row = split.row(align=align)
+    row.use_property_split = False
+    return row
+
+
+def switched(layout, data, switch: str, value: str, text: str):
+    """A value with the checkbox that turns it on in front of it, named text in the left column"""
+    row = layout.row(heading=text, align=True)
+    row.prop(data, switch, text="")
+    sub = row.row(align=True)
+    sub.active = getattr(data, switch)
+    sub.prop(data, value, text="")
+    return row
 
 
 def compact_row(layout, align: bool = True):

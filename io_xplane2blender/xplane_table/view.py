@@ -14,7 +14,7 @@ from bpy_extras.io_utils import ExportHelper, ImportHelper
 
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_scene_changes as changes
-from io_xplane2blender.xplane_properties_panel import Properties, compact_row
+from io_xplane2blender.xplane_properties_panel import Properties, named
 from io_xplane2blender.xplane_scene_changes import Remembered
 
 from .rows import (
@@ -343,10 +343,10 @@ class XPLANE_PT_table(Properties, bpy.types.Panel):
         s = table_settings(context)
         layout = self.layout
         layout.row().prop(s, "table", expand=True)
-        row = compact_row(layout, align=False)
-        row.prop(s, "selected_only")
-        row.label(text=f"{table_count(context)} object(s)")
-        row.operator(XPLANE_OT_table_select_listed.bl_idname, icon="RESTRICT_SELECT_OFF")
+        layout.column(heading="Objects").prop(s, "selected_only")
+        named(layout, f"{table_count(context)} Listed").operator(
+            XPLANE_OT_table_select_listed.bl_idname, icon="RESTRICT_SELECT_OFF"
+        )
         layout.template_list(
             "XPLANE_UL_object_table", "", context.scene, "objects", s, "index", rows=12
         )

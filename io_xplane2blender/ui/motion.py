@@ -8,7 +8,7 @@ from io_xplane2blender import xplane_anim_presets
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
 
-from .common import Properties, compact_row, custom_lines_layout, wrapped
+from .common import Properties, compact_row, custom_lines_layout, switched, wrapped
 from .ops_object import (
     XPLANE_OT_add_dataref,
     XPLANE_OT_go_to_frame,
@@ -82,9 +82,7 @@ def visibility_layout(layout, owner, bone=None) -> None:
 
 
 def draw_order_layout(layout, settings) -> None:
-    layout.prop(settings, "override_weight", text="Draw Order")
-    if settings.override_weight:
-        layout.prop(settings, "weight", text="Order")
+    switched(layout, settings, "override_weight", "weight", "Draw Order")
 
 
 class _BoneTab(Properties):

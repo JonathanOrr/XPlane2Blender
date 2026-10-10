@@ -29,7 +29,7 @@ The search button next to a **Command** or dataref searches X-Plane's own lists 
 
 Drags follow their animation: a **Slide by dragging** may have more than two keys along one line (it drags from the
 first to the last), and **Turn by dragging, with detents** lifts its detent dataref from 0 to the lift in meters, or
-with **Own detent dataref range** over the range you give. Every setting of every kind is in the
+with **Detent Dataref > Own Range** over the range you give. Every setting of every kind is in the
 [Settings Reference](reference.md#clickable).
 
 ## Making It Move
@@ -64,8 +64,8 @@ two commands that turns once around for 0 to 360:
   here the button is only drawn while the bus has power.
 - **Glow**: the night (LIT) texture's brightness follows a dataref, like a backlight on a dimmer, **Off At** and
   **Full At** are its range.
-- **Advanced**: **HUD Glass**, **Rain Cannot Escape**, **Draw Order**, levels of detail, exporting the part as **Its Own
-  File, From Its Own Origin** (a root object), and **Extra OBJ Lines** typed by hand for anything without a setting
+- **Advanced**: **Glass** (**HUD**, **Rain Cannot Escape**), **Draw Order**, levels of detail (**Distances**), exporting
+  the part **As Its Own File** from its own origin (a root object), and **Extra OBJ Lines** typed by hand for anything without a setting
   (**Add Line**, **Add Animation Line**).
 
 With several objects selected, the copy button in a card's header copies that card's settings from the active object

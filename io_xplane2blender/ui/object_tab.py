@@ -13,11 +13,12 @@ from io_xplane2blender import xplane_inspector as I
 from .common import (
     Properties,
     add_button,
-    compact_row,
     copy_button,
     custom_lines_layout,
     glow_layout,
+    named,
     remove_button,
+    switched,
     wrapped,
 )
 from .menus import XPLANE_MT_control_kind, XPLANE_MT_move_to_file
@@ -87,6 +88,14 @@ class Card(Properties):
         return obj is not None and obj.type in cls.object_types
 
 
+# The checkboxes of the Clickable card, by the heading they go under and their own text
+_CHECKBOXES = {
+    "autodetect_datarefs": ("From Animation", "Datarefs"),
+    "autodetect_settings_opt_in": ("From Animation", "Direction And Values"),
+    "detent_dataref_range": ("Detent Dataref", "Own Range"),
+}
+
+
 def _detent_ranges_layout(layout, manip) -> None:
     target = "object:xplane.manip.axis_detent_ranges"
     col = layout.column(align=True)
@@ -119,12 +128,19 @@ class XPLANE_PT_click(Card, bpy.types.Panel):
             layout.menu(XPLANE_MT_control_kind.bl_idname, text="Make Clickable As...", icon="RESTRICT_SELECT_OFF")
             return
         kind = I.control_kind(manip)
-        layout.menu(XPLANE_MT_control_kind.bl_idname, text=kind.label)
+        named(layout, "Acts As").menu(XPLANE_MT_control_kind.bl_idname, text=kind.label)
         wrapped(layout.column(), kind.help, "INFO")
         col = layout.column()
+        heading = None
         for field in I.manip_fields(manip):
             if field.kind in ("command", "dataref"):
                 text_with_search(col, manip, field.prop, field.label, field.kind, f"object:xplane.manip.{field.prop}")
+            elif field.prop in _CHECKBOXES:
+                under, text = _CHECKBOXES[field.prop]
+                # Checkboxes in a row share one heading
+                col.column(heading="" if under == heading else under).prop(manip, field.prop, text=text)
+                heading = under
+                continue
             else:
                 col.prop(manip, field.prop, text=field.label)
         if I.has_detent_ranges(manip):
@@ -187,21 +203,16 @@ class XPLANE_PT_attachment(Card, bpy.types.Panel):
         col = layout.column()
         if special.special_type == C.EMPTY_USAGE_EMITTER_PARTICLE:
             col.prop(special.emitter_props, "name", text="Emitter")
-            row = compact_row(col)
-            row.prop(special.emitter_props, "index_enabled", text="")
-            sub = row.row(align=True)
-            sub.active = special.emitter_props.index_enabled
-            sub.prop(special.emitter_props, "index", text="Array Index")
+            switched(col, special.emitter_props, "index_enabled", "index", "Array Index")
         elif special.special_type == C.EMPTY_USAGE_MAGNET:
             col.prop(special.magnet_props, "debug_name", text="Name")
-            row = compact_row(col)
-            row.label(text="Holds")
+            row = named(col, "Holds")
             row.prop(special.magnet_props, "magnet_type_is_xpad", text="Tablet", toggle=True)
             row.prop(special.magnet_props, "magnet_type_is_flashlight", text="Flashlight", toggle=True)
         elif special.special_type == C.EMPTY_USAGE_WHEEL:
-            row = compact_row(col)
-            row.prop(special.wheel_props, "gear_index", text="Gear")
-            row.prop(special.wheel_props, "wheel_index", text="Wheel")
+            sub = col.column(align=True)
+            sub.prop(special.wheel_props, "gear_index", text="Gear")
+            sub.prop(special.wheel_props, "wheel_index", text="Wheel")
         else:
             wrapped(col, "An empty only groups and moves its children.", "INFO")
 
@@ -217,19 +228,19 @@ class XPLANE_PT_more(Card, bpy.types.Panel):
         x = obj.xplane
         col = self.layout.column()
         if obj.type == "MESH":
-            col.prop(x, "hud_glass", text="HUD Glass")
-            col.prop(x, "rain_cannot_escape", text="Rain Cannot Escape")
+            sub = col.column(heading="Glass")
+            sub.prop(x, "hud_glass", text="HUD")
+            sub.prop(x, "rain_cannot_escape", text="Rain Cannot Escape")
         draw_order_layout(col, x)
         owners = I.files_of(obj, context.scene)
         lods = int(owners[0].xplane.layer.lods) if owners else 0
         if lods:
-            col.prop(x, "override_lods", text="Only In Some Distances")
+            col.column(heading="Distances").prop(x, "override_lods", text="Only Some")
             if x.override_lods:
-                grid = col.grid_flow(row_major=True, columns=2, align=True)
-                grid.use_property_split = False
+                grid = named(col, "").grid_flow(row_major=True, columns=2, align=True)
                 for i, bucket in enumerate(owners[0].xplane.layer.lod[:lods]):
                     grid.prop(x, "lod", index=i, text=f"{bucket.near}-{bucket.far} m", toggle=True)
-        col.prop(x, "isExportableRoot", text="Its Own File, From Its Own Origin")
+        col.column(heading="Export").prop(x, "isExportableRoot", text="As Its Own File")
         if obj.type != "EMPTY":
             custom_lines_layout(col, x, "object:xplane")
 

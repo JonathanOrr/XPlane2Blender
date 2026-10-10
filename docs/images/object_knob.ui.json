@@ -5,9 +5,28 @@
     "children": [],
     "draw": [
      {
-      "kind": "menu",
-      "menu": "XPLANE_MT_control_kind",
-      "text": "Knob, two commands"
+      "items": [
+       {
+        "items": [
+         {
+          "kind": "label",
+          "text": "Acts As"
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "items": [
+         {
+          "kind": "menu",
+          "menu": "XPLANE_MT_control_kind",
+          "text": "Knob, two commands"
+         }
+        ],
+        "kind": "row"
+       }
+      ],
+      "kind": "split"
      },
      {
       "items": [

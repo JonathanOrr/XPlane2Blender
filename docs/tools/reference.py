@@ -370,6 +370,7 @@ class _Walk:
         self.choices: Dict[Tuple[str, str], List[str]] = {}
         self.label = ""
         self.choice: Optional[Tuple[str, str]] = None
+        self.heading = ""
 
     def walk(self, items: List[dict], header_of: Optional[str] = None) -> None:
         for item in items:
@@ -389,8 +390,22 @@ class _Walk:
                 self.choices[self.choice].append(item["text"])
                 self.label = ""
                 continue
+            switched = _switched(item)
+            if switched:
+                # A checkbox and the value it turns on, under one heading (Specular)
+                (switch, value), heading = switched, item["heading"]
+                self.found.append(
+                    ("setting", f"{heading} (on / off)", switch.get("_tip", ""))
+                )
+                self.found.append(("setting", heading, value.get("_tip", "")))
+                self.label, self.choice = "", None
+                continue
             if isinstance(item.get("items"), list):
+                outer = self.heading
+                # Checkboxes under a heading go by both (Glass > HUD)
+                self.heading = item.get("heading", outer)
                 self.walk(item["items"])
+                self.heading = outer
                 continue
             self.choice = None
             if kind == "prop":
@@ -399,6 +414,13 @@ class _Walk:
                     or (f"{header_of} (on / off)" if header_of else self.label)
                     or item.get("_name", "")
                 )
+                if (
+                    self.heading
+                    and item["text"]
+                    and item.get("_checkbox")
+                    and name != self.heading
+                ):
+                    name = f"{self.heading} > {name}"
                 tip = item.get("_tip", "")
                 if item.get("_choices"):
                     tip = (
@@ -439,6 +461,27 @@ class _Walk:
             else:
                 rows.append((kind, name, tip))
         return rows
+
+
+def _leaves(items: List[dict]) -> List[dict]:
+    found = []
+    for item in items:
+        found += (
+            _leaves(item["items"]) if isinstance(item.get("items"), list) else [item]
+        )
+    return found
+
+
+def _switched(node: dict) -> Optional[Tuple[dict, dict]]:
+    """The checkbox and value of a row drawn by switched(): a heading, then two settings without names of their own"""
+    if not node.get("heading"):
+        return None
+    props = [item for item in _leaves(node["items"]) if item.get("kind") != "label"]
+    if len(props) == 2 and all(
+        p.get("kind") == "prop" and not p["text"] for p in props
+    ):
+        return props[0], props[1]
+    return None
 
 
 def _rows(
@@ -485,7 +528,11 @@ def _record(
     )
     rows += _rows(node.get("draw", []))
     shown_as = next(
-        (item["text"] for item in node.get("draw", []) if item.get("kind") == "menu"),
+        (
+            item["text"]
+            for item in _leaves(node.get("draw", []))
+            if item.get("kind") == "menu"
+        ),
         "",
     )
     return shown_as, rows

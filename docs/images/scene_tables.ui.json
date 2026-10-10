@@ -15,24 +15,44 @@
     "kind": "row"
    },
    {
+    "heading": "Objects",
     "items": [
+     {
+      "kind": "label",
+      "text": "Objects"
+     },
      {
       "kind": "prop",
       "prop": "selected_only",
       "text": "Selected Only",
       "value": false
-     },
-     {
-      "kind": "label",
-      "text": "2 object(s)"
-     },
-     {
-      "kind": "operator",
-      "operator": "xplane.table_select_listed",
-      "text": "Select Listed"
      }
     ],
-    "kind": "row"
+    "kind": "column"
+   },
+   {
+    "items": [
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "2 Listed"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "items": [
+       {
+        "kind": "operator",
+        "operator": "xplane.table_select_listed",
+        "text": "Select Listed"
+       }
+      ],
+      "kind": "row"
+     }
+    ],
+    "kind": "split"
    },
    {
     "items": 12,

@@ -123,21 +123,20 @@ class TestImportOperators(XPlaneTestCase):
         self.assertIn("binary", str(raised.exception))
 
     def test_everything_the_panel_draws_is_a_real_property(self) -> None:
-        import inspect
-        import re
+        from types import SimpleNamespace
 
+        from io_xplane2blender.tests.fake_layout import FakeLayout
         from io_xplane2blender.xplane_importer import ops
 
         for operator, cls in (
             (bpy.ops.import_scene.xplane_obj, ops.IMPORT_OT_xplane_obj),
             (bpy.ops.import_scene.xplane_aircraft, ops.IMPORT_OT_xplane_aircraft),
         ):
-            properties = {p.identifier for p in operator.get_rna_type().properties}
-            source = inspect.getsource(cls)
-            drawn = set(re.findall(r'prop\(self, "(\w+)"', source))
-            drawn |= set(re.findall(r'"(\w+)"', " ".join(re.findall(r"for name in \(([^)]*)\)", source))))
-            self.assertTrue(drawn)
-            self.assertFalse(drawn - properties, f"drawn but not properties: {drawn - properties}")
+            # The fake layout fails on a property the operator does not have
+            layout = FakeLayout()
+            cls.draw(SimpleNamespace(layout=layout, bl_rna=operator.get_rna_type()), bpy.context)
+            self.assertIn("import_materials", layout.props())
+            self.assertIn("scale", layout.props())
 
     def test_livery_choices_come_from_the_selected_aircraft(self) -> None:
         from io_xplane2blender.xplane_importer.ops import IMPORT_OT_xplane_aircraft, _livery_items

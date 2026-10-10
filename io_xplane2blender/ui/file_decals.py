@@ -16,14 +16,14 @@ KEYS = (
 )
 
 
-def _scale_row(layout, layer, prefix: str) -> None:
-    row = compact_row(layout)
-    row.prop(layer, f"{prefix}_projected", text="Projected", toggle=True)
+def _scale_rows(layout, layer, prefix: str) -> None:
+    layout.column(heading="Mapping").prop(layer, f"{prefix}_projected", text="Projected")
+    col = layout.column(align=True)
     if getattr(layer, f"{prefix}_projected"):
-        row.prop(layer, f"{prefix}_x_scale", text="X Scale")
-        row.prop(layer, f"{prefix}_y_scale", text="Y Scale")
+        col.prop(layer, f"{prefix}_x_scale", text="Scale X")
+        col.prop(layer, f"{prefix}_y_scale", text="Y")
     else:
-        row.prop(layer, f"{prefix}_scale", text="Scale")
+        col.prop(layer, f"{prefix}_scale", text="Scale")
 
 
 def _keys_column(layout, layer, prefix: str, title: str) -> None:
@@ -42,7 +42,7 @@ def decals_layout(layout, layer) -> None:
         if path and is_path_decal_lib(path):
             box.label(text="A decal library file (.dcl) brings its own settings", icon="INFO")
         elif path:
-            _scale_row(box, layer, f"decal{i}")
+            _scale_rows(box, layer, f"decal{i}")
             row = compact_row(box, align=False)
             _keys_column(row, layer, f"rgb_decal{i}", "Color Keyed By")
             _keys_column(row, layer, f"alpha_decal{i}", "Alpha Keyed By")
@@ -50,7 +50,7 @@ def decals_layout(layout, layer) -> None:
         box = layout.box()
         box.prop(layer, f"file_normal_decal{i}", text=f"Normal Detail {i}")
         if getattr(layer, f"file_normal_decal{i}"):
-            _scale_row(box, layer, f"normal_decal{i}")
+            _scale_rows(box, layer, f"normal_decal{i}")
             _keys_column(box, layer, f"normal_decal{i}", "Keyed By")
     layout.prop(layer, "texture_modulator", text="Modulator")
     if any(getattr(layer, f"file_{kind}{i}") for kind in ("decal", "normal_decal") for i in (1, 2)):

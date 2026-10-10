@@ -8,7 +8,7 @@ import bpy
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
 
-from .common import Properties, compact_row, custom_lines_layout, glow_layout, wrapped
+from .common import Properties, custom_lines_layout, glow_layout, named, switched, wrapped
 
 BLEND_LABELS = ((C.BLEND_ON, "Smooth"), (C.BLEND_OFF, "Hard Edge"), (C.BLEND_SHADOW, "Cut Shadow"))
 SCREEN_LABELS = (
@@ -28,8 +28,7 @@ class _MaterialTab(Properties):
 
 
 def _screen_layout(col, context, m) -> None:
-    col.label(text="Screen")
-    row = compact_row(col)
+    row = named(col, "Screen")
     for value, label in SCREEN_LABELS:
         row.prop_enum(m, "cockpit_feature", value, text=label)
     if m.cockpit_feature == C.COCKPIT_FEATURE_PANEL:
@@ -42,19 +41,13 @@ def _screen_layout(col, context, m) -> None:
         col.prop(m, "device_name", text="Device")
         if m.device_name == C.DEVICE_PLUGIN:
             col.prop(m, "plugin_device")
-        col.label(text="Powered By")
-        grid = col.grid_flow(row_major=True, columns=3, align=True)
-        grid.use_property_split = False
+        grid = named(col, "Powered By").grid_flow(row_major=True, columns=3, align=True)
         for bus in range(6):
             grid.prop(m, f"device_bus_{bus}", toggle=True)
         col.prop(m, "device_lighting_channel", text="Brightness Channel")
-        col.prop(m, "device_auto_adjust", text="Brighter In Daylight")
+        col.column(heading="Daylight").prop(m, "device_auto_adjust", text="Gets Brighter")
     if m.cockpit_feature != C.COCKPIT_FEATURE_NONE:
-        row = compact_row(col)
-        row.prop(m, "cockpit_feature_use_luminance", text="")
-        sub = row.row()
-        sub.active = m.cockpit_feature_use_luminance
-        sub.prop(m, "cockpit_feature_luminance", text="Max Brightness (nits)")
+        switched(col, m, "cockpit_feature_use_luminance", "cockpit_feature_luminance", "Max Nits")
 
 
 class XPLANE_PT_surface(_MaterialTab, bpy.types.Panel):
@@ -69,24 +62,25 @@ class XPLANE_PT_surface(_MaterialTab, bpy.types.Panel):
             layout.label(text=f"Shared by {users} meshes: changes apply to all", icon="LINKED")
         m = material.xplane
         col = layout.column()
-        col.prop(m, "draw", text="Visible")
+        sub = col.column(heading="Surface")
+        sub.prop(m, "draw", text="Visible")
+        if m.draw:
+            sub.prop(m, "shadow_local", text="Casts Shadows")
+        sub.prop(m, "solid_camera", text="Camera Cannot Pass Through")
         if not m.draw:
             col.label(text="Invisible, still clickable", icon="INFO")
         else:
-            col.label(text="Transparency")
-            row = compact_row(col)
+            row = named(col, "Transparency")
             for value, label in BLEND_LABELS:
                 row.prop_enum(m, "blend_v1000", value, text=label)
             if m.blend_v1000 in (C.BLEND_OFF, C.BLEND_SHADOW):
                 col.prop(m, "blendRatio", text="Cut Off Below", slider=True)
-            col.prop(m, "shadow_local", text="Casts Shadows")
-        col.prop(m, "solid_camera", text="Camera Cannot Pass Through")
 
         col.separator()
         _screen_layout(col, context, m)
 
         col.separator()
-        col.prop(m, "lightLevel", text="Material Glow")
+        col.column(heading="Glow").prop(m, "lightLevel", text="Dimmed By A Dataref")
         if m.lightLevel:
             glow_layout(col.box().column(), m, "material:xplane.lightLevel_dataref")
 
@@ -101,7 +95,7 @@ class XPLANE_PT_surface_more(_MaterialTab, bpy.types.Panel):
         col = self.layout.column()
         col.prop(m, "surfaceType", text="Hard Surface")
         if m.surfaceType != C.SURFACE_TYPE_NONE:
-            col.prop(m, "deck", text="Can Be Under It (deck)")
+            col.column(heading="Deck").prop(m, "deck", text="Can Be Under It")
         col.prop(m, "poly_os", text="Draw On Top")
         custom_lines_layout(col, m, "material:xplane", animation=False)
 
