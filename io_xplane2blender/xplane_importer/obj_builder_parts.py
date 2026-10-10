@@ -28,6 +28,9 @@ if TYPE_CHECKING:
 # Drag rotate's center, axis, angles and lift come from its animation, which is imported as animation
 _MANIP_ARGS = {
     **SETTINGS_WRITTEN,
+    # Laminar name a dataref after no-op, which X-Plane ignores: kept as a label
+    xplane_constants.MANIP_NOOP: ("noop_label",),
+    xplane_constants.MANIP_DEVICE: ("cursor", "device", "tooltip"),
     MANIP_DRAG_ROTATE: (
         "cursor",
         *[None] * 9,
@@ -148,6 +151,12 @@ class PartsBuilder:
                 if text in cursors:
                     m.cursor = text
                 continue
+            if field_name == "device":
+                if text in xplane_constants.DEVICES and text != xplane_constants.DEVICE_PLUGIN:
+                    m.device_name = text
+                else:
+                    m.device_name, m.plugin_device = xplane_constants.DEVICE_PLUGIN, text
+                continue
             if field_name in (
                 "tooltip",
                 "command",
@@ -155,6 +164,7 @@ class PartsBuilder:
                 "negative_command",
                 "dataref1",
                 "dataref2",
+                "noop_label",
             ):
                 setattr(
                     m,

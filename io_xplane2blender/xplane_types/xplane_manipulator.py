@@ -10,7 +10,7 @@ from typing import Tuple, Union
 
 from io_xplane2blender import xplane_helpers
 from io_xplane2blender.xplane_constants import *
-from io_xplane2blender.xplane_helpers import logger
+from io_xplane2blender.xplane_helpers import logger, unfinished
 from io_xplane2blender.xplane_types.xplane_attribute import XPlaneAttribute
 from io_xplane2blender.xplane_types.xplane_bone import XPlaneBone
 
@@ -94,7 +94,6 @@ SETTINGS_WRITTEN = {
         (MANIP_AXIS_KNOB, MANIP_AXIS_SWITCH_UP_DOWN, MANIP_AXIS_SWITCH_LEFT_RIGHT),
         ("cursor", "v1", "v2", "click_step", "hold_step", "dataref1", "tooltip"),
     ),
-    MANIP_NOOP: (),
 }
 
 # The direction of a drag (written 2nd to 4th) is never rounded
@@ -141,6 +140,19 @@ class XPlaneManipulator:
             self.type == MANIP_DRAG_AXIS and self.manip.autodetect_settings_opt_in
         ):
             written = self._drag_axis()
+        elif self.type == MANIP_DEVICE:
+            written = self._device()
+        elif self.type == MANIP_NOOP:
+            # The spec gives no-op no values; Laminar's name a dataref, which X-Plane ignores (kept as a label)
+            label = self.manip.noop_label.strip()
+            self._add("ATTR_manip_" + MANIP_NOOP, (label,) if label else ())
+            written = True
+        elif self.type in SETTINGS_WRITTEN and any(
+            not getattr(self.manip, setting).strip() for setting in SETTINGS_WRITTEN[self.type] if "command" in setting
+        ):
+            # Unfinished work, not an error: an empty command would let the tooltip's first word take its place
+            unfinished.add("click zones without a command (not clickable)", self.xplanePrimative.blenderObject.name)
+            written = False
         elif self.type in SETTINGS_WRITTEN:
             # An empty dataref is written as "none": left out, the words after it would move into its place
             value = tuple(
@@ -167,6 +179,18 @@ class XPlaneManipulator:
             and self.manip.wheel_delta != 0
         ):
             self._add("ATTR_manip_wheel", f"{self.manip.wheel_delta:.3f}")
+
+    def _device(self) -> bool:
+        """ATTR_manip_device <cursor> <device> <tooltip>: the touch screen of one of X-Plane's or a plugin's devices"""
+        device = self.manip.device_name
+        if device == DEVICE_PLUGIN:
+            device = self.manip.plugin_device.strip()
+            if not device:
+                # Unfinished work, not an error: the part exports without its click zone
+                unfinished.add("touch screens without a device ID (not clickable)", self.xplanePrimative.blenderObject.name)
+                return False
+        self._add("ATTR_manip_" + MANIP_DEVICE, (self.manip.cursor, device, self.manip.tooltip))
+        return True
 
     def _drag_axis(self) -> bool:
         """

@@ -66,6 +66,13 @@ SHOTS: List[Shot] = [
         "object_button", "OBJECT", ("XPLANE_PT_object",), select="landing light button"
     ),
     Shot(
+        "object_touch_screen",
+        "OBJECT",
+        ("XPLANE_PT_object",),
+        select="primary flight display",
+        then="touch_screen",
+    ),
+    Shot(
         "object_knob",
         "OBJECT",
         ("XPLANE_PT_object",),

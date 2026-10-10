@@ -194,7 +194,6 @@ _VALUED = {
 _MANIP_EXTRAS = (
     "ATTR_manip_wheel",
     "ATTR_manip_keyframe",
-    "ATTR_manip_wrap",
     "ATTR_axis_detented",
 )
 

@@ -17,7 +17,11 @@ Open **Clickable** and pick **Make Clickable As...**. The menu lists the kinds o
   a **Radio button** sets one value, a **Step** adds to the dataref on every click, **Step and wrap around** starts again
   at the other end.
 - **Dragged**: levers, throttles and sliders that follow the mouse, with or without detents.
-- **Other**: **Blocks clicks** for a part that should stop clicks reaching what is behind it.
+- **Other**: **Blocks clicks** for a part that should stop clicks reaching what is behind it, and **Touch screen**
+  (X-Plane 12.1 and later), which passes clicks on the part to an avionics screen as touches: one of X-Plane's own
+  devices, or a **Plugin Device** by its **Device ID**. The part needs the shape and UVs of the screen it covers.
+
+![The Clickable card of a touch screen](images/object_touch_screen.png)
 
 The card then shows only the settings that kind uses, with what it does in one line. This is a button that toggles the
 landing lights:

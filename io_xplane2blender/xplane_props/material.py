@@ -8,30 +8,6 @@ from io_xplane2blender.xplane_constants import *
 
 from .common import XPlaneCustomAttribute, add_props, light_level_props
 
-DEVICES = (
-    DEVICE_GNS430_1,
-    DEVICE_GNS430_2,
-    DEVICE_GNS530_1,
-    DEVICE_GNS530_2,
-    DEVICE_CDU739_1,
-    DEVICE_CDU739_2,
-    DEVICE_G1000_PFD1,
-    DEVICE_G1000_MFD,
-    DEVICE_G1000_PFD2,
-    DEVICE_CDU815_1,
-    DEVICE_CDU815_2,
-    DEVICE_Primus_PFD_1,
-    DEVICE_Primus_PFD_2,
-    DEVICE_Primus_MFD_1,
-    DEVICE_Primus_MFD_2,
-    DEVICE_Primus_MFD_3,
-    DEVICE_Primus_RMU_1,
-    DEVICE_Primus_RMU_2,
-    DEVICE_MCDU_1,
-    DEVICE_MCDU_2,
-    DEVICE_PLUGIN,
-)
-
 SURFACES = (
     (SURFACE_TYPE_NONE, "None"),
     (SURFACE_TYPE_WATER, "Water"),

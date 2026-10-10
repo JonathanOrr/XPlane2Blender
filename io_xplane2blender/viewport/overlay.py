@@ -37,6 +37,9 @@ def label_of(obj: bpy.types.Object) -> str:
     """What clicking does, in a few words"""
     manip = obj.xplane.manip
     kind = I.control_kind(manip)
+    if manip.type == C.MANIP_DEVICE:
+        device = manip.plugin_device if manip.device_name == C.DEVICE_PLUGIN else manip.device_name
+        return f"{kind.label}: {device}"
     for field in I.manip_fields(manip):
         if field.kind in ("command", "dataref"):
             value = getattr(manip, field.prop).strip()

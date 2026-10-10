@@ -124,6 +124,15 @@ def _sections() -> List[Section]:
                     _set("landing light button:xplane.manip.type", kind),
                 )
                 for kind in _enum_items(manip, "type")
+            ]
+            + [
+                (
+                    "{} (plugin device)",
+                    _steps(
+                        _set("landing light button:xplane.manip.type", "device"),
+                        _set("landing light button:xplane.manip.device_name", "Plugin Device"),
+                    ),
+                )
             ],
         ),
         ("Object tab", "XPLANE_PT_motion", "heading knob", {}, none),

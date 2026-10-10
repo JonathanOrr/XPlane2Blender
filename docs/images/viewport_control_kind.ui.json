@@ -219,6 +219,14 @@
          "kind": "noop"
         },
         "text": "Blocks clicks"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.set_control_kind",
+        "set": {
+         "kind": "device"
+        },
+        "text": "Touch screen"
        }
       ],
       "kind": "column"

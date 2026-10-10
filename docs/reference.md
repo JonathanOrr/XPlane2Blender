@@ -20,9 +20,9 @@ used.
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
 | Clickable (on / off) | setting |  | Make the object clickable in X-Plane |
-| Kind Of Control | menu |  | Choices: Drag in two directions, Slide by dragging, Button, Drag runs commands, Push, Radio button, Step, Step and wrap around, Toggle, Blocks clicks, Drag the mouse sideways, Knob, two commands, Switch, up / down, two commands, Switch, left / right, two commands, Switch, up / down, Switch, left / right, Knob, Slide by dragging, with detents, Turn by dragging, Turn by dragging, with detents. |
+| Kind Of Control | menu |  | Choices: Drag in two directions, Slide by dragging, Button, Drag runs commands, Push, Radio button, Step, Step and wrap around, Toggle, Blocks clicks, Drag the mouse sideways, Knob, two commands, Switch, up / down, two commands, Switch, left / right, two commands, Switch, up / down, Switch, left / right, Knob, Slide by dragging, with detents, Turn by dragging, Turn by dragging, with detents, Touch screen. |
 | Left / right dataref | setting | Drag in two directions | The dataref the control changes (the left / right one in Drag in two directions) |
-| Search | icon button | all but Blocks clicks, Slide by dragging, with detents, Turn by dragging, Turn by dragging, with detents | Search X-Plane's own list and the names this file already uses |
+| Search | icon button | all but Slide by dragging, with detents, Turn by dragging, Turn by dragging, with detents, Touch screen, Touch screen (plugin device) | Search X-Plane's own list and the names this file already uses |
 | Up / down dataref | setting | Drag in two directions | The second dataref: the up / down one in Drag in two directions, or the one the lever is lifted by for detents |
 | Drag width | setting | Drag in two directions | How far the drag goes: along X in meters for a slide or Drag runs commands, the width of Drag in two directions, or the pixels of Drag the mouse sideways |
 | Drag height | setting | Drag in two directions | How far the drag goes: along Y in meters for a slide or Drag runs commands, or the height of Drag in two directions |
@@ -52,6 +52,7 @@ used.
 | Highest | setting | Step, Step and wrap around | The highest value of a Step, or where the left / right dataref ends in Drag in two directions |
 | On value | setting | Toggle | The dataref value when the toggle is on |
 | Off value | setting | Toggle | The dataref value when the toggle is off |
+| Label dataref | setting | Blocks clicks | A dataref written after a click blocker, as Laminar do to tell which instrument it covers. X-Plane ignores it |
 | Drag distance (pixels) | setting | Drag the mouse sideways | How far the drag goes: along X in meters for a slide or Drag runs commands, the width of Drag in two directions, or the pixels of Drag the mouse sideways |
 | Step | setting | Drag the mouse sideways | The dataref changes in steps of this size |
 | Speed curve | setting | Drag the mouse sideways | How the dataref speeds up with the drag: higher numbers make small drags precise and large drags fast. 1: even |
@@ -68,6 +69,8 @@ used.
 | Datarefs from the animation | setting | Slide by dragging, with detents, Turn by dragging, Turn by dragging, with detents | Use the datarefs the object's animation is keyed on, instead of typing them in |
 | Add Detent | button | Slide by dragging, with detents, Turn by dragging, with detents | Add a detent: a range where the lever moves freely, and how high it is lifted to get in |
 | Own detent dataref range | setting | Turn by dragging, with detents | The detent dataref goes from its value at rest to its value lifted as the lever is lifted (Laminar's levers use 0 to 1), and the detent heights are in its units. Off: it goes from 0 to the lift in meters |
+| Device | setting | Touch screen, Touch screen (plugin device) | The avionics device whose touch screen gets the clicks. The mesh must have the shape and UVs of the device's screen Choices: GNS430_1, GNS430_2, GNS530_1, GNS530_2, CDU739_1, CDU739_2, G1000_PFD1, G1000_MFD, G1000_PFD2, CDU815_1, CDU815_2, Primus_PFD_1, Primus_PFD_2, Primus_MFD_1, Primus_MFD_2, Primus_MFD_3, Primus_RMU_1, Primus_RMU_2, MCDU_1, MCDU_2, Plugin Device. |
+| Device ID | setting | Touch screen (plugin device) | The device ID your plugin created the avionics device with |
 
 ### Moves
 
@@ -494,6 +497,7 @@ The options in the side panel of the file browser.
 | Drag in two directions | button | Dragging left/right and up/down sets two datarefs (yokes, sticks) |
 | Drag the mouse sideways | button | Dragging the mouse left and right changes a dataref, however the object is turned |
 | Blocks clicks | button | Does nothing, and stops clicks reaching what is behind it |
+| Touch screen | button | Clicks go to an avionics device's screen, as touches. The mesh needs the shape and UVs of the screen |
 
 ### Kind Of Light
 

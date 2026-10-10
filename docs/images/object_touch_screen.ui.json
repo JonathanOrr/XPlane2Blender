@@ -1,0 +1,172 @@
+[
+ {
+  "children": [
+   {
+    "children": [],
+    "draw": [
+     {
+      "kind": "menu",
+      "menu": "XPLANE_MT_control_kind",
+      "text": "Touch screen"
+     },
+     {
+      "items": [
+       {
+        "items": [
+         {
+          "icon": "INFO",
+          "kind": "label",
+          "text": "Clicks go to an avionics device's screen, as touches."
+         },
+         {
+          "icon": "BLANK1",
+          "kind": "label",
+          "text": "The mesh needs the shape and UVs of the screen"
+         }
+        ],
+        "kind": "column"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "device_name",
+        "text": "Device",
+        "value": "G1000_PFD1"
+       },
+       {
+        "kind": "prop",
+        "prop": "cursor",
+        "text": "Cursor",
+        "value": "hand"
+       },
+       {
+        "kind": "prop",
+        "prop": "tooltip",
+        "text": "Tooltip",
+        "value": "PFD"
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "draw_header": [
+     {
+      "kind": "prop",
+      "prop": "enabled",
+      "text": "",
+      "value": true
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Clickable",
+    "panel": "XPLANE_PT_click"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_push_button",
+        "text": "Button"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_switch",
+        "text": "Switch"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_range",
+        "text": "Knob / Lever"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "Not animated. Use a preset above, or key it by hand:"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.add_dataref",
+      "set": {
+       "anim_type": "transform",
+       "target": "object"
+      },
+      "text": "Key By Hand"
+     }
+    ],
+    "kind": "panel",
+    "label": "Moves",
+    "panel": "XPLANE_PT_motion"
+   },
+   {
+    "closed": true,
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Shows / Hides",
+    "panel": "XPLANE_PT_visibility"
+   },
+   {
+    "closed": true,
+    "draw_header": [
+     {
+      "kind": "prop",
+      "prop": "lightLevel",
+      "text": "",
+      "value": false
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Glow",
+    "panel": "XPLANE_PT_glow"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Advanced",
+    "panel": "XPLANE_PT_more"
+   }
+  ],
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "label",
+      "text": "Touch screen \u00b7 Avionics screen"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "xplane.show_file",
+      "set": {
+       "collection": "cockpit"
+      },
+      "text": "In cockpit.obj"
+     }
+    ],
+    "kind": "row"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane",
+  "panel": "XPLANE_PT_object"
+ }
+]
