@@ -150,7 +150,7 @@ def parse_lights_file():
         else:
             return True
 
-    with open(LIGHTS_FILEPATH, "r") as f:
+    with open(LIGHTS_FILEPATH, "r", encoding="utf-8", errors="replace") as f:
         lines = [
             (line_num, l.strip())
             for line_num, l in enumerate(f.read().splitlines())

@@ -49,7 +49,7 @@ _commands_txt_content = {}  # type: Dict[str,List[CommandInfoStruct]]
 
 def parse_commands_txt(filepath: str) -> Union[List[CommandInfoStruct], str]:
     try:
-        with open(filepath) as commands_file:
+        with open(filepath, encoding="utf-8", errors="replace") as commands_file:
             file_contents = []  # type: List[CommandInfoStruct]
             last_error = ""
             for i, line in enumerate(commands_file, start=1):
