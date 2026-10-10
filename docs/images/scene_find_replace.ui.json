@@ -91,42 +91,56 @@
    {
     "items": [
      {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "COMMANDS",
-      "prop": "kinds",
-      "text": "Commands"
+      "kind": "label",
+      "text": "Look In:"
      },
      {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "DATAREFS",
-      "prop": "kinds",
-      "text": "Datarefs"
-     },
-     {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "LIGHT_LEVELS",
-      "prop": "kinds",
-      "text": "Light Levels"
-     },
-     {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "TOOLTIPS",
-      "prop": "kinds",
-      "text": "Tooltips"
-     },
-     {
-      "kind": "prop_enum",
-      "on": false,
-      "option": "CUSTOM",
-      "prop": "kinds",
-      "text": "Custom Attributes"
+      "items": [
+       {
+        "items": [
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "COMMANDS",
+          "prop": "kinds",
+          "text": "Commands"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "DATAREFS",
+          "prop": "kinds",
+          "text": "Datarefs"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "LIGHT_LEVELS",
+          "prop": "kinds",
+          "text": "Light Levels"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "TOOLTIPS",
+          "prop": "kinds",
+          "text": "Tooltips"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "CUSTOM",
+          "prop": "kinds",
+          "text": "Custom Attributes"
+         }
+        ],
+        "kind": "grid"
+       }
+      ],
+      "kind": "row"
      }
     ],
-    "kind": "grid"
+    "kind": "split"
    },
    {
     "items": [

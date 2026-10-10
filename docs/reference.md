@@ -379,7 +379,7 @@ Nothing to set here in the demo scene.
 | Add Pair | button |  | Add a find and replace pair |
 | Swap Find And Replace | icon button |  | Swap Find And Replace in every pair, to go back the other way (right to left instead of left to right) |
 | Objects | setting |  | Choices: Selected, Selected And Children, Whole Scene. |
-| Settings | setting |  | Choices: Commands, Datarefs, Light Levels, Tooltips, Custom Attributes. |
+| Look In: | setting |  | Choices: Commands, Datarefs, Light Levels, Tooltips, Custom Attributes. |
 | Match Case | setting |  | Datarefs and commands are case sensitive in X-Plane |
 | Regex | setting |  | Read Find as a regular expression, Replace may use \1 for groups |
 | Preview | setting |  |  |

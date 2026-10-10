@@ -111,11 +111,13 @@ class XPLANE_PT_file_rain(_FilePanel, bpy.types.Panel):
         box = layout.box()
         box.label(text="Defrost (Thermal)", icon="FREEZE")
         box.prop(rain, "thermal_texture", text="Texture")
+        heats = box.column()
+        heats.label(text="Heated Windows:")
         for i, label in enumerate(THERMAL_LABELS, start=1):
             source = getattr(rain, f"thermal_source_{i}")
-            col = box.column(align=True)
-            col.prop(rain, f"thermal_source_{i}_enabled", text=label)
+            heats.prop(rain, f"thermal_source_{i}_enabled", text=label)
             if getattr(rain, f"thermal_source_{i}_enabled"):
+                col = heats.column(align=True)
                 col.prop(source, "defrost_time", text="Seconds")
                 col.prop(source, "dataref_on_off", text="On/Off Dataref")
 
@@ -123,13 +125,15 @@ class XPLANE_PT_file_rain(_FilePanel, bpy.types.Panel):
         box.label(text="Wipers", icon="MOD_WAVE")
         box.prop(rain, "wiper_texture", text="Gradient Texture")
         box.prop(rain, "wiper_ext_glass_object", text="Outside Glass")
+        blades = box.column()
+        blades.label(text="Wiper Blades:")
         for i in range(1, 5):
-            col = box.column(align=True)
-            col.prop(rain, f"wiper_{i}_enabled", text=f"Wiper {i}")
+            blades.prop(rain, f"wiper_{i}_enabled", text=f"Wiper {i}")
             if not getattr(rain, f"wiper_{i}_enabled"):
                 # Wipers are numbered from the first: the export stops at the first one turned off
                 break
             wiper = getattr(rain, f"wiper_{i}")
+            col = blades.column(align=True)
             col.prop(wiper, "object_name", text="Blade Object")
             col.prop(wiper, "dataref", text="Dataref")
             row = compact_row(col)

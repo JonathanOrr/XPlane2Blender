@@ -26,38 +26,27 @@
        {
         "items": [
          {
+          "kind": "label",
+          "text": "Heated Windows:"
+         },
+         {
           "kind": "prop",
           "prop": "thermal_source_1_enabled",
           "text": "Pilot Front Windshield",
           "value": false
-         }
-        ],
-        "kind": "column"
-       },
-       {
-        "items": [
+         },
          {
           "kind": "prop",
           "prop": "thermal_source_2_enabled",
           "text": "Copilot Front Windshield",
           "value": false
-         }
-        ],
-        "kind": "column"
-       },
-       {
-        "items": [
+         },
          {
           "kind": "prop",
           "prop": "thermal_source_3_enabled",
           "text": "Pilot Side Window",
           "value": false
-         }
-        ],
-        "kind": "column"
-       },
-       {
-        "items": [
+         },
          {
           "kind": "prop",
           "prop": "thermal_source_4_enabled",
@@ -91,6 +80,10 @@
        },
        {
         "items": [
+         {
+          "kind": "label",
+          "text": "Wiper Blades:"
+         },
          {
           "kind": "prop",
           "prop": "wiper_1_enabled",
