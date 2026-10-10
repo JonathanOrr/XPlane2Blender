@@ -12,7 +12,7 @@ The options are in the side panel of the file browser:
 | Option | What it does |
 |---|---|
 | **Livery** | Uses the textures of one of the aircraft's liveries |
-| **Damage Objects**, **Part Attached Objects**, **Not Drawn Objects** | Also brings in objects that are normally left out: they only show when a part breaks, move with a wing or gear part, or are drawn nowhere |
+| **Damage Objects**, **Part Attached Objects** | Also brings in objects that are normally left out: they only show when a part breaks, or move with a wing or gear part |
 | **Textures and Materials** | Loads the images and builds shader nodes, so it looks as it does in X-Plane |
 | **Animations** | Creates the dataref animations and show / hide settings, keyed on the parts themselves |
 | **Manipulators** | Makes the clickable parts clickable, with their commands, datarefs and tooltips |

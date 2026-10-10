@@ -58,7 +58,7 @@ class TestImportAircraft(XPlaneTestCase):
         self.report = ImportReport()
         write_png(self.folder.join("objects", "paint.png"), rgba=(10, 20, 30, 255))
         write_png(self.folder.join("liveries", "Red", "objects", "paint.png"), rgba=(250, 0, 0, 255))
-        for name in ("fuselage", "wing", "broken_wing", "easter_egg", "gear"):
+        for name in ("fuselage", "wing", "broken_wing", "windows", "gear"):
             write_file(self.folder.join("objects", f"{name}.obj"), obj_text("", header="TEXTURE paint.png\n"))
         write_file(self.folder.join("objects", "lights.obj"), obj_text("LIGHT_NAMED beacon 0 1 0\n", tris=None))
 
@@ -92,30 +92,28 @@ class TestImportAircraft(XPlaneTestCase):
         # 10 ft right, 5 ft up, 20 ft forward, in meters, in Blender's axes
         self.assertEqual(tuple(round(v, 3) for v in mesh.matrix_world.translation), (3.048, 6.096, 1.524))
 
-    def test_damage_and_attached_and_not_drawn_objects(self) -> None:
+    def test_damage_and_attached_objects_are_skipped(self) -> None:
         objects = {
             0: entry("fuselage.obj"),
             1: entry("broken_wing.obj", 528, wing=0),
             2: entry("gear.obj", 24, gear=1),
-            3: entry("easter_egg.obj", 0),
+            3: entry("windows.obj", 0),
             4: entry("lights.obj", 0),
         }
         root = self.do_import(objects)
-        self.assertEqual(self.names(root), ["easter_egg", "fuselage", "lights"])
+        self.assertEqual(self.names(root), ["fuselage", "lights", "windows"])
         view_layer = bpy.context.view_layer.layer_collection.children["Test Plane"]
-        self.assertTrue(view_layer.children["easter_egg"].exclude, "an object drawn nowhere is left out of the view layer")
-        self.assertFalse(view_layer.children["fuselage"].exclude)
-        self.assertFalse(view_layer.children["lights"].exclude, "lights are not geometry, flags 0 doesn't hide them")
+        # Flags 0 is drawn like any other object (the A330's window frames, the Aerolite's propeller)
+        self.assertFalse(any(child.exclude for child in view_layer.children))
         self.assertTrue(any("damage" in i for i in self.report.infos))
         self.assertTrue(any("attached" in i for i in self.report.infos))
 
     def test_options_bring_the_skipped_objects_back(self) -> None:
-        objects = {0: entry("broken_wing.obj", 528, wing=0), 1: entry("gear.obj", 24, gear=1), 2: entry("easter_egg.obj", 0)}
+        objects = {0: entry("broken_wing.obj", 528, wing=0), 1: entry("gear.obj", 24, gear=1)}
         root = import_aircraft(
-            self.make_acf(objects), ImportOptions(include_not_drawn=True), self.report, include_damage=True, include_attached=True
+            self.make_acf(objects), ImportOptions(), self.report, include_damage=True, include_attached=True
         )
-        self.assertEqual(self.names(root), ["broken_wing", "easter_egg", "gear"])
-        self.assertFalse(bpy.context.view_layer.layer_collection.children["Test Plane"].children["easter_egg"].exclude)
+        self.assertEqual(self.names(root), ["broken_wing", "gear"])
 
     def test_missing_objects_are_errors_but_the_rest_imports(self) -> None:
         root = self.do_import({0: entry("nothere.obj"), 1: entry("fuselage.obj")})

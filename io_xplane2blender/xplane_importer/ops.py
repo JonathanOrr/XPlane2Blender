@@ -101,7 +101,6 @@ def _options_from(op) -> ImportOptions:
         "scale",
     )
     options = ImportOptions(**{k: getattr(op, k) for k in keys if hasattr(op, k)})
-    options.include_not_drawn = getattr(op, "include_not_drawn", False)
     return options
 
 
@@ -312,11 +311,6 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
         description="Also import the objects that only show when a part breaks",
         default=False,
     )
-    include_not_drawn: bpy.props.BoolProperty(
-        name="Not Drawn Objects",
-        description="Also show the objects the aircraft file flags as drawn nowhere, for example placeholders and easter eggs",
-        default=False,
-    )
     include_attached: bpy.props.BoolProperty(
         name="Part Attached Objects",
         description="Also import objects attached to wings, gear or the body. They are placed at the aircraft origin",
@@ -360,7 +354,6 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
         box.prop(self, "livery")
         box.prop(self, "include_damage")
         box.prop(self, "include_attached")
-        box.prop(self, "include_not_drawn")
         _draw_options(layout, self)
 
 
