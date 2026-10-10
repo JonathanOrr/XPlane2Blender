@@ -1,0 +1,24 @@
+[
+ {
+  "children": [],
+  "draw": [
+   {
+    "kind": "operator",
+    "operator": "xplane.check",
+    "text": "Check Again"
+   },
+   {
+    "kind": "label",
+    "text": "1 thing(s) to finish"
+   },
+   {
+    "items": 1,
+    "kind": "list",
+    "list": "XPLANE_UL_check"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane Unfinished Work",
+  "panel": "XPLANE_PT_check"
+ }
+]

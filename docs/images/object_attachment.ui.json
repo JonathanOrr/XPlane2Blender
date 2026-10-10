@@ -1,0 +1,139 @@
+[
+ {
+  "children": [
+   {
+    "children": [],
+    "draw": [
+     {
+      "kind": "prop",
+      "prop": "special_type",
+      "text": "Is A",
+      "value": "magnet"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "debug_name",
+        "text": "Name",
+        "value": "Pilot tablet"
+       },
+       {
+        "items": [
+         {
+          "kind": "label",
+          "text": "Holds"
+         },
+         {
+          "kind": "prop",
+          "prop": "magnet_type_is_xpad",
+          "text": "Tablet",
+          "value": true
+         },
+         {
+          "kind": "prop",
+          "prop": "magnet_type_is_flashlight",
+          "text": "Flashlight",
+          "value": false
+         }
+        ],
+        "kind": "row"
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Attachment Point",
+    "panel": "XPLANE_PT_attachment"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_push_button",
+        "text": "Button"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_switch",
+        "text": "Switch"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_range",
+        "text": "Knob / Lever"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "Not animated. Use a preset above, or key it by hand:"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.add_dataref",
+      "set": {
+       "anim_type": "transform",
+       "target": "object"
+      },
+      "text": "Key By Hand"
+     }
+    ],
+    "kind": "panel",
+    "label": "Moves",
+    "panel": "XPLANE_PT_motion"
+   },
+   {
+    "closed": true,
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Shows / Hides",
+    "panel": "XPLANE_PT_visibility"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Advanced",
+    "panel": "XPLANE_PT_more"
+   }
+  ],
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "label",
+      "text": "Tablet mount"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "xplane.show_file",
+      "set": {
+       "collection": "cockpit"
+      },
+      "text": "In cockpit.obj"
+     }
+    ],
+    "kind": "row"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane",
+  "panel": "XPLANE_PT_object"
+ }
+]

@@ -1,0 +1,62 @@
+[
+ {
+  "draw": [
+   {
+    "kind": "operator",
+    "operator": "xplane.add_click_zone",
+    "text": "Click Zone"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.add_light",
+    "set": {
+     "kind": "automatic"
+    },
+    "text": "Light: Library Light"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.add_light",
+    "set": {
+     "kind": "light_spill_custom"
+    },
+    "text": "Light: Spill"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.add_light",
+    "set": {
+     "kind": "custom"
+    },
+    "text": "Light: Glow Sprite"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.add_attachment",
+    "set": {
+     "kind": "wheel"
+    },
+    "text": "Wheel"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.add_attachment",
+    "set": {
+     "kind": "magnet"
+    },
+    "text": "Tablet Mount"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.add_attachment",
+    "set": {
+     "kind": "emitter_particle"
+    },
+    "text": "Particle Emitter"
+   }
+  ],
+  "kind": "menu",
+  "label": "X-Plane",
+  "menu": "XPLANE_MT_add"
+ }
+]

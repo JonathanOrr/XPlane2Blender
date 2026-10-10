@@ -1,0 +1,6 @@
+# Panels, menus and buttons the guides do not need to describe, with the reason. They are still in the reference.
+# One per line; a # starts the reason.
+Apply the 'Material' datablock to all objects  # Developer Tools, for working on the add-on itself
+Create Fixture Names From Roots  # Developer Tools
+Create lights.txt Summary  # Developer Tools
+Re-run Updater  # Developer Tools

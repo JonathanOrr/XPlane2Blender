@@ -7,202 +7,32 @@
 > [here](https://github.com/JonathanOrr/XPlane2Blender/issues), not to Laminar Research.
 
 # X-Plane 12 Aircraft Tools
-A Blender add-on (Blender 3.6 and up, 5.2 LTS recommended) for making **X-Plane 12 aircraft and cockpits**: import an
+A Blender add-on (Blender 3.6 and up, 5.2 LTS recommended) for making X-Plane 12 aircraft and cockpits: import an
 aircraft or an OBJ, change it or add to it, and export X-Plane 12 OBJs.
 
 How it differs from XPlane2Blender:
-- **X-Plane 12 aircraft only.** There is no X-Plane version setting and nothing for scenery (draped geometry, layer
-  groups, slope limits, library export paths, tint) or for X-Plane 9 and 10 (VLIGHT lights, conditions). Files made
-  with XPlane2Blender open and are converted once: scenery files become aircraft files, and X-Plane 9 lights wait for
-  an X-Plane 12 light to be picked. Every other setting of XPlane2Blender is kept, under the same stored names, and has
-  a place in the panels. Imported OBJs and aircraft from X-Plane 10, 11 and 12 come in set up for X-Plane 12
-- **Plain-words panels that follow the selection.** An **X-Plane** panel in the Properties editor's Object, Bone,
-  Material, Collection and Scene tabs, each showing only what applies to what is selected
-- **Work in progress always exports.** Settings that are not filled in yet are left out, never an error
-- **An importer** for whole aircraft (.acf) and OBJ files
+- X-Plane 12 aircraft only. There is no X-Plane version setting and nothing for scenery or for X-Plane 9 and 10. Files
+  made with XPlane2Blender open and are converted once; every aircraft setting of XPlane2Blender is kept, under the same
+  stored names, and has a place in the panels.
+- Plain-words panels that follow the selection: an **X-Plane** panel in the Properties editor's Object, Bone,
+  Material, Collection and Scene tabs, each showing only what applies to what is selected.
+- Work in progress always exports: settings that are not filled in yet are left out, never an error.
+- An importer for whole aircraft (.acf) and OBJ files, so an aircraft can come in, be changed and go out again.
+
+## Documentation
+The [User Guide](docs/README.md) explains the add-on with pictures of its panels:
+[Getting Started](docs/getting-started.md), [Cockpit Controls](docs/cockpit-controls.md), [Lights](docs/lights.md),
+[Materials And Screens](docs/materials-and-screens.md), [Files And Export](docs/files-and-export.md),
+[Importing](docs/importing.md), [Working Faster](docs/working-faster.md), and the
+[Settings Reference](docs/reference.md) with every setting, button and menu. The guide is checked by the test suite,
+so it describes the add-on as it is.
 
 ## Installation
-1. Download the add-on .zip from the [releases](https://github.com/JonathanOrr/XPlane2Blender/releases), named like
-   `io_xplane2blender_5_0_0-alpha_1-123_20261008120000.zip`. Do not unzip it
-2. In Blender, Edit > Preferences > Add-ons: in Blender 4.2 and later use the drop-down at the top right and
-   **Install from Disk...**, in older versions **Install...**. Pick the .zip
-3. Tick **X-Plane 12 Aircraft Tools**. It replaces XPlane2Blender (same add-on folder), so do not enable both
-4. Restart Blender
+Download the add-on .zip from the [releases](https://github.com/JonathanOrr/XPlane2Blender/releases) (do not unzip
+it), install it in Blender's Preferences > Add-ons, enable X-Plane 12 Aircraft Tools and restart Blender. It replaces
+XPlane2Blender, so do not enable both. Step by step: [Getting Started](docs/getting-started.md#install).
 
 Always keep backups of your .blend files: a file opened and saved with this add-on has been converted to X-Plane 12.
-
-## The X-Plane Panels
-Everything is in the Properties editor, in the tab it belongs to. Blender lists an add-on's panels after its own (panel
-order numbers cannot be negative and all of Blender's own panels use 0, so an add-on cannot go first), which puts the
-**X-Plane** panel under Transform, Relations and the rest. To bring it up, click its header to close it, then
-**Ctrl+click** the header: it opens and all of Blender's own panels in that tab collapse (Ctrl+click on a panel that is
-already open only folds its sub-panels). Or drag the panel to the top by its ⠿ grip. Blender keeps either in the .blend
-file, once for each tab.
-
-**Object tab > X-Plane** shows the active object: what it is in plain words (for example
-`Knob, two commands · Moves · Glow`), which OBJ file it exports in, or that it is not in any file and so is not
-exported (with **New File** and **Move To File** right there), and what is not filled in yet. Below it, a card for
-each thing the object can do:
-
-| Card | For |
-|---|---|
-| **Clickable** | Make it clickable in the cockpit. **Make Clickable As...** lists the kinds of control by what they do (runs commands, sets a dataref, dragged), and the card then shows only the settings that kind uses, with the help in one line. The search button next to a command or dataref searches X-Plane's own lists and the custom names this file already uses. Drags follow their animation: a Drag Axis may have more than two keys along one line (it drags from the first to the last), Drag Rotate With Detents lifts its detent dataref from 0 to the lift in meters, or with **Own Detent Dataref Range** from the range you give (detent heights are in its units), and a stop pit may be level with a neighbouring detent, as X-Plane's spec allows |
-| **Light** | For lights: a library light from lights.txt (with a search tagged spill / glow, by name, taking its color and cone from the Blender light, or with its parameters set by hand), a spill that lights its surroundings, a glow sprite, or not exported. **Preview As In X-Plane** makes the viewport show it the way X-Plane does |
-| **Attachment Point** | For empties: a wheel, a VR tablet mount or a particle emitter |
-| **Moves** | The **Button**, **Switch** and **Knob / Lever** presets key a whole control on every selected object in one step. An animated object lists its datarefs and its keys as buttons (click one to go to it); to key by hand, pose the object, type the dataref value and click **Key Pose** |
-| **Shows / Hides** | Show or hide it while a dataref is in a range |
-| **Glow** | The night (LIT) texture's brightness follows a dataref, like a backlight on a dimmer |
-| **Advanced** | HUD glass, rain, draw order, levels of detail, exporting the object as its own file from its own origin (a root object), and extra OBJ lines typed by hand for anything without a setting |
-
-With several objects selected, the copy button in a card's header copies that card's settings from the active object
-to the others.
-
-**Material tab > X-Plane** is the material's surface, shared by every object using it: visible or invisible
-(invisible click zones), transparency, shadows, camera collision, a screen (the 2D panel or an avionics device with
-its power buses) and the material's glow. **Advanced** below it has the hard surface, deck, polygon offset and extra
-OBJ lines.
-
-**Bone tab > X-Plane** has the same **Moves**, **Shows / Hides** and **Advanced** cards for an armature's bone,
-keyed the same way as an object's.
-
-**Collection tab > X-Plane**: tick it to export the collection as an OBJ file, with its name and kind (aircraft part
-or cockpit). **File Settings And Export** opens the file in the Scene tab.
-
-**Scene tab > X-Plane Export** lists the OBJ files of the scene: tick a collection to export it, click **Cockpit** /
-**Part** to switch its kind, the arrow selects its objects. **Export N Files** writes them next to the .blend file.
-**New File From Selection** puts the selected objects (with their children) in a new file, taking them out of the
-files they were in, and fills in its textures from their materials. Under the list are the chosen file's settings:
-textures (with **From Materials**), look, cockpit panel, levels of detail, X-Plane 12 texture maps, rain, defrost and
-wipers, detail textures and **Advanced**. **Options** has the debug output and, for people working on the add-on itself,
-**Developer Tools**. Under look, **Specular (whole file)** writes the file's `GLOBAL_specular`, the shininess every part
-has unless its material's Specular differs, screens and panels included (off: each material writes its own, panels none,
-and with Metalness In Normal Map the file is fully shiny); an import turns it on with the OBJ's own value.
-
-**Scene tab > X-Plane Unfinished Work** lists what is not filled in yet in the export files, with a button to select
-each object.
-
-**Scene tab > X-Plane Tools** has the click zone overlay, the light preview for every light, **Tidy Empties And
-Light Cones** (see below) and **Open The X-Plane Workspace**.
-
-Also: **Shift+A > X-Plane** adds an invisible click zone, a light or an attachment point at the 3D cursor, and the
-viewport's right-click menu has **X-Plane > Make Clickable As**, the animation presets and **Move To File**.
-
-## In The 3D View
-- **Overlays popover > X-Plane** (saved per workspace, like Blender's own overlays):
-  - **Click Zones** outlines everything clickable (orange runs commands, blue sets datarefs, green is dragged), with
-    an arrow for a typed drag direction, and labels say what a click does, for the selected zones or all of them.
-  - **Motion** draws the path the selected animated objects travel between their first and last keyframes, with a
-    tick and the dataref value at each keyframe, the hinge line of turning parts, and `dataref = value` on the active
-    one.
-  - **Lever Handle** puts a gizmo on the active animated object: a dial around the hinge of a knob, lever or door, an
-    arrow along the slide of a throttle or seat. Drag it to move the part through its animation as it moves in X-Plane
-    and read the dataref value. It only changes the scene frame, nothing is keyed.
-  - **Lights** rings every X-Plane light in its color (red when no light is chosen yet), with a tick for the way a spot
-    shines. A selected light is named and drawn out to the reach X-Plane gives it, which only a spill has (its size in
-    meters: a Spill's Reach, or the size of a lights.txt spill): a cone for a spot, a sphere for a light that shines
-    all around, and "reach 2.5 m" in its name. The rest are lit by their intensity, which has no cutoff: they get a
-    short cone for the direction and "direction only".
-  - **Unfinished** outlines in red what the last Check listed, and says what is missing on the selected ones.
-- **Shift+Q** opens the X-Plane pie menu: Make Clickable As, Animate As, Add, Key This Pose, Move To File, Check
-  (which also turns on the Unfinished overlay), Export, the overlay switches, **Tidy Empties And Cones** and
-  **Blender's Light Gizmos** (Blender's own Overlays > Extras switch, see below). Change the key in Preferences >
-  Keymap > Object Mode.
-- **X-Plane Copy** in the toolbar (the stamp): make a finished button, light or attachment active, then click every
-  other one to give it the same settings. The tool settings choose what is copied: Click, Glow, Shows / Hides, Light,
-  Attachment.
-- **The X-Plane workspace** (the workspace tabs' right-click menu, or Scene tab > X-Plane Tools) is a copy of Layout
-  with those overlays and the lever handle on, textures shown in Solid shading, the dashed parent lines off and
-  Properties on the Object tab.
-- **Preview In Viewport**, under a file's Detail Textures, shows its detail textures on its materials in Material
-  Preview, approximately as X-Plane draws them: tiled at their scale, as strong as their keys say. The preview is a
-  set of shader nodes in a frame that the X button takes out again; exports never read shader nodes.
-
-### A coffee cup in the cup holder
-1. Model or append the cup, give it a material with an image texture
-2. Select it, then Scene tab > X-Plane Export > **New File From Selection**, name it `coffee_cup`
-3. Save the .blend in your aircraft's `objects` folder (OBJs are written next to the .blend) and click **Export 1 File**
-4. Add `coffee_cup.obj` to the aircraft in Plane Maker (Standard > Objects)
-
-## Exporting Work In Progress
-You can export at any stage: settings you have started but not filled in yet are left out of the OBJ instead of stopping the export, and the status bar counts them, for example `Exported 10 file(s); left out as unfinished: 2 lights without an X-Plane light chosen`. The full list is in the `X-Plane Export.log` text in the Text Editor. This covers meshes without a material (they export with X-Plane's default material state) and library lights with no light chosen yet. A file with a real error is not written, but the other files of the export still are, and the status bar says which ones were skipped.
-
-## Find And Replace, Duplicate And Replace
-For the many controls that differ only by side or number. **Scene tab > X-Plane Find And Replace**: add pairs such as `cockpit/mcdu/` → `cockpit/mcdu_2/` and `Captain` → `First Officer`, choose which settings to touch (commands, datarefs, light levels, tooltips, custom attributes) and which objects (selected, selected and their children, or the whole scene), and the panel previews every change before you apply it.
-- **Find And Replace** changes the objects in place.
-- **Duplicate And Replace** copies the selection, renames the settings on the copies only and lets you move them, like Shift+D. Copy the captain's MCDU once and the first officer's is done.
-- Pairs are applied in order, **Match Case** is on by default (X-Plane names are case sensitive) and **Regex** allows regular expressions with `\1` groups.
-- A material or light that objects outside the selection also use is left alone, so changing one side never changes the other. The panel says how many were skipped.
-- Both are normal Blender operations: Ctrl+Z undoes them and the Adjust Last Operation panel works.
-
-## Tables And CSV
-**Scene tab > X-Plane Tables** lists the objects of one table in one place: **Clickable** (every manipulator), **Glow** (every light level), **Datarefs** (the datarefs that move, show or hide objects) and **Lights** (every light, which X-Plane light it becomes and its parameters). Click a row to select that object in the viewport (the active object's row is marked), type in the search box to filter by name, command, dataref or light, **Select Listed** selects everything the list shows, for the other tools to work on together, and widen the Properties editor to edit the settings in place (a narrow one shows the end of each command, where `key/A` and `key/B` differ). It stays quick on an aircraft with thousands of objects. **Export CSV** writes every setting of the listed objects to a spreadsheet file, and **Import CSV** reads it back by object name: values that did not change are left alone, and objects that are not found or values that cannot be used are reported instead of stopping the import. Keyframes stay in Blender; the Datarefs table holds the dataref paths and show/hide values.
-
-## Animation Presets
-In the **Moves** card (and the viewport's right-click menu), on every selected object:
-- **Button** moves the button in while its command is held, with a `CMND=` dataref. Leave the command empty and each button uses its own manipulator command, so a hundred buttons get their animation in one click. Buttons without a manipulator get one (tick off **Make Clickable** to skip that).
-- **Switch** gives each of a number of positions a dataref value and an angle or a distance, for toggles, rotary selectors and pull switches. The dialog shows the result, for example `0 → 20°  1 → 0°  2 → -20°`.
-- **Knob / Lever** follows a dataref over a range, turning or sliding. **Loop Every** makes an endless knob.
-
-Movement is along or around the object's own axis, from where it stands. Keys are linear, as X-Plane interpolates them, and turns over 90° get extra keys in between so whole turns are kept. `{name}` in a command or dataref becomes the object's name. Objects that are already animated are left alone unless **Replace** is ticked, and Replace starts again from where the object stood before the preset first animated it. On the A321XLR cockpit the Button preset reproduces 40 of 40 hand-made button animations key for key.
-
-## Lights
-- The search button next to a light's **Name** lists every light in lights.txt, tagged **spill** (lights its surroundings), **glow** (a visible halo that lights nothing) or both. Under the name, the card says what the chosen light is, or that the name is not in lights.txt.
-- For **Library Light, Manual** the card has a setting for each parameter the light takes (a color, a direction, the cone as an angle, a size, an index) and the line they make as text, which can also be pasted or edited by hand, and says when it has too few or too many values. A new one starts with the color, cone and direction of the Blender light it is made from. The direction of a Spot light is its rotation: the exporter turns the typed one to wherever the light points.
-- **The X-Plane light and the Blender light share their numbers, and you can change either one.** A change made on the Blender light is taken into the X-Plane light (for the selected lights, after every change) and a change made in the card or the typed line is pushed to the Blender light:
-  - **Rotation** is the direction, for every kind of light. **Spot Size** is the cone and **Color** the color: Library and Spill lights are always written from them, and for **Library Light, Manual** the typed `WIDTH` and `R G B` follow them.
-  - **Power** (watts, while it is above 0) is the **Intensity** in candela, at 4π²/683 watts per candela, the factor the preview has always used. **Custom Distance** (once switched on) is the reach in meters, which only spills have: a Spill's Reach, or the Light Size of a library spill. A light lit by its intensity has no reach in X-Plane, so its Custom Distance is left alone.
-  - A light is never changed by being looked at: only a change that is made while the add-on is watching is passed on, so opening a file or selecting a light changes nothing. What the preview multiplied the power by is remembered and taken out again.
-  - The watts-per-candela factor makes a plausible picture, not a measurement: check the brightness against the sim.
-- **Preview As In X-Plane** makes lights look in the viewport the way X-Plane draws them: spill lights light their surroundings, custom spills only out to their reach in meters, and glow-only and custom lights light nothing. It only changes Blender settings the exporter never reads (power, except for glow sprites whose power is the exported alpha, cutoff distance and ray visibility), so the exported OBJ stays the same. Ctrl+Z undoes it.
-- Old X-Plane 9 lights (`VLIGHT` / `LIGHTS`) have no X-Plane 12 equivalent. Opened or imported, they keep their place
-  and color and are listed as unfinished work until an X-Plane 12 light is picked; until then they are left out of
-  exports.
-
-## Importing X-Plane Aircraft And Objects
-Open **File > Import > X-Plane Aircraft (.acf)**, pick an aircraft's `.acf` file, and the whole aircraft is brought in: every object it lists, in the right place, with its textures, normal maps, materials, animations, manipulators and lights. It works with the text based `.acf` files of X-Plane 10, 11 and 12. **File > Import > X-Plane Object (.obj)** imports single OBJ8 files (several at once is fine), and you can also drag an `.acf` or `.obj` onto the 3D viewport in Blender 4.1 and later.
-
-The options are in the side panel of the file browser:
-
-| Option | What it does |
-|---|---|
-| Livery | Uses the textures of one of the aircraft's liveries instead of the default ones |
-| Textures and Materials | Loads the images and builds shader nodes (albedo, normal map, gloss, metalness, alpha cutoff, the `_LIT` texture) |
-| Animations | Creates the dataref animations (keyframes on the parts) and show/hide settings |
-| Manipulators | Sets up the clickable manipulators, with their commands, datarefs and tooltips |
-| Lights | Creates lights with their XPlane2Blender settings. See "How lights come in" below |
-| All LODs | Imports every level of detail instead of only the first. Off, a multi-LOD file exports with the first LOD's parts at every distance; a file with one LOD keeps its range either way |
-| Mark What X-Plane Hides | Draws a sphere around the parts that X-Plane would not draw with the datarefs at their default values (Viewport Display > Bounds, Sphere) and leaves them out of renders. They stay visible and are exported like any part: in Blender, hidden objects are never exported |
-| Make Export Files | Ticks each OBJ's collection as an export file. Off by default, because exporting a whole aircraft would write every file. The texture and export settings are always filled in and the files are listed unticked in the Scene tab's X-Plane Export panel, so one tick exports one again |
-| Night Light Strength | How much the `_LIT` texture glows, 0 shows the daytime look |
-| Light Strength | Switches the spill lights on, such as the cockpit annunciator and panel lights. 0 keeps them from lighting the scene (they are off in the parked pose), 1 is the brightness the light's parameters ask for |
-| Damage / Part Attached / Not Drawn Objects | Also brings in objects that are normally left out (they only show when a part breaks, move with a wing or gear part, or are drawn nowhere) |
-
-What you get:
-- Each OBJ becomes a collection, grouped under the aircraft's collection, with the scene opening in the parked pose (landing gear down, flaps in, and so on)
-- **The parts carry their own animations**, the way you would build them: the pivot is the part's origin and the dataref and keys are on the part, so a knob is one object that you select and click. A part pushed in and turned by the same dataref is one object, and so is a part turned about up to three axes by one dataref. A show / hide that holds a single part is on the part. Where several parts share an animation the biggest one carries it and the others hang on it. An Empty is only made where one is needed: the outer animations of a part under animations of different datarefs, or a static turn that a panel's parts share (a ` frame` Empty, which holds the tilt of the panel, so the keys of every button in it are along the panel's own axes). The imported A330 went from 5,694 Empties to 654 (of 9,079 objects, now 4,039), and the exported A321XLR cockpit OBJs from 802 to 24. Animations with nothing in them (no part, no light) are left out and counted in the import report
-- Animations are keyframed with linear interpolation like X-Plane, from frame 1 on (no key is before it, where the playhead cannot go). The parked pose is one frame for every part, and the scene opens on it
-- Meshes with different manipulators, light levels or materials are separate objects with one material each (the exporter reads an object's first material only), so everything can be edited and exported again
-- Header lines the add-on has settings for fill them in: rain, defrost and wipers, the lit texture's luminance and cockpit regions. Anything the add-on has no setting for is kept as a custom attribute (with the line that ends it, such as `ATTR_cull` after `ATTR_no_cull`), or reported as a warning, never silently dropped. This includes `ATTR_albedo_opacity <min> <max> <dataref>`, which X-Plane 12 reads although the OBJ8 spec does not list it (it fades the day texture by a dataref, for example ice building up), kept with its `ATTR_albedo_opacity_reset`
-- Textures are named as the OBJ names them: X-Plane loads `wing.dds` for `TEXTURE wing.png`, so Blender shows the .dds and the export still names the .png, and a texture that is not shipped stays named. With a livery the livery's textures are shown, and the OBJ still names the aircraft's own
-- `ATTR_landing_gear` (where a wheel is, for the sim's gear) becomes a Wheel Empty in its animation, and magnets and emitters keep their turn inside turned frames
-- Older files that put an animation line after geometry in a block (Laminar's C172 and Citation X) are read the way X-Plane reads them: the line only moves what follows it
-- Triangles with no area (corners on a line) are left out: they draw nothing, and Blender's normals around them change when a part is turned. Normals are kept exactly when the importer or the exporter turns a part (an airliner's walls and knobs came back with corners pointing elsewhere)
-- Drag click zones are kept free of children and in the frame their animation turns in, which the exporter needs. A drag rotate with a lift becomes Drag Rotate With Detents with **Own Detent Dataref Range** on (Laminar's levers lift a dataref from 0 to 1); one with detent lines but no lift stays a Drag Rotate and keeps them. A drag axis with `ATTR_axis_detented` becomes Drag Axis With Detents
-- Empties are drawn at a quarter of the largest part hanging on them (a few millimeters for a knob, at most 6 cm) and the lines of a spot light's cone only as long as its reach (15 cm for a light that is off and has none: a light that is switched on keeps Blender's own distance, so it lights as it should). The dashed parent lines are turned off in the viewport the import shows. **Tidy Empties And Light Cones** (Scene tab > X-Plane Tools, and the pie menu) does the same for a scene that was imported before
-- **Lights, many of them:** Blender draws every light with a line down to the ground and, for a spot, a circle whose size depends only on the spot's angle (10 m times the sine of half the angle, however short the cone is and whatever the power), so an aircraft's hundreds of lights bury it. Nothing can shrink those circles but hiding them: **Overlays > Extras off** (the pie menu has the switch, as **Blender's Light Gizmos**) hides them and keeps the lights lighting the scene (hiding lights with the eye in Selectability & Visibility would switch their light off too). An import with 20 or more lights does this for you and turns on the X-Plane **Lights** overlay, which draws a ring in each light's color with a tick for the way a spot shines, and the name and cone of the selected ones. With Extras off, the lights can still be clicked in the viewport (where their rings are), and the Scene tab's **X-Plane Tables > Lights** lists them all
-
-How lights come in:
-- `lights.txt` gives a light a **billboard** (the visible halo, lights nothing) and/or a **spill** (really lights its surroundings). Spills become Blender point or spot lights, with the cone and direction from the light's parameters (`WIDTH` is the cosine of half the cone angle, `DX DY DZ` the direction) and the power from its candela or radius. Billboards and `LIGHT_CUSTOM` halos are kept for export but do not light the scene in Cycles or EEVEE
-- The numbers are for a plausible picture, not a measurement. The exporter writes a light's parameters as stored and never reads the power of a named, parameterized or spill light, so you can change the Blender power freely. The power the light has when on is stored on the light as `xplane_watts_when_on`
-- `LIGHT_CUSTOM` is the exception: the exporter writes the Blender power as the light's alpha, and colors outside 0 to 1 (some halos use -1 as a placeholder) use the "RGB Picker Override"
-- Re-exporting writes the same parameters, and the same position and direction in the aircraft. A `LIGHT_SPILL_CUSTOM`'s alpha is the Spill's **Dim** (1 is full brightness; the King Air's spills start at 0 and their datarefs brighten them), and its direction is written normalized
-
-Limits worth knowing:
-- Wings and fuselages that Plane Maker builds from its own parts (not from OBJ files) are not imported, only the OBJ objects are
-- Objects attached to a wing, gear or body part are skipped by default, their placement depends on that part
-- Textures in the BC6/BC7 DDS formats can't be read by Blender, those materials have no image
-- Re-exporting complex drag rotate manipulators needs the parent and child animation layout XPlane2Blender asks for
-- Imported textures are referenced by their full path, keep the aircraft where it is or relink them in Blender
 
 ## Relationship To XPlane2Blender
 This fork started from XPlane2Blender 4.5 (the tag `upstream-base`) and has since been rewritten for X-Plane 12
@@ -222,9 +52,9 @@ with XPlane2Blender, which sees its aircraft settings as they are.
 - [X-Plane Modeling Tutorials](http://developer.x-plane.com/docs/modeling/)
 
 ## Test Suite
-**The average user does not need the test suite.** Before releasing a build to the public we test the code many many many times! This is only useful for developers and power users who make changes to the source code. The tests folder must also be in the same folder as the addon folder (see manual installation).
+The average user does not need the test suite. Before releasing a build to the public we test the code many many many times! This is only useful for developers and power users who make changes to the source code. The tests folder must also be in the same folder as the addon folder (see manual installation).
 
-If you have Python 3 installed (it only launches Blender; the tests themselves run on Blender's bundled Python) and the **full source code** downloaded, you can run the test suite. It will attempt to export sample .blend files that utilize various features of the exporter and print the results (see the contents of the ``test`` folder). All passing means XPlane2Blender is safe to use. In the XPlane2Blender folder, open up a command line and run
+If you have Python 3 installed (it only launches Blender; the tests themselves run on Blender's bundled Python) and the full source code downloaded, you can run the test suite. It will attempt to export sample .blend files that utilize various features of the exporter and print the results (see the contents of the ``test`` folder). All passing means XPlane2Blender is safe to use. In the XPlane2Blender folder, open up a command line and run
 
 ``python tests.py --print-fails``
 

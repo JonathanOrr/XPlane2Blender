@@ -1,0 +1,56 @@
+[
+ {
+  "children": [],
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "prop",
+      "prop": "name",
+      "text": "Saved As",
+      "value": "cockpit"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop_enum",
+        "on": false,
+        "option": "aircraft",
+        "prop": "export_type",
+        "text": "Aircraft Part"
+       },
+       {
+        "kind": "prop_enum",
+        "on": true,
+        "option": "cockpit",
+        "prop": "export_type",
+        "text": "Cockpit"
+       }
+      ],
+      "kind": "row"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.show_file",
+    "set": {
+     "collection": "cockpit"
+    },
+    "text": "File Settings And Export"
+   }
+  ],
+  "draw_header": [
+   {
+    "kind": "prop",
+    "prop": "is_exportable_collection",
+    "text": "",
+    "value": true
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane",
+  "panel": "XPLANE_PT_collection"
+ }
+]

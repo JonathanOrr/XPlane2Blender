@@ -1,0 +1,21 @@
+# Names Blender itself shows, which the docs give in bold. One per line; a # starts a comment.
+Properties editor
+Object tab
+Material tab
+Bone tab
+Collection tab
+Scene tab
+3D View
+Overlays
+Extras
+Edit
+Preferences
+Add-ons
+Keymap
+Install from Disk
+Install
+File
+Import
+Export
+Shift+A
+X-Plane 12 Aircraft Tools  # The add-on's name in Preferences > Add-ons

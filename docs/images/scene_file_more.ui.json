@@ -1,0 +1,178 @@
+[
+ {
+  "children": [
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "file_decal1",
+        "text": "Detail 1",
+        "value": ""
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "file_decal2",
+        "text": "Detail 2",
+        "value": ""
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "file_normal_decal1",
+        "text": "Normal Detail 1",
+        "value": ""
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "file_normal_decal2",
+        "text": "Normal Detail 2",
+        "value": ""
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "kind": "prop",
+      "prop": "texture_modulator",
+      "text": "Modulator",
+      "value": ""
+     }
+    ],
+    "kind": "panel",
+    "label": "Detail Textures",
+    "panel": "XPLANE_PT_file_decals"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "particle_system_file",
+        "text": "Particle Systems (.pss)",
+        "value": ""
+       },
+       {
+        "kind": "prop",
+        "prop": "slungLoadWeight",
+        "text": "Slung Load Weight (lb)",
+        "value": 0.0
+       },
+       {
+        "kind": "prop",
+        "prop": "debug",
+        "text": "Debug Info In This OBJ",
+        "value": true
+       },
+       {
+        "items": [
+         {
+          "kind": "label",
+          "text": "Extra OBJ Lines"
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.list_add",
+          "set": {
+           "target": "file:xplane.layer.customAttributes"
+          },
+          "text": "Add Line"
+         }
+        ],
+        "kind": "column"
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "kind": "panel",
+    "label": "Advanced",
+    "panel": "XPLANE_PT_file_more"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "optimize",
+        "text": "Smaller Files (share vertices)",
+        "value": false
+       },
+       {
+        "kind": "prop",
+        "prop": "debug",
+        "text": "Debug Info",
+        "value": false
+       },
+       {
+        "icon": "INFO",
+        "kind": "label",
+        "text": "Add-on <version>"
+       },
+       {
+        "kind": "prop",
+        "prop": "plugin_development",
+        "text": "Developer Tools",
+        "value": false
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "kind": "panel",
+    "label": "Options",
+    "panel": "XPLANE_PT_export_options"
+   }
+  ],
+  "draw": [
+   {
+    "items": 2,
+    "kind": "list",
+    "list": "XPLANE_UL_files"
+   },
+   {
+    "kind": "operator",
+    "operator": "xplane.new_file",
+    "text": "New File From Selection"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "scene.export_to_relative_dir",
+      "text": "Export 2 Files"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "icon": "FILE_FOLDER",
+    "kind": "label",
+    "text": "To <demo folder>/"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane Export",
+  "panel": "XPLANE_PT_export"
+ }
+]

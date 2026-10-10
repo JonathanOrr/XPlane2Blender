@@ -1,0 +1,192 @@
+[
+ {
+  "children": [
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Advanced",
+    "panel": "XPLANE_PT_surface_more"
+   }
+  ],
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "prop",
+      "prop": "draw",
+      "text": "Visible",
+      "value": true
+     },
+     {
+      "kind": "label",
+      "text": "Transparency"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop_enum",
+        "on": true,
+        "option": "on",
+        "prop": "blend_v1000",
+        "text": "Smooth"
+       },
+       {
+        "kind": "prop_enum",
+        "on": false,
+        "option": "off",
+        "prop": "blend_v1000",
+        "text": "Hard Edge"
+       },
+       {
+        "kind": "prop_enum",
+        "on": false,
+        "option": "shadow",
+        "prop": "blend_v1000",
+        "text": "Cut Shadow"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "kind": "prop",
+      "prop": "shadow_local",
+      "text": "Casts Shadows",
+      "value": true
+     },
+     {
+      "kind": "prop",
+      "prop": "solid_camera",
+      "text": "Camera Cannot Pass Through",
+      "value": false
+     },
+     {
+      "kind": "label",
+      "text": "Screen"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop_enum",
+        "on": false,
+        "option": "none",
+        "prop": "cockpit_feature",
+        "text": "None"
+       },
+       {
+        "kind": "prop_enum",
+        "on": false,
+        "option": "panel",
+        "prop": "cockpit_feature",
+        "text": "2D Panel"
+       },
+       {
+        "kind": "prop_enum",
+        "on": true,
+        "option": "device",
+        "prop": "cockpit_feature",
+        "text": "Avionics"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "kind": "prop",
+      "prop": "device_name",
+      "text": "Device",
+      "value": "G1000_PFD1"
+     },
+     {
+      "kind": "label",
+      "text": "Powered By"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "device_bus_0",
+        "text": "Bus 1",
+        "value": true
+       },
+       {
+        "kind": "prop",
+        "prop": "device_bus_1",
+        "text": "Bus 2",
+        "value": false
+       },
+       {
+        "kind": "prop",
+        "prop": "device_bus_2",
+        "text": "Bus 3",
+        "value": false
+       },
+       {
+        "kind": "prop",
+        "prop": "device_bus_3",
+        "text": "Bus 4",
+        "value": false
+       },
+       {
+        "kind": "prop",
+        "prop": "device_bus_4",
+        "text": "Bus 5",
+        "value": false
+       },
+       {
+        "kind": "prop",
+        "prop": "device_bus_5",
+        "text": "Bus 6",
+        "value": false
+       }
+      ],
+      "kind": "grid"
+     },
+     {
+      "kind": "prop",
+      "prop": "device_lighting_channel",
+      "text": "Brightness Channel",
+      "value": 0
+     },
+     {
+      "kind": "prop",
+      "prop": "device_auto_adjust",
+      "text": "Brighter In Daylight",
+      "value": true
+     },
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "cockpit_feature_use_luminance",
+        "text": "",
+        "value": false
+       },
+       {
+        "active": false,
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "cockpit_feature_luminance",
+          "text": "Max Brightness (nits)",
+          "value": 1000
+         }
+        ],
+        "kind": "row"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "kind": "prop",
+      "prop": "lightLevel",
+      "text": "Material Glow",
+      "value": false
+     }
+    ],
+    "kind": "column"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane",
+  "panel": "XPLANE_PT_surface"
+ }
+]

@@ -1,0 +1,288 @@
+[
+ {
+  "children": [],
+  "draw": [
+   {
+    "items": [
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "find",
+        "text": "",
+        "value": "heading"
+       },
+       {
+        "icon": "FORWARD",
+        "kind": "label",
+        "text": ""
+       },
+       {
+        "kind": "prop",
+        "prop": "replace",
+        "text": "",
+        "value": "course"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.bulk_pair_remove",
+        "set": {
+         "index": 0
+        },
+        "text": ""
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "find",
+        "text": "",
+        "value": "Heading"
+       },
+       {
+        "icon": "FORWARD",
+        "kind": "label",
+        "text": ""
+       },
+       {
+        "kind": "prop",
+        "prop": "replace",
+        "text": "",
+        "value": "Course"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.bulk_pair_remove",
+        "set": {
+         "index": 1
+        },
+        "text": ""
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "items": [
+       {
+        "kind": "operator",
+        "operator": "xplane.bulk_pair_add",
+        "text": "Add Pair"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.bulk_pairs_swap",
+        "text": ""
+       }
+      ],
+      "kind": "row"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "kind": "prop",
+    "prop": "scope",
+    "text": "Objects",
+    "value": "SELECTED"
+   },
+   {
+    "items": [
+     {
+      "kind": "prop_enum",
+      "on": false,
+      "option": "COMMANDS",
+      "prop": "kinds",
+      "text": "Commands"
+     },
+     {
+      "kind": "prop_enum",
+      "on": false,
+      "option": "DATAREFS",
+      "prop": "kinds",
+      "text": "Datarefs"
+     },
+     {
+      "kind": "prop_enum",
+      "on": false,
+      "option": "LIGHT_LEVELS",
+      "prop": "kinds",
+      "text": "Light Levels"
+     },
+     {
+      "kind": "prop_enum",
+      "on": false,
+      "option": "TOOLTIPS",
+      "prop": "kinds",
+      "text": "Tooltips"
+     },
+     {
+      "kind": "prop_enum",
+      "on": false,
+      "option": "CUSTOM",
+      "prop": "kinds",
+      "text": "Custom Attributes"
+     }
+    ],
+    "kind": "grid"
+   },
+   {
+    "items": [
+     {
+      "kind": "prop",
+      "prop": "match_case",
+      "text": "Match Case",
+      "value": true
+     },
+     {
+      "kind": "prop",
+      "prop": "use_regex",
+      "text": "Regex",
+      "value": false
+     }
+    ],
+    "kind": "row"
+   },
+   {
+    "items": [
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "show_preview",
+        "text": "",
+        "value": true
+       },
+       {
+        "kind": "label",
+        "text": "4 change(s)"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "heading knob: positive command"
+       },
+       {
+        "active": false,
+        "items": [
+         {
+          "icon": "REMOVE",
+          "kind": "label",
+          "text": "sim/autopilot/heading_up"
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "icon": "ADD",
+        "kind": "label",
+        "text": "sim/autopilot/course_up"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "heading knob: negative command"
+       },
+       {
+        "active": false,
+        "items": [
+         {
+          "icon": "REMOVE",
+          "kind": "label",
+          "text": "sim/autopilot/heading_down"
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "icon": "ADD",
+        "kind": "label",
+        "text": "sim/autopilot/course_down"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "heading knob: tooltip"
+       },
+       {
+        "active": false,
+        "items": [
+         {
+          "icon": "REMOVE",
+          "kind": "label",
+          "text": "Heading"
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "icon": "ADD",
+        "kind": "label",
+        "text": "Course"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "heading knob: animation dataref 1"
+       },
+       {
+        "active": false,
+        "items": [
+         {
+          "icon": "REMOVE",
+          "kind": "label",
+          "text": "sim/cockpit/autopilot/heading_mag"
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "icon": "ADD",
+        "kind": "label",
+        "text": "sim/cockpit/autopilot/course_mag"
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "kind": "box"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "xplane.bulk_replace",
+      "text": "Find And Replace"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.bulk_duplicate_replace",
+      "text": "Duplicate And Replace"
+     }
+    ],
+    "kind": "column"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane Find And Replace",
+  "panel": "XPLANE_PT_bulk_edit"
+ }
+]

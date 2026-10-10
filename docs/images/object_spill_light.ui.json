@@ -1,0 +1,197 @@
+[
+ {
+  "children": [
+   {
+    "children": [
+     {
+      "closed": true,
+      "kind": "panel",
+      "label": "Light Lines",
+      "panel": "XPLANE_PT_light_more"
+     }
+    ],
+    "draw": [
+     {
+      "kind": "menu",
+      "menu": "XPLANE_MT_light_kind",
+      "text": "Spill"
+     },
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "size",
+        "text": "Reach (m)",
+        "value": 0.6
+       },
+       {
+        "items": [
+         {
+          "icon": "LINKED",
+          "kind": "label",
+          "text": "Reach is the Blender light's Custom Distance, the cone"
+         },
+         {
+          "icon": "BLANK1",
+          "kind": "label",
+          "text": "its Spot Size"
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "items": [
+         {
+          "kind": "label",
+          "text": "Brightness Dataref"
+         },
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "dataref",
+            "text": "",
+            "value": "sim/cockpit2/switches/panel_brightness_ratio[0]"
+           },
+           {
+            "kind": "operator",
+            "operator": "xplane.search",
+            "set": {
+             "kind": "dataref",
+             "target": "light:xplane.dataref"
+            },
+            "text": ""
+           }
+          ],
+          "kind": "row"
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "kind": "prop",
+        "prop": "color",
+        "text": "Color",
+        "value": [
+         1.0,
+         1.0,
+         1.0
+        ]
+       },
+       {
+        "kind": "prop",
+        "prop": "spill_dim",
+        "text": "Dim",
+        "value": 0.8
+       },
+       {
+        "icon": "LIGHT_SPOT",
+        "kind": "label",
+        "text": "Cone written as: 0.92388"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.lights_preview",
+      "set": {
+       "selected_only": true
+      },
+      "text": "Preview As In X-Plane"
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Light",
+    "panel": "XPLANE_PT_light"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_push_button",
+        "text": "Button"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_switch",
+        "text": "Switch"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_range",
+        "text": "Knob / Lever"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "Not animated. Use a preset above, or key it by hand:"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.add_dataref",
+      "set": {
+       "anim_type": "transform",
+       "target": "object"
+      },
+      "text": "Key By Hand"
+     }
+    ],
+    "kind": "panel",
+    "label": "Moves",
+    "panel": "XPLANE_PT_motion"
+   },
+   {
+    "closed": true,
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Shows / Hides",
+    "panel": "XPLANE_PT_visibility"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Advanced",
+    "panel": "XPLANE_PT_more"
+   }
+  ],
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "label",
+      "text": "Light"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "xplane.show_file",
+      "set": {
+       "collection": "cockpit"
+      },
+      "text": "In cockpit.obj"
+     }
+    ],
+    "kind": "row"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane",
+  "panel": "XPLANE_PT_object"
+ }
+]

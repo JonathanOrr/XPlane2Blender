@@ -1,0 +1,154 @@
+[
+ {
+  "children": [
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "Not clickable. Pick what it is to make it clickable in"
+       },
+       {
+        "kind": "label",
+        "text": "the cockpit:"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "kind": "menu",
+      "menu": "XPLANE_MT_control_kind",
+      "text": "Make Clickable As..."
+     }
+    ],
+    "draw_header": [
+     {
+      "kind": "prop",
+      "prop": "enabled",
+      "text": "",
+      "value": false
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Clickable",
+    "panel": "XPLANE_PT_click"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_push_button",
+        "text": "Button"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_switch",
+        "text": "Switch"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.anim_range",
+        "text": "Knob / Lever"
+       }
+      ],
+      "kind": "row"
+     },
+     {
+      "items": [
+       {
+        "kind": "label",
+        "text": "Not animated. Use a preset above, or key it by hand:"
+       }
+      ],
+      "kind": "column"
+     },
+     {
+      "kind": "operator",
+      "operator": "xplane.add_dataref",
+      "set": {
+       "anim_type": "transform",
+       "target": "object"
+      },
+      "text": "Key By Hand"
+     }
+    ],
+    "kind": "panel",
+    "label": "Moves",
+    "panel": "XPLANE_PT_motion"
+   },
+   {
+    "closed": true,
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Shows / Hides",
+    "panel": "XPLANE_PT_visibility"
+   },
+   {
+    "closed": true,
+    "draw_header": [
+     {
+      "kind": "prop",
+      "prop": "lightLevel",
+      "text": "",
+      "value": false
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Glow",
+    "panel": "XPLANE_PT_glow"
+   },
+   {
+    "closed": true,
+    "kind": "panel",
+    "label": "Advanced",
+    "panel": "XPLANE_PT_more"
+   }
+  ],
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "label",
+      "text": "Part"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "items": [
+     {
+      "icon": "ERROR",
+      "kind": "label",
+      "text": "Not exported: it is not in an export file"
+     },
+     {
+      "items": [
+       {
+        "kind": "operator",
+        "operator": "xplane.new_file",
+        "text": "New File"
+       },
+       {
+        "kind": "menu",
+        "menu": "XPLANE_MT_move_to_file",
+        "text": "Move To File"
+       }
+      ],
+      "kind": "row"
+     }
+    ],
+    "kind": "box"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane",
+  "panel": "XPLANE_PT_object"
+ }
+]

@@ -1,0 +1,305 @@
+[
+ {
+  "children": [
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "items": [
+         {
+          "kind": "prop_enum",
+          "on": true,
+          "option": "show",
+          "prop": "anim_type",
+          "text": "Show"
+         },
+         {
+          "kind": "prop_enum",
+          "on": false,
+          "option": "hide",
+          "prop": "anim_type",
+          "text": "Hide"
+         },
+         {
+          "kind": "label",
+          "text": "when"
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.remove_dataref",
+          "set": {
+           "index": 1,
+           "target": "object"
+          },
+          "text": ""
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "path",
+          "text": "",
+          "value": "sim/cockpit2/electrical/bus_volts[0]"
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.search",
+          "set": {
+           "kind": "dataref",
+           "target": "object:xplane.datarefs[1].path"
+          },
+          "text": ""
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "show_hide_v1",
+          "text": "is from",
+          "value": 20.0
+         },
+         {
+          "kind": "prop",
+          "prop": "show_hide_v2",
+          "text": "to",
+          "value": 30.0
+         }
+        ],
+        "kind": "row"
+       }
+      ],
+      "kind": "box"
+     },
+     {
+      "items": [
+       {
+        "kind": "operator",
+        "operator": "xplane.add_dataref",
+        "set": {
+         "anim_type": "show",
+         "target": "object"
+        },
+        "text": "Show When"
+       },
+       {
+        "kind": "operator",
+        "operator": "xplane.add_dataref",
+        "set": {
+         "anim_type": "hide",
+         "target": "object"
+        },
+        "text": "Hide When"
+       }
+      ],
+      "kind": "row"
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Shows / Hides",
+    "panel": "XPLANE_PT_visibility"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "items": [
+         {
+          "kind": "label",
+          "text": "The night (LIT) texture's brightness follows a dataref,"
+         },
+         {
+          "kind": "label",
+          "text": "like a backlight on a dimmer."
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "items": [
+         {
+          "kind": "label",
+          "text": "Dataref"
+         },
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "lightLevel_dataref",
+            "text": "",
+            "value": "sim/cockpit2/switches/instrument_brightness_ratio[0]"
+           },
+           {
+            "kind": "operator",
+            "operator": "xplane.search",
+            "set": {
+             "kind": "dataref",
+             "target": "object:xplane.lightLevel_dataref"
+            },
+            "text": ""
+           }
+          ],
+          "kind": "row"
+         }
+        ],
+        "kind": "column"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "lightLevel_v1",
+          "text": "Off At",
+          "value": 0.0
+         },
+         {
+          "kind": "prop",
+          "prop": "lightLevel_v2",
+          "text": "Full At",
+          "value": 1.0
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "items": [
+         {
+          "kind": "prop",
+          "prop": "lightLevel_photometric",
+          "text": "",
+          "value": false
+         },
+         {
+          "active": false,
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "lightLevel_brightness",
+            "text": "Full (nits)",
+            "value": 1000
+           }
+          ],
+          "kind": "row"
+         }
+        ],
+        "kind": "row"
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "draw_header": [
+     {
+      "kind": "prop",
+      "prop": "lightLevel",
+      "text": "",
+      "value": true
+     }
+    ],
+    "draw_header_preset": [],
+    "kind": "panel",
+    "label": "Glow",
+    "panel": "XPLANE_PT_glow"
+   },
+   {
+    "children": [],
+    "draw": [
+     {
+      "items": [
+       {
+        "kind": "prop",
+        "prop": "hud_glass",
+        "text": "HUD Glass",
+        "value": false
+       },
+       {
+        "kind": "prop",
+        "prop": "rain_cannot_escape",
+        "text": "Rain Cannot Escape",
+        "value": false
+       },
+       {
+        "kind": "prop",
+        "prop": "override_weight",
+        "text": "Draw Order",
+        "value": false
+       },
+       {
+        "kind": "prop",
+        "prop": "isExportableRoot",
+        "text": "Its Own File, From Its Own Origin",
+        "value": false
+       },
+       {
+        "items": [
+         {
+          "kind": "label",
+          "text": "Extra OBJ Lines"
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.list_add",
+          "set": {
+           "target": "object:xplane.customAttributes"
+          },
+          "text": "Add Line"
+         },
+         {
+          "kind": "operator",
+          "operator": "xplane.list_add",
+          "set": {
+           "target": "object:xplane.customAnimAttributes"
+          },
+          "text": "Add Animation Line"
+         }
+        ],
+        "kind": "column"
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "kind": "panel",
+    "label": "Advanced",
+    "panel": "XPLANE_PT_more"
+   }
+  ],
+  "draw": [
+   {
+    "items": [
+     {
+      "kind": "label",
+      "text": "Button \u00b7 Moves \u00b7 Shows / Hides \u00b7 Glow"
+     }
+    ],
+    "kind": "column"
+   },
+   {
+    "items": [
+     {
+      "kind": "operator",
+      "operator": "xplane.show_file",
+      "set": {
+       "collection": "cockpit"
+      },
+      "text": "In cockpit.obj"
+     }
+    ],
+    "kind": "row"
+   }
+  ],
+  "kind": "panel",
+  "label": "X-Plane",
+  "panel": "XPLANE_PT_object"
+ }
+]
