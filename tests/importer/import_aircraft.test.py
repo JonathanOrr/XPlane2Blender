@@ -58,7 +58,7 @@ class TestImportAircraft(XPlaneTestCase):
         self.report = ImportReport()
         write_png(self.folder.join("objects", "paint.png"), rgba=(10, 20, 30, 255))
         write_png(self.folder.join("liveries", "Red", "objects", "paint.png"), rgba=(250, 0, 0, 255))
-        for name in ("fuselage", "wing", "broken_wing", "windows", "gear"):
+        for name in ("fuselage", "wing", "broken_wing", "windows", "gear", "prefill"):
             write_file(self.folder.join("objects", f"{name}.obj"), obj_text("", header="TEXTURE paint.png\n"))
         write_file(self.folder.join("objects", "lights.obj"), obj_text("LIGHT_NAMED beacon 0 1 0\n", tris=None))
 
@@ -107,6 +107,14 @@ class TestImportAircraft(XPlaneTestCase):
         self.assertFalse(any(child.exclude for child in view_layer.children))
         self.assertTrue(any("damage" in i for i in self.report.infos))
         self.assertTrue(any("attached" in i for i in self.report.infos))
+
+    def test_prefill_only_objects_are_named_for_what_they_are(self) -> None:
+        root = self.do_import({0: entry("fuselage.obj"), 1: entry("prefill.obj", 32 + 256)})
+        self.assertEqual(self.names(root), ["fuselage", "prefill (prefill only, not drawn)"])
+        prefill = root.children["prefill (prefill only, not drawn)"]
+        self.assertEqual(prefill.xplane.layer.name, "prefill", "it still exports as prefill.obj")
+        self.assertFalse(bpy.context.view_layer.layer_collection.children["Test Plane"].children[prefill.name].exclude)
+        self.assertTrue(any("Prefill Only" in i and "prefill" in i for i in self.report.infos))
 
     def test_options_bring_the_skipped_objects_back(self) -> None:
         objects = {0: entry("broken_wing.obj", 528, wing=0), 1: entry("gear.obj", 24, gear=1)}

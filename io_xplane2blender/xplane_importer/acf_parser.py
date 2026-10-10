@@ -46,6 +46,12 @@ class AcfObject:
     def is_glass(self) -> bool:
         return bool(self.flags & 2 or self.flags & 8192)
 
+    @property
+    def is_prefill_only(self) -> bool:
+        """Plane Maker's "Prefill Only" (Prefill 32 + Only 256): it only hides the clouds behind it, X-Plane never draws
+        it"""
+        return bool(self.flags & 256)
+
 
 @dataclass
 class AcfFile:
