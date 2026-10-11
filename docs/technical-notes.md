@@ -32,7 +32,14 @@ How the add-on turns Blender into X-Plane and back, for when the guides are not 
 - Movement is along or around the object's own axis, from where it stands. Keys are linear, as X-Plane interpolates
   them, and turns of more than 90° get keys in between so whole turns are kept.
 - **Replace** starts again from where the object stood before the preset first animated it.
-- The **Button** preset reproduces hand-made button animations key for key.
+- The **Button** preset reproduces hand-made button animations key for key, keyed on the delta location.
+- Delta transforms are exported. The delta location adds to the location. The delta rotation, which Blender turns by
+  after the rotation in the parent's space, is a fixed turn before the animation when it is the same at every key,
+  the animated turn when only it is keyed, and otherwise combined with the keyed rotation, exact at the keys.
+  Axis-angle rotations have no delta rotation in Blender.
+- **Make Keys Relative** renames the location FCurves to the delta location and moves their keys (and handles) by
+  where the part stands at frame 1, so the interpolation is unchanged. Parts sharing an Action are done together.
+- The importer keys a moving part relative in the same way, standing in its parked pose.
 
 ## Importing
 

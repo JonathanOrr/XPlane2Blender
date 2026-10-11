@@ -37,6 +37,8 @@ from io_xplane2blender.xplane_helpers import (
     is_multiplayer_dataref,
     logger,
 )
+from io_xplane2blender.xplane_types.xplane_delta_transforms import NONE as NO_DELTA
+from io_xplane2blender.xplane_types.xplane_file_keyframes import delta_case
 from io_xplane2blender.xplane_types.xplane_keyframe import XPlaneKeyframe
 from io_xplane2blender.xplane_types.xplane_keyframe_collection import (
     XPlaneKeyframeCollection,
@@ -113,6 +115,8 @@ class XPlaneBone(XPlaneBoneMatrices, XPlaneBoneWriter):
         # IMPORTANT NOTE: Show/Hide Datarefs and datarefs without 2 keyframes will not be included and
         # must be accessed via blenderObject.xplane.datarefs!
         self.datarefs: Dict[str, xplane_props.XPlaneDataref] = {}
+        # Where an object's delta rotation goes in the animation (see xplane_delta_transforms)
+        self.delta_case = NO_DELTA
         self.collectAnimations()
 
     def sortChildren(self) -> None:
@@ -198,6 +202,8 @@ class XPlaneBone(XPlaneBoneMatrices, XPlaneBoneWriter):
                 for f in get_action_fcurves(blenderObject)
                 if f.data_path.startswith(f"xplane.datarefs")
             ]
+            # Read now: the keyframe infos are gone by the time the file is written
+            self.delta_case = delta_case(blenderObject)
 
         for fcurve in fcurves:
             if bone:

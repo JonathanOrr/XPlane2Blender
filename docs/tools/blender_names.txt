@@ -1,6 +1,7 @@
 # Names Blender itself shows, which the docs give in bold. One per line; a # starts a comment.
 Properties editor
 Object tab
+Delta Transform
 Material tab
 Bone tab
 Collection tab

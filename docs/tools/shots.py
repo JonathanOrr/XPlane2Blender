@@ -66,6 +66,14 @@ SHOTS: List[Shot] = [
         "object_button", "OBJECT", ("XPLANE_PT_object",), select="landing light button"
     ),
     Shot(
+        "object_button_location_keyed",
+        "OBJECT",
+        ("XPLANE_PT_object",),
+        select="landing light button",
+        then="location_keyed",
+        hide=("XPLANE_PT_click",),
+    ),
+    Shot(
         "object_touch_screen",
         "OBJECT",
         ("XPLANE_PT_object",),

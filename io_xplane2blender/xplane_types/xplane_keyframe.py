@@ -19,7 +19,11 @@ class XPlaneKeyframe:
         dataref: str,
         xplaneBone: "XPlaneBone",
     ) -> None:
-        from io_xplane2blender.xplane_types import xplane_file
+        from io_xplane2blender.xplane_types import (
+            xplane_delta_transforms,
+            xplane_file,
+            xplane_file_keyframes,
+        )
 
         self.dataref = dataref
         self.dataref_values_index = dataref_values_index
@@ -46,11 +50,17 @@ class XPlaneKeyframe:
             rotation_mode = keyframe_info_per_frame.rotation_mode
             rotation = keyframe_info_per_frame.rotation
         except KeyError:
-            location, rotation_mode, rotation = (
-                blenderObject.location,
-                blenderObject.rotation_mode,
-                xplane_helpers.get_rotation_from_rotatable(blenderObject),
-            )
+            if xplaneBone.blenderBone:
+                location, rotation_mode, rotation = (
+                    blenderObject.location,
+                    blenderObject.rotation_mode,
+                    xplane_helpers.get_rotation_from_rotatable(blenderObject),
+                )
+            else:
+                frames = {self.frame_num: xplane_file_keyframes.object_info(blenderObject, self.frame_num)}
+                xplane_delta_transforms.settle(frames)
+                info = frames[self.frame_num]
+                location, rotation_mode, rotation = info.location, info.rotation_mode, info.rotation
 
         self.location = xplane_helpers.round_vec(location, PRECISION_KEYFRAME)
         assert isinstance(self.location, mathutils.Vector)

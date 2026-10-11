@@ -171,6 +171,7 @@ class XPLANE_MT_object_context(bpy.types.Menu):
         layout.operator(xplane_anim_presets.XPLANE_OT_anim_push_button.bl_idname, text="Animate As Push Button")
         layout.operator(xplane_anim_presets.XPLANE_OT_anim_switch.bl_idname, text="Animate As Switch")
         layout.operator(xplane_anim_presets.XPLANE_OT_anim_range.bl_idname, text="Animate As Knob / Lever")
+        layout.operator(xplane_anim_presets.XPLANE_OT_make_keys_relative.bl_idname)
         layout.separator()
         layout.menu(XPLANE_MT_move_to_file.bl_idname, icon="FILE")
 

@@ -53,10 +53,20 @@ Movement is along or around the object's own axis, from where it stands. Keys ar
 them, and turns of more than 90° get keys in between so whole turns are kept. `{name}` in a command or dataref becomes
 the object's name. Objects that are already animated are left alone unless **Replace** is ticked.
 
+A move is keyed relative, on the part's **Delta Transform** (Object tab > Transform > Delta Transform) instead of its
+location, so a button can be moved anywhere after it is animated and its animation goes with it. The Moves card says
+*Keyed relative*. A part whose location is keyed, by hand or before relative keys, snaps back when moved: click **Make
+Keys Relative**, also in the 3D view's right-click **X-Plane** menu for many parts at once. Each part then stands where
+it is at frame 1, and its exported OBJ stays the same. Turning parts keep their rotation keys: they can be moved, but
+turning one on its panel means keying it again.
+
+![A button whose location is keyed](images/object_button_location_keyed.png)
+
 An animated part lists its datarefs and their keys as buttons. Click a key to go to it, pose the part, type the dataref
-value in **At** and click **Key Pose**. **Repeats Every** makes the animation repeat (an endless knob), **Add Dataref**
-adds another dataref, and **Key By Hand** starts an animation without a preset. This is the heading knob, a knob with
-two commands that turns once around for 0 to 360:
+value in **At** and click **Key Pose**. On a part keyed relative, Key Pose keys its Delta Transform: pose it with the
+Delta Transform values, as moving it moves where it stands. **Repeats Every** makes the animation repeat (an endless
+knob), **Add Dataref** adds another dataref, and **Key By Hand** starts an animation without a preset. This is the
+heading knob, a knob with two commands that turns once around for 0 to 360:
 
 ![The Clickable and Moves cards of a knob](images/object_knob.png)
 

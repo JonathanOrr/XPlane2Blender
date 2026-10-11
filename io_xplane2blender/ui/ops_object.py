@@ -8,6 +8,7 @@ from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_helpers
 from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender import xplane_light_tools
+from io_xplane2blender.xplane_relative_keys import keyed_paths
 from io_xplane2blender.xplane_ops import getDatarefValuePath, removeDatarefFCurve
 from io_xplane2blender.xplane_props.light import LIGHT_TYPE_ITEMS
 
@@ -160,6 +161,19 @@ def _rotation_path(owner) -> str:
     )
 
 
+def _pose_paths(moving, bone) -> list:
+    """What Key Pose keys: the transforms already keyed, as on a part keyed relative (on its delta transform),
+    or the location and rotation of a new animation"""
+    plain = ["location", _rotation_path(moving)]
+    if bone is not None:
+        return plain
+    delta_rotation = {"QUATERNION": "delta_rotation_quaternion", "AXIS_ANGLE": ""}.get(
+        moving.rotation_mode, "delta_rotation_euler"
+    )
+    keyed = keyed_paths(moving)
+    return [p for p in (*plain, "delta_location", delta_rotation) if p and p in keyed] or plain
+
+
 class XPLANE_OT_key_pose(bpy.types.Operator):
     """Key where it is now at this dataref value: pose it, type the value, click. Keys are linear, like X-Plane"""
 
@@ -180,12 +194,12 @@ class XPLANE_OT_key_pose(bpy.types.Operator):
             moving, prefix, group = owner, "", "Object Transforms"
         else:
             moving, prefix, group = context.object.pose.bones[bone.name], f'pose.bones["{bone.name}"].', bone.name
-        rotation = _rotation_path(moving)
+        paths = _pose_paths(moving, bone)
         id_data.keyframe_insert(data_path=value_path, frame=frame, group="XPlane Datarefs")
-        moving.keyframe_insert(data_path="location", frame=frame, group=group)
-        moving.keyframe_insert(data_path=rotation, frame=frame, group=group)
+        for path in paths:
+            moving.keyframe_insert(data_path=path, frame=frame, group=group)
         _make_linear(id_data, frame, [value_path])
-        _make_linear(context.object, frame, [prefix + "location", prefix + rotation])
+        _make_linear(context.object, frame, [prefix + p for p in paths])
         return {"FINISHED"}
 
 
