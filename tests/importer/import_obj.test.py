@@ -13,6 +13,7 @@ from io_xplane2blender.tests.importer_helpers import (
     write_png,
 )
 from io_xplane2blender.tests.test_creation_helpers import create_initial_test_setup
+from io_xplane2blender.xplane_helpers import get_action_fcurves
 from io_xplane2blender.xplane_importer.common import ImportOptions, ImportReport
 from io_xplane2blender.xplane_importer.importing import import_obj_file
 from io_xplane2blender.xplane_importer.obj_builder_parts import PartsBuilder
@@ -347,8 +348,11 @@ class TestImportObj(XPlaneTestCase):
         body = "ANIM_begin\nANIM_trans 0 1 0 0 1 0\nANIM_trans_begin sim/slide\nANIM_trans_key 0 0 0 0\nANIM_trans_key 1 0 1 0\nANIM_trans_end\nTRIS 0 3\nANIM_end\n"
         built = self.do_import(obj_text(body, tris=None))
         (empty,) = self.meshes(built)
-        # X-Plane's y (up) is Blender's z: 1 up plus the animated 1 up
-        self.assertEqual(self.frame_values(empty, "location", 2), [(1, 1.0, "LINEAR"), (2, 2.0, "LINEAR")])
+        # X-Plane's y (up) is Blender's z: it stands 1 up, keyed relative (on its delta location) for the animated 1 up,
+        # so it can be moved without its keys pulling it back
+        self.assertAlmostEqual(empty.location.z, 1.0, places=5)
+        self.assertEqual(self.frame_values(empty, "delta_location", 2), [(1, 0.0, "LINEAR"), (2, 1.0, "LINEAR")])
+        self.assertFalse([f for f in get_action_fcurves(empty) if f.data_path == "location"])
 
     def test_the_scene_opens_in_the_parked_pose(self) -> None:
         # Keys at -1, 0 and 1: no key is before frame 1, where the playhead cannot go, and the scene opens on the key
@@ -403,7 +407,7 @@ class TestImportObj(XPlaneTestCase):
         self.assertFalse(self.empties(built))
         (part,) = self.meshes(built)
         self.assertEqual(1, len(part.xplane.datarefs))
-        self.assertEqual([(1, 0.0, "LINEAR"), (2, 1.0, "LINEAR")], self.frame_values(part, "location", 2))
+        self.assertEqual([(1, 0.0, "LINEAR"), (2, 1.0, "LINEAR")], self.frame_values(part, "delta_location", 2))
         self.assertEqual([(1, 0.0, "LINEAR"), (2, round(math.radians(90), 4), "LINEAR")], self.frame_values(part, "rotation_euler", 0))
 
     def test_turns_about_three_axes_of_one_dataref_are_euler_angles_of_one_object(self) -> None:

@@ -1,15 +1,17 @@
 """
-Every object's and bone's location and rotation at every keyframe of the scene, read once per export.
+Every object's and bone's location and rotation at every keyframe of the scene, read once per export. An object's
+location includes its delta location, and its delta rotation is settled by xplane_delta_transforms.
 """
 
 import collections
 import dataclasses
-from typing import Dict, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import bpy
 import mathutils
 
 from io_xplane2blender import xplane_helpers
+from io_xplane2blender.xplane_types import xplane_delta_transforms as deltas
 
 
 @dataclasses.dataclass(frozen=True)
@@ -22,6 +24,9 @@ class LocRotPerFrame:
     rotation: Union[
         mathutils.Euler, mathutils.Quaternion, Tuple[float, float, float, float]
     ]
+    # The delta rotation, None when there is none, and where it went once settled
+    delta: Optional[Union[mathutils.Euler, mathutils.Quaternion]] = None
+    delta_case: str = deltas.NONE
 
 
 ObjectBoneNameKey = Tuple[str, str]
@@ -81,15 +86,31 @@ def _pre_scan_all_keyframes():
 
                     scene_keyframe_infos[(obj.name, bone.name)][frame_num] = l
                 # --- End bones to visit ---------
-            l = LocRotPerFrame(
-                frame_num,
-                obj.location.copy(),
-                obj.rotation_mode,
-                xplane_helpers.get_rotation_from_rotatable(obj),
-            )
-            scene_keyframe_infos[(obj.name, None)][frame_num] = l
+            scene_keyframe_infos[(obj.name, None)][frame_num] = object_info(obj, frame_num)
         # --- End objects to visit ---------------
     # --- End frames to visit---------------------
+    for (_, bone_name), frames in scene_keyframe_infos.items():
+        if bone_name is None:
+            deltas.settle(frames)
     bpy.context.scene.frame_set(1)
     _all_keyframe_infos[bpy.context.scene.name] = scene_keyframe_infos
     return
+
+
+def object_info(obj: bpy.types.Object, frame_num: int) -> LocRotPerFrame:
+    """The object's location (with its delta location) and rotations now. Settle a frame on its own"""
+    return LocRotPerFrame(
+        frame_num,
+        obj.location + obj.delta_location,
+        obj.rotation_mode,
+        xplane_helpers.get_rotation_from_rotatable(obj),
+        deltas.delta_rotation(obj),
+    )
+
+
+def delta_case(obj: bpy.types.Object) -> str:
+    """Where the object's delta rotation went in the keyframes read for this export (see xplane_delta_transforms)"""
+    frames = _all_keyframe_infos.get(bpy.context.scene.name, {}).get((obj.name, None))
+    if frames:
+        return next(iter(frames.values())).delta_case
+    return deltas.NONE if deltas.delta_rotation(obj) is None else deltas.STATIC

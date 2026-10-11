@@ -7,6 +7,7 @@ import bpy
 from io_xplane2blender import xplane_anim_presets
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
+from io_xplane2blender import xplane_relative_keys
 
 from .common import Properties, compact_row, custom_lines_layout, switched, wrapped
 from .ops_object import (
@@ -35,6 +36,8 @@ def motion_layout(layout, context, owner, id_data, bone=None) -> None:
         presets.operator(xplane_anim_presets.XPLANE_OT_anim_range.bl_idname, text="Knob / Lever")
         if not motion:
             wrapped(layout, "Not animated. Use a preset above, or key it by hand:")
+        else:
+            _relative_layout(layout, owner)
     elif not motion:
         wrapped(layout, "Not animated. Pose the bone in Pose Mode and key it against a dataref:")
     for index, dataref in motion:
@@ -55,6 +58,16 @@ def motion_layout(layout, context, owner, id_data, bone=None) -> None:
         box.prop(dataref, "loop", text="Repeats Every")
     op = _op(layout, XPLANE_OT_add_dataref.bl_idname, target, "Add Dataref" if motion else "Key By Hand", "ADD")
     op.anim_type = C.ANIM_TYPE_TRANSFORM
+
+
+def _relative_layout(layout, obj) -> None:
+    """Whether the object can be moved without its keys pulling it back"""
+    keyed = xplane_relative_keys.keyed_paths(obj)
+    if "location" in keyed:
+        wrapped(layout, "Its location is keyed, so moving it snaps it back.", "INFO")
+        layout.operator(xplane_relative_keys.XPLANE_OT_make_keys_relative.bl_idname, text="Make Keys Relative")
+    elif any(p.startswith("delta_") for p in keyed):
+        layout.label(text="Keyed relative: it can be moved, its keys go with it", icon="CHECKMARK")
 
 
 def visibility_layout(layout, owner, bone=None) -> None:

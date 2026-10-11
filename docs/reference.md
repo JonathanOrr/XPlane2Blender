@@ -526,6 +526,7 @@ The options in the side panel of the file browser.
 | Animate As Push Button | button | Animate the selected objects as push buttons that move in while their command is held (CMND= dataref) |
 | Animate As Switch | button | Animate the selected objects as switches with a number of positions, each a dataref value |
 | Animate As Knob / Lever | button | Animate the selected objects as knobs, levers or sliders that follow a dataref over a range |
+| Make Keys Relative | button | Key the movement of the selected (and active) objects on their delta location instead of their location, so that they can be moved anywhere and their animation goes with them. The exported OBJ stays the same |
 | Move To File | menu |  |
 
 ### X-Plane Pie Menu (Shift+Q)

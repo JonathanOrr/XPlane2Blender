@@ -254,6 +254,20 @@ def touch_screen() -> None:
     manip.tooltip = "PFD"
 
 
+def location_keyed() -> None:
+    """The landing light button keyed the old way, on its location, as by hand"""
+    from io_xplane2blender.xplane_helpers import get_action_fcurves
+
+    button = bpy.data.objects["landing light button"]
+    for fc in get_action_fcurves(button):
+        if fc.data_path == "delta_location":
+            fc.data_path = "location"
+            for key in fc.keyframe_points:
+                key.co[1] += button.location[fc.array_index]
+            fc.update()
+    button.delta_location = (0, 0, 0)
+
+
 def cards() -> None:
     """The landing light button with a glow and a show / hide, as a backlit button on a powered bus"""
     from io_xplane2blender import xplane_constants as C

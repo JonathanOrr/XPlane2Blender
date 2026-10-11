@@ -38,7 +38,8 @@ The options are in the side panel of the file browser:
 - The parts carry their own animations: the pivot is the part's origin and the dataref and keys are on the part, so a
   knob is one object you select and click. An Empty is only made where one is needed, for example a ` frame` Empty
   holding the tilt of a panel, so that the keys of every button in it are along the panel's own axes.
-- Keys are linear, as in X-Plane, from frame 1 on.
+- Keys are linear, as in X-Plane, from frame 1 on. A part that moves is keyed relative, on its delta location, so it can
+  be moved without its keys pulling it back (see [Making It Move](cockpit-controls.md#making-it-move)).
 - Each mesh with its own click zone, glow or material is a separate object with one material, so everything can be
   edited and exported again.
 - Header lines the add-on has settings for fill them in: rain, defrost and wipers, the night texture's brightness,

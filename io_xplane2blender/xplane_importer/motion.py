@@ -18,6 +18,7 @@ import numpy as np
 
 from . import transforms as T
 from .defaults import nearest_key_index
+from ..xplane_relative_keys import make_relative_one
 from .obj_parser import AnimOp
 
 EPSILON = 1e-6
@@ -151,6 +152,9 @@ def apply(
             obj.keyframe_insert(data_path="location", frame=frame)
         _set_rotation(obj, motion, i, frame)
     _linear(obj)
+    if motion.location:
+        # Keyed relative, so the part can be moved without its keys pulling it back
+        make_relative_one(obj)
 
 
 def _rotation_mode(motion: Motion) -> str:

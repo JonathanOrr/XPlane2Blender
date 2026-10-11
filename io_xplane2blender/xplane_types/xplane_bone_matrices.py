@@ -5,6 +5,8 @@ vertices and its children.
 
 import mathutils
 
+from .xplane_delta_transforms import basis_for_animation, rotation_after_animation
+
 
 class XPlaneBoneMatrices:
     """The matrix half of XPlaneBone"""
@@ -110,8 +112,9 @@ class XPlaneBoneMatrices:
             # translation and static rotation, for example.)
             my_final = self.getBlenderWorldMatrix()
 
-            # This is all of the transformations (rot,loc,scale) that our data block might do.
-            my_block = self.blenderObject.matrix_basis
+            # This is all of the transformations (rot,loc,scale) that our data block might do, less a delta rotation
+            # that is the same at every key, which stays before the animation
+            my_block = basis_for_animation(self.blenderObject, self.delta_case)
 
             # If we are NOT animated for translation and we are here we MUST be animated for rotation.  In this case, we want
             # to treat ONLY the rotation part as "dynamic" - so nuke the translation components.
@@ -177,12 +180,13 @@ class XPlaneBoneMatrices:
                         our_loc,
                         our_rot,
                         our_scale,
-                    ) = self.blenderObject.matrix_basis.decompose()
+                    ) = basis_for_animation(self.blenderObject, self.delta_case).decompose()
 
                 our_rot_inv = our_rot.to_matrix().to_4x4().inverted_safe()
                 return world_matrix_no_scale @ our_rot_inv
-            else:
-                return world_matrix_no_scale
+            # A keyed delta rotation is the animated one when the rotation after it is static: back that out
+            after = None if self.blenderBone else rotation_after_animation(self.blenderObject, self.delta_case)
+            return world_matrix_no_scale if after is None else world_matrix_no_scale @ after.inverted_safe()
 
     #
     # ANIMATION BAKE MATRIX (DELTA)

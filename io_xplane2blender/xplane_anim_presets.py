@@ -4,8 +4,10 @@ of positions, and a knob or lever over a range. Each one keys a dataref and the 
 as many selected objects as needed, where by hand it means keyframing a dataref value and a transform per position
 per object.
 
-Movement is along or around the object's own axis, from where it stands at frame 1. Keys are linear, as X-Plane
-interpolates them. Objects that are already animated are left alone unless Replace is ticked.
+Movement is along or around the object's own axis, from where it stands at frame 1. A move is keyed on the delta
+location, so the object can be moved anywhere afterwards and its animation goes with it (see xplane_relative_keys).
+Keys are linear, as X-Plane interpolates them. Objects that are already animated are left alone unless Replace is
+ticked.
 """
 
 import math
@@ -15,6 +17,7 @@ import bpy
 from mathutils import Quaternion, Vector
 
 from .xplane_helpers import get_action_channelbag, get_action_fcurves
+from .xplane_relative_keys import XPLANE_OT_make_keys_relative
 
 AXES = (
     ("X", "X", "The object's own X axis"),
@@ -33,7 +36,15 @@ FRAME_STEP = 10
 MAX_ROTATION_STEP = math.radians(90.0)
 # Where the presets found the object before animating it, so Replace starts from there again
 REST_PROPERTY = "xplane_preset_rest"
-ANIMATED_PATHS = ("location", "rotation_euler", "rotation_quaternion", "rotation_axis_angle")
+ANIMATED_PATHS = (
+    "location",
+    "rotation_euler",
+    "rotation_quaternion",
+    "rotation_axis_angle",
+    "delta_location",
+    "delta_rotation_euler",
+    "delta_rotation_quaternion",
+)
 
 
 def axis_vector(axis: str) -> Vector:
@@ -99,14 +110,19 @@ def animate(
     if obj.rotation_mode in ("QUATERNION", "AXIS_ANGLE"):
         obj.rotation_mode = "XYZ"  # Blender keeps the orientation when the mode changes
     stored = obj.get(REST_PROPERTY)
-    if replace and stored is not None and len(stored) == 6:
+    if replace and stored is not None and len(stored) in (6, 9):
         # Frame 1 shows the first position of the old animation, not where the object stood
         obj.location = stored[:3]
-        obj.rotation_euler = stored[3:]
+        obj.rotation_euler = stored[3:6]
+        if len(stored) == 9:
+            obj.delta_location = stored[6:]
     rest_location = obj.location.copy()
     rest_rotation = obj.rotation_euler.copy()
-    obj[REST_PROPERTY] = [*rest_location, *rest_rotation]
+    rest_delta = obj.delta_location.copy()
+    obj[REST_PROPERTY] = [*rest_location, *rest_rotation, *rest_delta]
     rest_quaternion = rest_rotation.to_quaternion()
+    # A move is in the parent's space, as the delta location is, so along the axis as the object is turned now
+    rest_turn = obj.matrix_basis.decompose()[1]
     direction = axis_vector(axis)
 
     dataref_item = obj.xplane.datarefs.add()
@@ -121,8 +137,8 @@ def animate(
         obj.xplane.datarefs[index].value = value
         obj.keyframe_insert(data_path=f"xplane.datarefs[{index}].value", frame=frame, group="XPlane Datarefs")
         if motion == "MOVE":
-            obj.location = rest_location + rest_quaternion @ (direction * offset)
-            obj.keyframe_insert(data_path="location", frame=frame, group="Location")
+            obj.delta_location = rest_delta + rest_turn @ (direction * offset)
+            obj.keyframe_insert(data_path="delta_location", frame=frame, group="Delta Transform")
         else:
             turned = rest_quaternion @ Quaternion(direction, offset)
             obj.rotation_euler = turned.to_euler(obj.rotation_mode, previous)
@@ -342,8 +358,8 @@ class XPLANE_OT_anim_range(_Preset, bpy.types.Operator):
         return self.finish(done, skipped)
 
 
-# The presets are in the Object tab's Moves card and the viewport's right-click menu
-_classes = (XPLANE_OT_anim_push_button, XPLANE_OT_anim_switch, XPLANE_OT_anim_range)
+# The presets and Make Keys Relative are in the Object tab's Moves card and the viewport's right-click menu
+_classes = (XPLANE_OT_anim_push_button, XPLANE_OT_anim_switch, XPLANE_OT_anim_range, XPLANE_OT_make_keys_relative)
 
 
 def register():

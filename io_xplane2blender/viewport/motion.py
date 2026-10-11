@@ -91,9 +91,12 @@ def _channel(obj, curves, path: str, frame: float) -> List[float]:
 def pose_at(
     obj: bpy.types.Object, frame: float, curves=None
 ) -> Tuple[Vector, Quaternion]:
-    """The object's location and rotation (relative to its parent) at a frame, from its keyframes"""
+    """The object's location and rotation (relative to its parent) at a frame, from its keyframes, delta transform
+    included"""
     curves = _keyed(obj) if curves is None else curves
-    location = Vector(_channel(obj, curves, "location", frame))
+    location = Vector(_channel(obj, curves, "location", frame)) + Vector(
+        _channel(obj, curves, "delta_location", frame)
+    )
     mode = obj.rotation_mode
     if mode == "QUATERNION":
         rotation = Quaternion(
@@ -108,6 +111,11 @@ def pose_at(
         rotation = Euler(
             _channel(obj, curves, "rotation_euler", frame), mode
         ).to_quaternion()
+    # Blender turns by the delta rotation after the rotation
+    if mode == "QUATERNION":
+        rotation = Quaternion(_channel(obj, curves, "delta_rotation_quaternion", frame)).normalized() @ rotation
+    elif mode != "AXIS_ANGLE":
+        rotation = Euler(_channel(obj, curves, "delta_rotation_euler", frame), mode).to_quaternion() @ rotation
     return location, rotation
 
 

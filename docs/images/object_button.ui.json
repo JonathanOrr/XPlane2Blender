@@ -108,6 +108,11 @@
       "kind": "row"
      },
      {
+      "icon": "CHECKMARK",
+      "kind": "label",
+      "text": "Keyed relative: it can be moved, its keys go with it"
+     },
+     {
       "items": [
        {
         "items": [
