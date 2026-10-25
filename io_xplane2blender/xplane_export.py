@@ -31,6 +31,21 @@ def showLogDialog():
         bpy.ops.wm.call_menu(name="XPLANE_MT_xplane_export_log")
 
 
+def _write_obj(fullpath: str, out: str) -> None:
+    """
+    Written beside the OBJ, then put in its place: a write that fails leaves the OBJ from before, never an empty one.
+    UTF-8 whatever the system's code page (Windows' cp1252 cannot write every name in the comments)
+    """
+    part = fullpath + ".part"
+    try:
+        with open(part, "w", encoding="utf-8") as obj_file:
+            obj_file.write(out)
+        os.replace(part, fullpath)
+    finally:
+        if os.path.exists(part):
+            os.remove(part)
+
+
 class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
     """Export to X-Plane Object file format (.obj)"""
 
@@ -240,11 +255,13 @@ class EXPORT_OT_ExportXPlane(bpy.types.Operator, ExportHelper):
             except OSError as e:
                 logger.error(e)
                 return "failed"
-            else:
-                with open(fullpath, "w") as objFile:
-                    logger.info("Writing %s" % fullpath)
-                    objFile.write(out)
-                    logger.success("Wrote %s" % fullpath)
+            logger.info("Writing %s" % fullpath)
+            try:
+                _write_obj(fullpath, out)
+            except (OSError, UnicodeError) as e:
+                logger.error(f"Could not write {fullpath}: {e}")
+                return "failed"
+            logger.success("Wrote %s" % fullpath)
         else:
             logger.info('Skipped writing %s due to "Dry Run"' % (fullpath))
 
