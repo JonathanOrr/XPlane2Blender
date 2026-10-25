@@ -220,11 +220,19 @@ class XPlaneHeader:
             raise
         else:
             os.chdir(old_cwd)
-            if any(c.isspace() for c in rel_path):
+            parts = rel_path.split("/")
+            spaced = next((p for p in parts if any(c.isspace() for c in p)), None)
+            if spaced is not None:
+                # Such as X-Plane 12, when the OBJ is exported outside the aircraft folder its textures are in
+                climbs_through = parts[0] == ".." and spaced != parts[-1]
                 logger.error(
-                    f"Texture path '{rel_path}' contains a space, which breaks the OBJ "
-                    "file format (tokens are whitespace-separated). Rename the file or "
-                    "folder, or use underscores instead of spaces."
+                    f"Texture path '{rel_path}' has a space in '{spaced}', and X-Plane reads a path only up to a "
+                    "space. "
+                    + (
+                        "Export the OBJ into the aircraft folder, next to its textures, or rename that folder"
+                        if climbs_through
+                        else "Rename it, with underscores instead of spaces"
+                    )
                 )
                 raise ValueError
             return rel_path

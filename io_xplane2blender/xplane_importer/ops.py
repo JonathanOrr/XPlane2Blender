@@ -15,7 +15,7 @@ from .common import ImportOptions, ImportReport
 from .importing import import_obj_file
 
 
-def _option_properties():
+def _option_properties(make_exportable: bool = False):
     """The option properties shared by the OBJ and ACF importers"""
     return {
         "import_materials": bpy.props.BoolProperty(
@@ -53,7 +53,7 @@ def _option_properties():
             name="Make Export Files",
             description="Tick each imported OBJ's collection as an export file, so Export writes them again. "
             "Their texture and export settings are filled in either way, you can tick a single collection later",
-            default=False,
+            default=make_exportable,
         ),
         "lit_strength": bpy.props.FloatProperty(
             name="Night Light Strength",
@@ -317,7 +317,8 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
         default=False,
     )
 
-    __annotations__.update(_option_properties())
+    # An aircraft is imported to be worked on and exported again
+    __annotations__.update(_option_properties(make_exportable=True))
 
     def execute(self, context):
         report = ImportReport()

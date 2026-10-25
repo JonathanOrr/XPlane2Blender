@@ -19,7 +19,7 @@ The options are in the side panel of the file browser:
 | **Lights** | Creates the lights, see below |
 | **All LODs** | Imports every level of detail instead of only the first. A file with one level of detail keeps its distances either way |
 | **Mark What X-Plane Hides** | Draws a sphere around the parts X-Plane would not draw with the datarefs at their default values, and leaves them out of renders. They stay visible and are exported like any part: in Blender, hidden objects are never exported |
-| **Make Export Files** | Ticks each OBJ's collection as an export file. Off by default, because exporting would then write every file of the aircraft; the files are listed unticked in the **Scene tab**'s **X-Plane Export**, so one tick exports one again |
+| **Make Export Files** | Ticks each OBJ's collection as an export file, so **Export** writes them all again. On by default for an aircraft, off for single OBJs. Untick it to export files one at a time: they are listed unticked in the **Scene tab**'s **X-Plane Export**, so one tick exports one again |
 | **Night Light Strength** | How much the night (LIT) texture glows, 0 shows the daytime look |
 | **Light Strength** | Switches the spill lights on (annunciators, panel lights). 0 keeps them dark, as they are in the parked pose |
 | **Scale** | Multiplies all sizes |
@@ -59,4 +59,6 @@ drawing and turns on the X-Plane **Lights** overlay, see [Lights](lights.md#seei
 - Objects attached to a wing, gear or body part are skipped unless **Part Attached Objects** is ticked; they are then
   placed at the aircraft's origin.
 - Textures in the BC6 and BC7 DDS formats cannot be read by Blender, those materials have no image.
-- Imported textures are linked by their full path: keep the aircraft where it is, or relink them in Blender.
+- Imported textures are linked by their full path: keep the aircraft where it is, or relink them in Blender. The
+  export writes each path relative to the OBJ, so export into the aircraft folder: from elsewhere the path goes
+  through the X-Plane folder, and a space in a path (such as `X-Plane 12`) cannot be written in an OBJ.

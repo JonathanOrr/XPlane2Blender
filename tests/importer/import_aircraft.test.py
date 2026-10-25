@@ -165,5 +165,12 @@ class TestImportAircraft(XPlaneTestCase):
         (mesh,) = [o for o in root.all_objects if o.type == "MESH"]
         self.assertAlmostEqual(mesh.matrix_world.translation.x, 3.048 + 4.0, places=4)
 
+    def test_an_aircraft_is_made_into_export_files_by_default(self) -> None:
+        def default(operator) -> bool:
+            return operator.get_rna_type().properties["make_exportable"].default
+
+        self.assertTrue(default(bpy.ops.import_scene.xplane_aircraft))
+        self.assertFalse(default(bpy.ops.import_scene.xplane_obj))
+
 
 runTestCases([TestImportAircraft])
