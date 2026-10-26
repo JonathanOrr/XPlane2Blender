@@ -42,6 +42,12 @@ class TestFileFolders(XPlaneTestCase):
         layer.export_folder = ""
         self.assertEqual("knob", layer.name)
 
+    def test_a_file_not_named_yet_shows_its_collections_name(self) -> None:
+        # It is exported as CKPT_LIT.obj, so that is what Name says
+        layer = make_file("CKPT_LIT", "").xplane.layer
+
+        self.assertEqual(("", "CKPT_LIT"), (layer.export_folder, layer.export_stem))
+
     def test_a_picked_folder_is_made_relative_to_the_blend_file(self) -> None:
         tmp = Path(get_tmp_folder()) / "file_folders"
         tmp.mkdir(parents=True, exist_ok=True)

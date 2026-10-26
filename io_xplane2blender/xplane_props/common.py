@@ -107,6 +107,10 @@ def light_level_props(target: str) -> dict:
     }
 
 
+# Path settings that may start with // (the .blend file's folder). Blender 4.5 and later mark them in red without it
+RELATIVE_PATH = {"PATH_SUPPORTS_BLEND_RELATIVE"} if bpy.app.version >= (4, 5, 0) else set()
+
+
 def add_props(cls, props: dict):
     """Adds generated properties to a PropertyGroup before it is registered"""
     cls.__annotations__ = {**cls.__annotations__, **props}

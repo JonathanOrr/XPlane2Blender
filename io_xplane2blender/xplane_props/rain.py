@@ -4,7 +4,7 @@ Rain on glass: rain scale, defrost (thermal) sources and wipers.
 
 import bpy
 
-from .common import add_props
+from .common import RELATIVE_PATH, add_props
 
 THERMAL_SOURCES = (
     "Pilot Front Windshield",
@@ -53,7 +53,9 @@ class XPlaneRainSettings(bpy.types.PropertyGroup):
         max=1.0,
     )
     thermal_texture: bpy.props.StringProperty(
-        name="Thermal Texture", description="The defrost texture, which marks the area each window heat clears", subtype="FILE_PATH"
+        name="Thermal Texture", description="The defrost texture, which marks the area each window heat clears",
+        subtype="FILE_PATH",
+        options=RELATIVE_PATH,
     )
     wiper_ext_glass_object: bpy.props.StringProperty(
         name="Exterior Glass Object",
@@ -63,6 +65,7 @@ class XPlaneRainSettings(bpy.types.PropertyGroup):
         name="Wiper Gradient Texture",
         description="The wiper gradient texture, which Bake For makes",
         subtype="FILE_PATH",
+        options=RELATIVE_PATH,
     )
 
 
