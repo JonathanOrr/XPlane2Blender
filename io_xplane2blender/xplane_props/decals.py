@@ -5,6 +5,8 @@ each with the same set of settings, so they are made in a loop.
 
 import bpy
 
+from .common import RELATIVE_PATH
+
 KEYS = (
     ("red_key", "Red Key", "How much the day texture's red adds to the strength"),
     ("green_key", "Green Key", "How much the day texture's green adds to the strength"),
@@ -43,7 +45,7 @@ def _keys(prefix: str, label: str, what: str) -> dict:
 
 
 def _path(name: str, description: str):
-    return bpy.props.StringProperty(subtype="FILE_PATH", name=name, description=description)
+    return bpy.props.StringProperty(subtype="FILE_PATH", name=name, description=description, options=RELATIVE_PATH)
 
 
 def decal_props() -> dict:

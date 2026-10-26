@@ -7,6 +7,8 @@ import os
 
 import bpy
 
+from .common import RELATIVE_PATH
+
 # Not saved: they read and write the name. Code that copies saved settings skips them
 DERIVED = {"export_folder", "export_stem"}
 
@@ -49,7 +51,8 @@ def set_folder(self, value: str) -> None:
 
 
 def get_stem(self) -> str:
-    return split(self.name)[1]
+    """A file not named yet is exported under its collection's name"""
+    return split(self.name)[1] or _owner_name(self)
 
 
 def set_stem(self, value: str) -> None:
@@ -66,6 +69,7 @@ def props() -> dict:
             description="The folder the OBJ is written to, below the .blend file's folder, such as objects/cockpit."
             " Empty writes it next to the .blend file",
             subtype="DIR_PATH",
+            options=RELATIVE_PATH,
             get=get_folder,
             set=set_folder,
         ),

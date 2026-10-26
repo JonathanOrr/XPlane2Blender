@@ -6,7 +6,7 @@ import bpy
 
 from io_xplane2blender.xplane_constants import *
 
-from .common import XPlaneCustomAttribute, add_props
+from .common import RELATIVE_PATH, XPlaneCustomAttribute, add_props
 from .decals import decal_props
 from .file_path import props as path_props
 from .rain import XPlaneRainSettings
@@ -35,7 +35,7 @@ class XPlaneLOD(bpy.types.PropertyGroup):
 
 
 def _texture(name: str, description: str):
-    return bpy.props.StringProperty(subtype="FILE_PATH", name=name, description=description)
+    return bpy.props.StringProperty(subtype="FILE_PATH", name=name, description=description, options=RELATIVE_PATH)
 
 
 def _get_normal_maps(self) -> int:
@@ -198,6 +198,7 @@ class XPlaneLayer(bpy.types.PropertyGroup):
         name="Particle System Definition File",
         description="The particle system file (.pss) the file's emitters use",
         subtype="FILE_PATH",
+        options=RELATIVE_PATH,
     )
     rain: bpy.props.PointerProperty(
         type=XPlaneRainSettings,
