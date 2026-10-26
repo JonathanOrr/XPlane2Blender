@@ -1,29 +1,16 @@
 """
 The X-Plane pie menu, Shift+Q in the 3D View's Object Mode (change it in Preferences > Keymap > Object Mode):
-make clickable, animate, add, key the pose, move to a file, check, export, and the X-Plane overlays.
+make clickable, make keys relative, add, key the pose, move to a file, check, export, and the X-Plane overlays.
 """
 
 import bpy
 
-from io_xplane2blender import xplane_anim_presets as presets
+from io_xplane2blender import xplane_relative_keys
 from io_xplane2blender import xplane_inspector as I
 
 from .settings import view_settings
 
 _keymaps = []
-
-
-class XPLANE_MT_animate(bpy.types.Menu):
-    bl_idname = "XPLANE_MT_animate"
-    bl_label = "Animate As"
-
-    def draw(self, context):
-        layout = self.layout
-        layout.operator(
-            presets.XPLANE_OT_anim_push_button.bl_idname, text="Push Button"
-        )
-        layout.operator(presets.XPLANE_OT_anim_switch.bl_idname, text="Switch")
-        layout.operator(presets.XPLANE_OT_anim_range.bl_idname, text="Knob / Lever")
 
 
 class XPLANE_OT_check_in_viewport(bpy.types.Operator):
@@ -57,7 +44,7 @@ class XPLANE_MT_pie(bpy.types.Menu):
             text="Make Clickable As",
             icon="RESTRICT_SELECT_OFF",
         )
-        pie.menu(XPLANE_MT_animate.bl_idname, icon="ANIM")
+        pie.operator(xplane_relative_keys.XPLANE_OT_make_keys_relative.bl_idname, icon="ANIM")
         pie.operator("scene.export_to_relative_dir", text="Export", icon="EXPORT")
         s = view_settings(context)
         if s is not None:
@@ -87,7 +74,7 @@ class XPLANE_MT_pie(bpy.types.Menu):
         pie.operator(XPLANE_OT_check_in_viewport.bl_idname, icon="CHECKMARK")
 
 
-classes = (XPLANE_MT_animate, XPLANE_OT_check_in_viewport, XPLANE_MT_pie)
+classes = (XPLANE_OT_check_in_viewport, XPLANE_MT_pie)
 
 
 def register_keymap():

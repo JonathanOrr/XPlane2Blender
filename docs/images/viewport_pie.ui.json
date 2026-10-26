@@ -9,9 +9,9 @@
       "text": "Make Clickable As"
      },
      {
-      "kind": "menu",
-      "menu": "XPLANE_MT_animate",
-      "text": "Animate As"
+      "kind": "operator",
+      "operator": "xplane.make_keys_relative",
+      "text": "Make Keys Relative"
      },
      {
       "kind": "operator",

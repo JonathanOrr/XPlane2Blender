@@ -4,7 +4,6 @@ Moves and Shows / Hides: datarefs that animate an object, or a bone of an armatu
 
 import bpy
 
-from io_xplane2blender import xplane_anim_presets
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender import xplane_relative_keys
@@ -30,12 +29,8 @@ def motion_layout(layout, context, owner, id_data, bone=None) -> None:
     target = "bone" if bone else "object"
     motion = I.motion_datarefs(owner)
     if bone is None:
-        presets = layout.row(align=True)
-        presets.operator(xplane_anim_presets.XPLANE_OT_anim_push_button.bl_idname, text="Button")
-        presets.operator(xplane_anim_presets.XPLANE_OT_anim_switch.bl_idname, text="Switch")
-        presets.operator(xplane_anim_presets.XPLANE_OT_anim_range.bl_idname, text="Knob / Lever")
         if not motion:
-            wrapped(layout, "Not animated. Use a preset above, or key it by hand:")
+            wrapped(layout, "Not animated. Key it against a dataref:")
         else:
             _relative_layout(layout, owner)
     elif not motion:

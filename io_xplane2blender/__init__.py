@@ -43,7 +43,7 @@ if "" not in locals():
     from . import xplane_table
     from . import xplane_light_sync
     from . import xplane_light_tools
-    from . import xplane_anim_presets
+    from . import xplane_relative_keys
     from . import ui
     from . import viewport
     from . import xplane_config
@@ -63,7 +63,7 @@ else:
     xplane_table = importlib.reload(xplane_table)
     xplane_light_sync = importlib.reload(xplane_light_sync)
     xplane_light_tools = importlib.reload(xplane_light_tools)
-    xplane_anim_presets = importlib.reload(xplane_anim_presets)
+    xplane_relative_keys = importlib.reload(xplane_relative_keys)
     ui = importlib.reload(ui)
     viewport = importlib.reload(viewport)
     xplane_config  = importlib.reload(xplane_config)
@@ -100,7 +100,7 @@ def register():
     xplane_table.register()
     xplane_light_tools.register()
     xplane_light_sync.register()
-    xplane_anim_presets.register()
+    xplane_relative_keys.register()
     xplane_import_ops.register()
     bpy.types.TOPBAR_MT_file_export.append(menu_func)
 
@@ -110,7 +110,7 @@ def register():
 def unregister():
     xplane_export.unregister()
     xplane_import_ops.unregister()
-    xplane_anim_presets.unregister()
+    xplane_relative_keys.unregister()
     xplane_light_sync.unregister()
     xplane_light_tools.unregister()
     xplane_table.unregister()

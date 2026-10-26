@@ -74,7 +74,6 @@ class TestViewportTools(XPlaneTestCase):
             SimpleNamespace(layout=FakeLayout()),
             SimpleNamespace(screen=None, object=None),
         )
-        pie.XPLANE_MT_animate.draw(SimpleNamespace(layout=FakeLayout()), bpy.context)
 
     def test_check_in_viewport(self) -> None:
         self.obj.xplane.lightLevel = True

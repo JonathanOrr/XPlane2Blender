@@ -99,7 +99,13 @@ class TestPanels(XPlaneTestCase):
     def test_animated_and_lit_part_with_every_screen_draws(self) -> None:
         obj = mesh("display")
         make_active(obj)
-        bpy.ops.xplane.anim_range(dataref="a321/knob")
+        bpy.ops.xplane.add_dataref(anim_type=C.ANIM_TYPE_TRANSFORM)
+        obj.xplane.datarefs[0].path = "a321/knob"
+        for frame, value in ((1, 0.0), (11, 1.0)):
+            obj.xplane.datarefs[0].value = value
+            obj.keyframe_insert("xplane.datarefs[0].value", frame=frame)
+            obj.rotation_euler.z = value
+            obj.keyframe_insert("rotation_euler", frame=frame)
         bpy.ops.xplane.add_dataref(anim_type=C.ANIM_TYPE_HIDE)
         obj.xplane.lightLevel = True
         material = bpy.data.materials.new("screen")

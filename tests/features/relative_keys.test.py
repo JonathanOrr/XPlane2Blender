@@ -1,6 +1,6 @@
 """
 Relative keys: movement keyed on the delta location, so a part can be moved without its keys pulling it back.
-Make Keys Relative, the push button preset, Key Pose and the motion overlay
+Make Keys Relative, Key Pose and the motion overlay
 """
 
 import bpy
@@ -111,31 +111,6 @@ class TestRelativeKeys(XPlaneTestCase):
         bpy.ops.xplane.make_keys_relative()
 
         self.assertEqual(before, self.export())
-
-    def test_the_push_button_preset_keys_relative(self) -> None:
-        obj = self.mesh("apu_master")
-        obj.rotation_euler = (0.5, 0, 0)
-        select(obj)
-
-        bpy.ops.xplane.anim_push_button(command="a321/apu/master", axis="-Z", distance=2.0)
-        obj.location = (1, 1, 1)
-        bpy.context.scene.frame_set(11)
-
-        self.assertEqual(["delta_location"], paths(obj))
-        pressed = obj.matrix_world.translation - Vector((1, 1, 1))
-        own_z = obj.matrix_world.to_3x3().normalized() @ Vector((0, 0, 1))
-        self.assertLess((pressed + own_z * 0.002).length, 1e-6)
-
-    def test_replacing_an_old_preset_starts_where_the_button_stood(self) -> None:
-        obj = self.mesh("apu_master")
-        select(obj)
-        bpy.ops.xplane.anim_push_button(command="a321/apu/master", distance=2.0)
-        obj.location = (1, 1, 1)
-
-        bpy.ops.xplane.anim_push_button(command="a321/apu/master", distance=3.0, replace=True)
-
-        self.assertEqual(Vector((0.1, -2.0, 1.0)), obj.location)
-        self.assertEqual(Vector(), obj.delta_location)
 
     def test_key_pose_keys_the_delta_location_of_a_relative_part(self) -> None:
         obj = self.mesh("apu_start")

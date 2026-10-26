@@ -5,9 +5,9 @@ Add and right-click menus, with the things they add.
 
 import bpy
 
-from io_xplane2blender import xplane_anim_presets
 from io_xplane2blender import xplane_constants as C
 from io_xplane2blender import xplane_inspector as I
+from io_xplane2blender import xplane_relative_keys
 from io_xplane2blender.xplane_props.light import LIGHT_TYPE_ITEMS
 
 from .ops_file import XPLANE_OT_move_to_file, XPLANE_OT_new_file
@@ -168,10 +168,7 @@ class XPLANE_MT_object_context(bpy.types.Menu):
         layout = self.layout
         layout.menu(XPLANE_MT_control_kind.bl_idname, text="Make Clickable As", icon="RESTRICT_SELECT_OFF")
         layout.separator()
-        layout.operator(xplane_anim_presets.XPLANE_OT_anim_push_button.bl_idname, text="Animate As Push Button")
-        layout.operator(xplane_anim_presets.XPLANE_OT_anim_switch.bl_idname, text="Animate As Switch")
-        layout.operator(xplane_anim_presets.XPLANE_OT_anim_range.bl_idname, text="Animate As Knob / Lever")
-        layout.operator(xplane_anim_presets.XPLANE_OT_make_keys_relative.bl_idname)
+        layout.operator(xplane_relative_keys.XPLANE_OT_make_keys_relative.bl_idname)
         layout.separator()
         layout.menu(XPLANE_MT_move_to_file.bl_idname, icon="FILE")
 
