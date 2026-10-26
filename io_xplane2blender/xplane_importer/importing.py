@@ -23,10 +23,12 @@ def import_obj_file(
     base_matrix=None,
     update_view_layer: bool = True,
     settle_frames: bool = True,
+    copy=None,
 ) -> Optional[BuiltObj]:
     """
     Imports one OBJ. Failures are reported, not raised, so one bad file doesn't stop a whole aircraft.
-    settle_frames False leaves the keys around frame 1, for a caller that imports several OBJs to settle them together
+    settle_frames False leaves the keys around frame 1, for a caller that imports several OBJs to settle them together.
+    copy, an AircraftCopy, copies the files the OBJ uses next to the .blend file
     """
     options = options or ImportOptions()
     report = report or ImportReport()
@@ -46,6 +48,7 @@ def import_obj_file(
         livery_objects_dir,
         objects_root,
         base_matrix,
+        copy,
     )
     try:
         built = builder.build()

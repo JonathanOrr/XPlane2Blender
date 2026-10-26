@@ -34,6 +34,10 @@ used.
 # ---- Variants: (label, what to set up) for each panel -----------------------------------------------------------------
 
 
+# Buttons whose text is the file or folder they are for
+NAMED_BY_DATA = {"xplane.choose_file", "xplane.toggle_file_type", "xplane.open_folder"}
+
+
 def _enum_items(data, prop: str) -> List[str]:
     return [item.identifier for item in data.bl_rna.properties[prop].enum_items]
 
@@ -256,7 +260,7 @@ def _sections() -> List[Section]:
                 for kind in _enum_items(layer, "export_type")
             ],
         ),
-        ("Scene tab", "XPLANE_PT_export", "glareshield panel", {}, none),
+        ("Scene tab", "XPLANE_PT_export", "glareshield panel", {}, [(None, scenes.in_folders)]),
         (
             "Scene tab",
             "XPLANE_PT_file",
@@ -442,8 +446,10 @@ class _Walk:
             elif kind == "operator":
                 # A button that only has an icon goes by the name its tooltip gives it
                 kind = "button" if item["text"] else "icon button"
+                # A file list's buttons show the file (cockpit.obj, Cockpit) and go by their own name
+                text = "" if item["operator"] in NAMED_BY_DATA else item["text"]
                 self.found.append(
-                    (kind, item["text"] or item.get("_name", ""), item.get("_tip", ""))
+                    (kind, text or item.get("_name", ""), item.get("_tip", ""))
                 )
             elif kind == "menu":
                 # A menu button showing what is chosen: the menu's own name, and the choice it shows

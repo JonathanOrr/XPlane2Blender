@@ -65,6 +65,7 @@ class ObjBuilder(PartsBuilder):
         livery_objects_dir: str = "",
         objects_root: str = "",
         base_matrix: Optional[mathutils.Matrix] = None,
+        copy=None,
     ) -> None:
         self.obj = obj
         self.options = options
@@ -78,7 +79,7 @@ class ObjBuilder(PartsBuilder):
         )
         self.collection: bpy.types.Collection = None
         self.resolver = TextureResolver(
-            os.path.dirname(obj.path), livery_objects_dir, objects_root
+            os.path.dirname(obj.path), livery_objects_dir, objects_root, copy
         )
         # X-Plane space placement of the whole object, used by aircraft where the .acf moves objects
         self.base_matrix = (

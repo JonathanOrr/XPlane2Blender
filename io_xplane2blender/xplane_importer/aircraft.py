@@ -9,6 +9,7 @@ import mathutils
 
 from . import frames
 from . import transforms as T
+from .aircraft_copy import AircraftCopy
 from .acf_parser import (
     AcfFile,
     AcfObject,
@@ -43,7 +44,12 @@ def import_aircraft(
     include_damage: bool = False,
     include_attached: bool = False,
     progress: Optional[Callable[[int, int], None]] = None,
+    copy_to: str = "",
 ) -> Optional[bpy.types.Collection]:
+    """
+    copy_to, a folder (the .blend file's), gets the aircraft's layout: the files the OBJs use are copied there, and
+    each OBJ is exported to where it was in the aircraft
+    """
     options = options or ImportOptions()
     report = report or ImportReport()
     try:
@@ -56,6 +62,7 @@ def import_aircraft(
     bpy.context.scene.collection.children.link(root)
     root["xplane_acf"] = acf_path
     root["xplane_acf_version"] = acf.version
+    copy = AircraftCopy(acf.folder, copy_to) if copy_to else None
 
     livery_objects = ""
     if livery:
@@ -99,7 +106,10 @@ def import_aircraft(
             base_matrix=_placement_matrix(item),
             update_view_layer=False,
             settle_frames=False,
+            copy=copy,
         )
+        if built is not None and copy is not None:
+            built.collection.xplane.layer.name = copy.export_name(path) or stem
         if built is not None:
             built.collection["xplane_acf_object"] = item.index
             built.collection["xplane_obj_flags"] = item.flags
@@ -123,6 +133,8 @@ def import_aircraft(
         report.info(
             f"{skipped_attached} object(s) attached to wings, gear or the body were skipped"
         )
+    if copy is not None:
+        copy.tell(report)
     frames.settle(root.all_objects, bpy.context.scene)
     bpy.context.view_layer.update()
     return root

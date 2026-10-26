@@ -4,3 +4,5 @@ Apply the 'Material' datablock to all objects  # Developer Tools, for working on
 Create Fixture Names From Roots  # Developer Tools
 Create lights.txt Summary  # Developer Tools
 Re-run Updater  # Developer Tools
+Choose File  # Shown as the file's name in the Export panel's list (files-and-export.md: click its name)
+Open Folder  # Shown as the folder's name in the Export panel's list (files-and-export.md: a folder opens with a click)

@@ -153,21 +153,21 @@ class TestPanels(XPlaneTestCase):
         self.assertTrue(any("2 selected" in text for text in draw_panel(object_tab.XPLANE_PT_object).labels()))
 
     def test_files_list(self) -> None:
+        from io_xplane2blender.ui import file_tree
+
+        def listed():
+            return [c.name for c in file_tree.listed(bpy.context)]
+
         mesh("in file")
         test_creation_helpers.create_datablock_collection("Not a file")
-        ul = SimpleNamespace(filter_name="", bitflag_filter_item=1 << 30)
-        flags, _ = scene_tab.XPLANE_UL_files.filter_items(ul, bpy.context, bpy.data, "collections")
-        self.assertEqual(["Panel"], [c.name for c, f in zip(bpy.data.collections, flags) if f])
+        self.assertEqual(["Panel"], listed())
         # Imported OBJs have their settings filled in but are not ticked: they are listed, ready to tick
         bpy.data.collections["Not a file"].xplane.layer.name = "imported_part"
-        flags, _ = scene_tab.XPLANE_UL_files.filter_items(ul, bpy.context, bpy.data, "collections")
-        self.assertEqual(2, sum(1 for f in flags if f))
+        self.assertEqual(2, len(listed()))
         bpy.data.collections["Not a file"].xplane.layer.name = ""
         bpy.context.window_manager.xplane_panels.show_all_collections = True
-        flags, _ = scene_tab.XPLANE_UL_files.filter_items(ul, bpy.context, bpy.data, "collections")
-        self.assertEqual(2, sum(1 for f in flags if f))
-        for collection in bpy.data.collections:
-            scene_tab.XPLANE_UL_files.draw_item(ul, bpy.context, FakeLayout(), bpy.data, collection, 0, None, "", 0)
+        self.assertEqual(2, len(listed()))
+        file_tree.draw(FakeLayout(), bpy.context)
 
     def test_every_panel_draws_flush_left(self) -> None:
         from io_xplane2blender import xplane_bulk_edit, xplane_table
@@ -213,7 +213,8 @@ class TestPanels(XPlaneTestCase):
         bpy.context.view_layer.active_layer_collection = panel_layer
         layout = draw_panel(scene_tab.XPLANE_PT_collection)
         self.assertIn("xplane.show_file", layout.operators())
-        self.assertIn("name", layout.props())
+        self.assertIn("export_folder", layout.props())
+        self.assertIn("export_stem", layout.props())
 
 
 runTestCases([TestPanels])
