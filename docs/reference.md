@@ -76,9 +76,6 @@ used.
 
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
-| Button | button |  | Animate the selected objects as push buttons that move in while their command is held (CMND= dataref) |
-| Switch | button |  | Animate the selected objects as switches with a number of positions, each a dataref value |
-| Knob / Lever | button |  | Animate the selected objects as knobs, levers or sliders that follow a dataref over a range |
 | Dataref Path | setting |  | The dataref, such as sim/cockpit2/switches/landing_lights_on, or name[0] for an array |
 | Search | icon button |  | Search X-Plane's own list and the names this file already uses |
 | Remove Dataref | icon button |  | Remove this dataref and its keyframes |
@@ -473,14 +470,6 @@ The options in the side panel of the file browser.
 | Tablet Mount | button | Add an empty at the 3D cursor: where a VR tablet can be attached |
 | Particle Emitter | button | Add an empty at the 3D cursor: where particles (smoke, sparks) come from |
 
-### Animate As
-
-| Item | Kind | What it does |
-|---|---|---|
-| Push Button | button | Animate the selected objects as push buttons that move in while their command is held (CMND= dataref) |
-| Switch | button | Animate the selected objects as switches with a number of positions, each a dataref value |
-| Knob / Lever | button | Animate the selected objects as knobs, levers or sliders that follow a dataref over a range |
-
 ### Kind Of Control
 
 | Item | Kind | What it does |
@@ -534,9 +523,6 @@ The options in the side panel of the file browser.
 | Item | Kind | What it does |
 |---|---|---|
 | Kind Of Control | menu |  |
-| Animate As Push Button | button | Animate the selected objects as push buttons that move in while their command is held (CMND= dataref) |
-| Animate As Switch | button | Animate the selected objects as switches with a number of positions, each a dataref value |
-| Animate As Knob / Lever | button | Animate the selected objects as knobs, levers or sliders that follow a dataref over a range |
 | Make Keys Relative | button | Key the movement of the selected (and active) objects on their delta location instead of their location, so that they can be moved anywhere and their animation goes with them. The exported OBJ stays the same |
 | Move To File | menu |  |
 
@@ -545,7 +531,7 @@ The options in the side panel of the file browser.
 | Item | Kind | What it does |
 |---|---|---|
 | Kind Of Control | menu |  |
-| Animate As | menu |  |
+| Make Keys Relative | button | Key the movement of the selected (and active) objects on their delta location instead of their location, so that they can be moved anywhere and their animation goes with them. The exported OBJ stays the same |
 | Export | button | Export the ticked files next to the .blend file, or below it at their Saved As paths |
 | Click Zones | setting | Outline what can be clicked in X-Plane: orange runs commands, blue sets datarefs, green is dragged |
 | Motion | setting | Show how the selected animated objects move: their path from the first to the last keyframe, with the dataref value at each keyframe |

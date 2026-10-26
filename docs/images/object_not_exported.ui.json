@@ -42,28 +42,8 @@
      {
       "items": [
        {
-        "kind": "operator",
-        "operator": "xplane.anim_push_button",
-        "text": "Button"
-       },
-       {
-        "kind": "operator",
-        "operator": "xplane.anim_switch",
-        "text": "Switch"
-       },
-       {
-        "kind": "operator",
-        "operator": "xplane.anim_range",
-        "text": "Knob / Lever"
-       }
-      ],
-      "kind": "row"
-     },
-     {
-      "items": [
-       {
         "kind": "label",
-        "text": "Not animated. Use a preset above, or key it by hand:"
+        "text": "Not animated. Key it against a dataref:"
        }
       ],
       "kind": "column"

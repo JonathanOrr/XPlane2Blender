@@ -38,22 +38,11 @@ with **Own detent dataref range** over the range you give. Every setting of ever
 
 ## Making It Move
 
-The **Moves** card animates the part. Three presets key a whole control in one step, on every selected object:
+The **Moves** card animates the part: **Key By Hand** adds a dataref, then pose the part at each dataref value and
+click **Key Pose** (see below). A button that runs a command while it is held moves with a `CMND=` dataref, such as
+`CMND=sim/lights/landing_lights_toggle` from 0 (up) to 1 (pressed in).
 
-- **Button** moves the button in while its command is held, with a `CMND=` dataref. Leave **Command** empty and each
-  button uses its own manipulator command, so a hundred buttons are animated in one click. Buttons that are not
-  clickable yet are made clickable (untick **Make Clickable** to skip that). **Pushes Along** and **Travel (mm)** are
-  the direction and depth.
-- **Switch** gives each of a number of **Positions** a dataref value (**First Value**, **Value Step**) and an angle or a
-  distance (**First Position**, **Step**), for toggles, rotary selectors and pull switches.
-- **Knob / Lever** follows a dataref from **From Value** to **To Value**, turning or sliding from **From** to **To**.
-  **Loop Every** makes an endless knob.
-
-Movement is along or around the object's own axis, from where it stands. Keys are linear, as X-Plane interpolates
-them, and turns of more than 90° get keys in between so whole turns are kept. `{name}` in a command or dataref becomes
-the object's name. Objects that are already animated are left alone unless **Replace** is ticked.
-
-A move is keyed relative, on the part's **Delta Transform** (Object tab > Transform > Delta Transform) instead of its
+Key a move relative, on the part's **Delta Transform** (Object tab > Transform > Delta Transform) instead of its
 location, so a button can be moved anywhere after it is animated and its animation goes with it. The Moves card says
 *Keyed relative*. A part whose location is keyed, by hand or before relative keys, snaps back when moved: click **Make
 Keys Relative**, also in the 3D view's right-click **X-Plane** menu for many parts at once. Each part then stands where
@@ -65,7 +54,7 @@ turning one on its panel means keying it again.
 An animated part lists its datarefs and their keys as buttons. Click a key to go to it, pose the part, type the dataref
 value in **At** and click **Key Pose**. On a part keyed relative, Key Pose keys its Delta Transform: pose it with the
 Delta Transform values, as moving it moves where it stands. **Repeats Every** makes the animation repeat (an endless
-knob), **Add Dataref** adds another dataref, and **Key By Hand** starts an animation without a preset. This is the
+knob), **Add Dataref** adds another dataref, and **Key By Hand** starts an animation. This is the
 heading knob, a knob with two commands that turns once around for 0 to 360:
 
 ![The Clickable and Moves cards of a knob](images/object_knob.png)

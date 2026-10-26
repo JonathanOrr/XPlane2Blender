@@ -88,26 +88,6 @@
     "children": [],
     "draw": [
      {
-      "items": [
-       {
-        "kind": "operator",
-        "operator": "xplane.anim_push_button",
-        "text": "Button"
-       },
-       {
-        "kind": "operator",
-        "operator": "xplane.anim_switch",
-        "text": "Switch"
-       },
-       {
-        "kind": "operator",
-        "operator": "xplane.anim_range",
-        "text": "Knob / Lever"
-       }
-      ],
-      "kind": "row"
-     },
-     {
       "icon": "CHECKMARK",
       "kind": "label",
       "text": "Keyed relative: it can be moved, its keys go with it"

@@ -4,9 +4,12 @@ heading knob, a landing light button and a switch, a screen, a flood light, a do
 nobody has picked a kind for yet, and a coffee cup that is in no export file.
 """
 
+import math
+
 import bpy
 
 from io_xplane2blender import xplane_constants as C
+from io_xplane2blender.xplane_helpers import get_action_fcurves
 
 
 def _clear() -> None:
@@ -32,6 +35,22 @@ def _file(name: str, kind: str) -> bpy.types.Collection:
     coll.xplane.layer.name = name
     coll.xplane.layer.export_type = kind
     return coll
+
+
+def _keyed(obj: bpy.types.Object, dataref: str, keys) -> None:
+    """Keys (dataref value, transform path, pose) every 10 frames from frame 1, linear as X-Plane is"""
+    item = obj.xplane.datarefs.add()
+    item.path, item.anim_type = dataref, C.ANIM_TYPE_TRANSFORM
+    for number, (value, path, pose) in enumerate(keys):
+        frame = 1 + 10 * number
+        item.value = value
+        obj.keyframe_insert("xplane.datarefs[0].value", frame=frame, group="XPlane Datarefs")
+        setattr(obj, path, pose)
+        obj.keyframe_insert(path, frame=frame)
+    for fcurve in get_action_fcurves(obj):
+        for key in fcurve.keyframe_points:
+            key.interpolation = "LINEAR"
+    setattr(obj, keys[0][1], keys[0][2])
 
 
 def _box(name: str, size, location, coll: bpy.types.Collection) -> bpy.types.Object:
@@ -115,24 +134,25 @@ def build() -> None:
     knob.xplane.manip.positive_command = "sim/autopilot/heading_up"
     knob.xplane.manip.negative_command = "sim/autopilot/heading_down"
     knob.xplane.manip.tooltip = "Heading"
-    _select(knob)
-    bpy.ops.xplane.anim_range(
-        dataref="sim/cockpit/autopilot/heading_mag",
-        value_from=0,
-        value_to=360,
-        axis="Y",
-        offset_from=0,
-        offset_to=-360,
+    _keyed(
+        knob,
+        "sim/cockpit/autopilot/heading_mag",
+        [(v, "rotation_euler", (0, math.radians(-v), 0)) for v in (0, 90, 180, 270, 360)],
     )
 
     button = _box(
         "landing light button", (0.025, 0.02, 0.025), (-0.12, 0.58, 1.02), cockpit
     )
     button.data.materials.append(paint)
-    _select(button)
-    bpy.ops.xplane.anim_push_button(
-        command="sim/lights/landing_lights_toggle", axis="Y", distance=2.0
+    _keyed(
+        button,
+        "CMND=sim/lights/landing_lights_toggle",
+        [(0, "delta_location", (0, 0, 0)), (1, "delta_location", (0, 0.002, 0))],
     )
+    button.xplane.manip.enabled = True
+    button.xplane.manip.type = C.MANIP_COMMAND
+    button.xplane.manip.cursor = "button"
+    button.xplane.manip.command = "sim/lights/landing_lights_toggle"
     button.xplane.manip.tooltip = "Landing lights"
 
     pedestal = _box("center pedestal", (0.2, 0.3, 0.08), (0, 0.35, 0.8), cockpit)
@@ -142,14 +162,10 @@ def build() -> None:
         __import__("mathutils").Matrix.Translation((0, 0, 0.06))
     )  # Its origin is its pivot
     throttle.data.materials.append(paint)
-    _select(throttle)
-    bpy.ops.xplane.anim_range(
-        dataref="sim/cockpit2/engine/actuators/throttle_ratio_all",
-        value_from=0,
-        value_to=1,
-        axis="X",
-        offset_from=-20,
-        offset_to=20,
+    _keyed(
+        throttle,
+        "sim/cockpit2/engine/actuators/throttle_ratio_all",
+        [(v, "rotation_euler", (math.radians(a), 0, 0)) for v, a in ((0, -20), (1, 20))],
     )
 
     screen = _box(

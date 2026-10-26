@@ -2,7 +2,7 @@
 
 ## The Pie Menu
 
-**Shift+Q** in the 3D View opens the X-Plane pie menu: **Make Clickable As**, **Animate As**, **Add**, **Key This
+**Shift+Q** in the 3D View opens the X-Plane pie menu: **Make Clickable As**, **Make Keys Relative**, **Add**, **Key This
 Pose**, **Move To File**, **Check**, **Export**, and a box with the overlay switches, **Tidy Empties And Cones** and
 **Blender's Light Gizmos**. Change the key in **Edit > Preferences > Keymap** (Object Mode).
 
@@ -15,7 +15,7 @@ Glow Sprite**) or an attachment point (**Wheel**, **Tablet Mount**, **Particle E
 
 ![The X-Plane section of the Add menu](images/viewport_add_menu.png)
 
-The 3D View's right-click menu has an **X-Plane** section with **Make Clickable As**, the animation presets and
+The 3D View's right-click menu has an **X-Plane** section with **Make Clickable As**, **Make Keys Relative** and
 **Move To File**.
 
 ## Copying Settings

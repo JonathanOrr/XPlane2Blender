@@ -11,7 +11,7 @@ import bpy
 from .xplane_helpers import get_action_fcurves
 
 LOCATION, DELTA_LOCATION = "location", "delta_location"
-# Where the presets and the importer show the parked pose, and so where a part stands
+# Where the importer shows the parked pose, and so where a part stands
 REST_FRAME = 1.0
 
 
@@ -114,3 +114,7 @@ class XPLANE_OT_make_keys_relative(bpy.types.Operator):
         text += "".join(f"; {n} left alone, {reason}" for reason, n in reasons.items())
         self.report({"INFO"} if done else {"WARNING"}, text)
         return {"FINISHED"} if done else {"CANCELLED"}
+
+
+# In the Object tab's Moves card, the viewport's pie menu and its right-click menu
+register, unregister = bpy.utils.register_classes_factory((XPLANE_OT_make_keys_relative,))
