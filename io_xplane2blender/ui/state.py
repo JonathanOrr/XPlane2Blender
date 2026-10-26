@@ -22,6 +22,9 @@ class XPlanePanelState(bpy.types.PropertyGroup):
         description="List every collection, so any of them can be made an export file",
         default=False,
     )
+    file_filter: bpy.props.StringProperty(name="Filter", description="Only list the files whose name has this in it")
+    # The Scene tab's open folders, one per line
+    open_folders: bpy.props.StringProperty()
     checked: bpy.props.BoolProperty(default=False)
     check_items: bpy.props.CollectionProperty(type=XPlaneCheckItem)
     check_index: bpy.props.IntProperty()

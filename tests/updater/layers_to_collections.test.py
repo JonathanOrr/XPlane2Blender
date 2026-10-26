@@ -9,6 +9,7 @@ import bpy
 from io_xplane2blender import xplane_config, xplane_constants, xplane_helpers
 from io_xplane2blender.tests import *
 from io_xplane2blender.xplane_props import XPlaneLayer
+from io_xplane2blender.xplane_props.file_path import DERIVED
 
 __dirname__ = os.path.dirname(__file__)
 
@@ -24,7 +25,8 @@ class TestLayersToCollections(XPlaneTestCase):
 
         Each value is tested per type, floats are tested wtih assertFloatAlmostEqual
         """
-        layer_props = set(xplane_layer.bl_rna.properties.keys()) - {"rna_type"}
+        # Folder and Name show the name, which is checked itself
+        layer_props = set(xplane_layer.bl_rna.properties.keys()) - {"rna_type"} - DERIVED
         assert layer_props <= correct_values.keys(), (
             f"correct_values is missing XPlaneLayer's {layer_props - correct_values.keys()}"
         )
@@ -55,7 +57,7 @@ class TestLayersToCollections(XPlaneTestCase):
             for prop in [
                 prop
                 for prop in real_prop_group.bl_rna.properties
-                if prop.identifier not in {"rna_type", "index", "expanded"}
+                if prop.identifier not in {"rna_type", "index", "expanded"} | DERIVED
             ]:
                 if prop.type == "COLLECTION":
                     for collection_member, collection_value in zip(

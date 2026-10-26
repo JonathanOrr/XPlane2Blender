@@ -320,6 +320,14 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
     # An aircraft is imported to be worked on and exported again
     __annotations__.update(_option_properties(make_exportable=True))
 
+    @classmethod
+    def poll(cls, context):
+        # Its textures are copied next to the .blend file, and the OBJs exported where they were in the aircraft
+        if not bpy.data.filepath:
+            cls.poll_message_set("Save the .blend file first: the aircraft's textures are copied next to it")
+            return False
+        return True
+
     def execute(self, context):
         report = ImportReport()
         options = _options_from(self)
@@ -338,6 +346,7 @@ class IMPORT_OT_xplane_aircraft(bpy.types.Operator, ImportHelper):
             include_damage=self.include_damage,
             include_attached=self.include_attached,
             progress=progress,
+            copy_to=bpy.path.abspath("//"),
         )
         wm.progress_end()
         crowded = _is_crowded(report) and self.show_result

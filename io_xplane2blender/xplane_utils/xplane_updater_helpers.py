@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 import bpy
 import idprop
 
+from io_xplane2blender.xplane_props.file_path import DERIVED
+
 # This is basically a copy of EnumPropertyItem, with only the parts we care about
 _EnumItem = collections.namedtuple("EnumItem", ["identifier", "name", "description"])
 
@@ -46,7 +48,7 @@ def check_property_group_has_non_default(
     def check_recursive(real_prop_group: bpy.types.PropertyGroup):
         nondefault_props = {}
         for prop in filter(
-            lambda p: p.identifier not in (props_to_ignore | {"rna_type"}),
+            lambda p: p.identifier not in (props_to_ignore | {"rna_type"} | DERIVED),
             real_prop_group.bl_rna.properties,
         ):
             if prop.type == "POINTER":
@@ -114,7 +116,7 @@ def copy_property_group(
     ):
         assert source_prop_group.rna_type == dest_prop_group.rna_type
         for prop in filter(
-            lambda p: p.identifier not in (props_to_ignore | {"rna_type"}),
+            lambda p: p.identifier not in (props_to_ignore | {"rna_type"} | DERIVED),
             source_prop_group.bl_rna.properties,
         ):
             if prop.type == "POINTER":

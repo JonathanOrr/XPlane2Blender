@@ -241,7 +241,8 @@ Nothing to set here in the demo scene.
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
 | X-Plane (on / off) | setting |  | Export everything in this collection as one OBJ file |
-| Saved As | setting |  | Unique name used in the code and scripting, can be re-defined in Python sub-classes if needed |
+| Folder | setting |  | The folder the OBJ is written to, below the .blend file's folder, such as objects/cockpit. Empty writes it next to the .blend file |
+| Name | setting |  | The OBJ's file name, without .obj |
 | Type: | setting |  | Choices: Aircraft Part, Cockpit. |
 | File Settings And Export | button |  | Show this file's settings in the Scene tab's X-Plane Export panel |
 
@@ -251,6 +252,15 @@ Nothing to set here in the demo scene.
 
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
+| Filter | setting |  | Only list the files whose name has this in it |
+| All Collections | setting |  | List every collection, so any of them can be made an export file |
+| Open Folder | button |  | Open or close this folder |
+| Tick Folder | icon button |  | Tick or untick every file in this folder, so Export writes them or leaves them out |
+| Rename Folder | icon button |  | Rename or move this folder: every file in it is exported to the new folder |
+| Root Collection | setting |  | Export everything in this collection as one OBJ file |
+| Choose File | button |  | Show this file's settings below the list |
+| Cockpit Or Aircraft Part | button |  | Switch this file between cockpit (clickable, panel textures) and aircraft part |
+| Select Objects | icon button |  | Select the objects of this file |
 | New File From Selection | button |  | Make a new OBJ file holding the selected objects (and their children). They leave the files they were in |
 | Save The .blend First | button |  | Export the ticked files next to the .blend file, or below it at their Saved As paths |
 
@@ -258,7 +268,8 @@ Nothing to set here in the demo scene.
 
 | Name | Kind | Shown for | What it does |
 |---|---|---|---|
-| Saved As | setting |  | Unique name used in the code and scripting, can be re-defined in Python sub-classes if needed |
+| Folder | setting |  | The folder the OBJ is written to, below the .blend file's folder, such as objects/cockpit. Empty writes it next to the .blend file |
+| Name | setting |  | The OBJ's file name, without .obj |
 | Type: | setting |  | Choices: Aircraft Part, Cockpit. |
 | Day | setting |  | TEXTURE: the color (albedo) texture of every part of the file |
 | Night | setting |  | TEXTURE_LIT: the texture that glows at night, drawn over the day texture |

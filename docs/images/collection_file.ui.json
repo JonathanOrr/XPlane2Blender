@@ -6,8 +6,14 @@
     "items": [
      {
       "kind": "prop",
-      "prop": "name",
-      "text": "Saved As",
+      "prop": "export_folder",
+      "text": "Folder",
+      "value": ""
+     },
+     {
+      "kind": "prop",
+      "prop": "export_stem",
+      "text": "Name",
       "value": "cockpit"
      },
      {

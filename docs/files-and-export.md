@@ -6,11 +6,15 @@ An export file is a collection with its **X-Plane** box ticked in the **Collecti
 one OBJ. A single object can also be its own file, from its own origin: tick **Its Own File, From Its Own Origin** in
 its **Advanced** card (a root object).
 
-The **Scene tab**'s **X-Plane Export** panel lists the export files of the scene. Tick a file to export it, click
-**Cockpit** or **Part** to switch its kind, and the arrow selects its objects. **New File From Selection** puts the
-selected objects and their children in a new file. **Export 2 Files** (it counts the ticked files) writes them next to
-the .blend file, or, with the path in a file's **Saved As**, below it: the line under the button says where. Until the
-.blend is saved the button says **Save The .blend First**. **File > Export > X-Plane Object (.obj)** does the same.
+The **Scene tab**'s **X-Plane Export** panel lists the export files of the scene, in the folders they are written to,
+like a file browser. Tick a file to export it, click its name to show its settings, click **Cockpit** or **Part** to
+switch its kind, and the arrow selects its objects. A folder opens and closes with a click, its tick box ticks or
+unticks every file in it, and the pencil renames it: every file in it is then written to the new folder. The search
+field lists only the files with those letters in their name (with all folders open), and the box next to it lists
+every collection, so any of them can be made a file. **New File From Selection** puts the selected objects and their
+children in a new file. **Export 2 Files** (it counts the ticked files) writes each file in its **Folder** below the
+.blend file's folder: the line under the button says where that is. Until the .blend is saved the button says **Save
+The .blend First**. **File > Export > X-Plane Object (.obj)** does the same.
 
 ![The X-Plane Export panel](images/scene_export.png)
 
@@ -18,8 +22,12 @@ the .blend file, or, with the path in a file's **Saved As**, below it: the line 
 
 Under the list are the settings of the chosen file (or the active object's file):
 
-- **Saved As**: the OBJ's name, and **Aircraft Part** or **Cockpit**. The cockpit OBJ is the one with clickable parts,
-  panel textures and camera collision.
+- **Folder** and **Name**: where the OBJ is written and its file name. The folder is below the .blend file's folder,
+  such as `objects/cockpit`, and empty writes it next to the .blend; the folder button picks one. Texture paths are
+  written relative to the OBJ, so a file exported in the folder it has in the aircraft names its textures as X-Plane
+  expects them.
+- **Aircraft Part** or **Cockpit**. The cockpit OBJ is the one with clickable parts, panel textures and camera
+  collision.
 - **Textures**: the **Day** and **Night** textures, and how the normal map and shine come in (**Normal And Shine**):
   - **One Texture**: a **Normal** texture with the normal in red and green and the gloss in alpha (and the metalness in
     blue with **Metalness In Normal Map**).

@@ -19,6 +19,8 @@ PANELS = [cls for cls in ui._classes if issubclass(cls, bpy.types.Panel)]
 NOT_SETTINGS = {"XPlane2BlenderVersion"}
 # Picked from a menu of plain-worded kinds, which sets them
 FROM_MENUS = {"XPlaneLightSettings.type", "XPlaneManipulatorSettings.type"}
+# Drawn as Folder and Name, which set it
+SHOWN_SPLIT = {"XPlaneLayer.name"}
 
 
 def every_setting():
@@ -30,7 +32,7 @@ def every_setting():
             builtin = prop.identifier == "name" and "name" not in cls.__annotations__
             if prop.identifier != "rna_type" and prop.type not in {"POINTER", "COLLECTION"} and not builtin:
                 setting = f"{cls.bl_rna.identifier}.{prop.identifier}"
-                if setting not in FROM_MENUS:
+                if setting not in FROM_MENUS | SHOWN_SPLIT:
                     yield setting
 
 

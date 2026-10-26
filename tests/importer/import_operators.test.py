@@ -29,6 +29,9 @@ class TestImportOperators(XPlaneTestCase):
         write_png(self.folder.join("tex.png"))
         write_file(self.folder.join("part.obj"), obj_text("ATTR_manip_command button sim/x A tip\nTRIS 0 3\n", header="TEXTURE tex.png\n", tris=None))
         write_file(self.folder.join("other.obj"), obj_text("", header="TEXTURE tex.png\n"))
+        # An aircraft's textures are copied next to the saved .blend file
+        os.makedirs(self.folder.join("project"))
+        bpy.ops.wm.save_as_mainfile(filepath=self.folder.join("project", "plane.blend"))
 
     def tearDown(self) -> None:
         self.folder.cleanup()

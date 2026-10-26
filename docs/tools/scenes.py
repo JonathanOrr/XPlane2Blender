@@ -268,6 +268,13 @@ def location_keyed() -> None:
     button.delta_location = (0, 0, 0)
 
 
+def in_folders() -> None:
+    """The files exported into an aircraft's objects folder, as an imported aircraft's are, with the folder open"""
+    for name in ("cockpit", "exterior"):
+        bpy.data.collections[name].xplane.layer.name = f"objects/{name}"
+    bpy.context.window_manager.xplane_panels.open_folders = "objects"
+
+
 def cards() -> None:
     """The landing light button with a glow and a show / hide, as a backlit button on a powered bus"""
     from io_xplane2blender import xplane_constants as C

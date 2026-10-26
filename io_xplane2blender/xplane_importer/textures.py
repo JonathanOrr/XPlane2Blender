@@ -1,7 +1,10 @@
 """Finds an OBJ's texture files, next to it, in its aircraft's folders or in a livery"""
 
 import os
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
+
+if TYPE_CHECKING:
+    from .aircraft_copy import AircraftCopy
 
 _EXTENSIONS = (".dds", ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".tif", ".tiff")
 
@@ -23,9 +26,15 @@ class TextureResolver:
     """Resolves an OBJ's texture paths on disk. A livery's replacement textures are checked first"""
 
     def __init__(
-        self, obj_dir: str, livery_objects_dir: str = "", objects_root: str = ""
+        self,
+        obj_dir: str,
+        livery_objects_dir: str = "",
+        objects_root: str = "",
+        copy: Optional["AircraftCopy"] = None,
     ) -> None:
         self.obj_dir = obj_dir
+        # Copies the files found next to the .blend file, and the paths then lead to the copies
+        self.copy = copy
         # liveries/<name>/objects replaces files of the aircraft's objects folder with the same relative path
         self.livery_objects_dir = livery_objects_dir
         self.objects_root = objects_root
@@ -63,11 +72,14 @@ class TextureResolver:
             candidates += [stem + e for e in _EXTENSIONS if e != extension.lower()]
         for candidate in candidates:
             if os.path.isabs(candidate) and os.path.isfile(candidate):
-                return candidate
+                return self._copied(candidate)
             base = self._find_in_dir(self.obj_dir, candidate)
             if base:
-                return self._livery_override(base) or base
+                return self._copied(self._livery_override(base) or base)
         return None
+
+    def _copied(self, path: str) -> str:
+        return self.copy.copy(path) if self.copy else path
 
     def reference(self, texture_path: str) -> Optional[str]:
         """
@@ -91,13 +103,24 @@ class TextureResolver:
                 name = os.path.basename(
                     texture_path.replace("\\", "/").replace(":", "/")
                 )
-                return os.path.join(os.path.dirname(found), name)
+                return self._for_blend(os.path.join(os.path.dirname(self._copied(found)), name), placed=True)
         # Not shipped (Laminar's Aerolite pedals name a normal map that is not there): still named, as the OBJ does
-        return os.path.normpath(
-            os.path.join(
-                self.obj_dir, texture_path.replace("\\", "/").replace(":", "/")
-            )
+        return self._for_blend(
+            os.path.normpath(
+                os.path.join(
+                    self.obj_dir, texture_path.replace("\\", "/").replace(":", "/")
+                )
+            ),
+            placed=False,
         )
+
+    def _for_blend(self, path: str, placed: bool) -> str:
+        """A copy's path, relative to the .blend file. A file that is not shipped is not copied, only placed"""
+        if not self.copy:
+            return path
+        from .aircraft_copy import blend_relative
+
+        return blend_relative(path if placed else self.copy.place(path))
 
     def _livery_override(self, base: str) -> Optional[str]:
         if not (self.livery_objects_dir and self.objects_root):

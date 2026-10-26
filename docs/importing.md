@@ -1,7 +1,8 @@
 # Importing
 
 **File > Import > X-Plane Aircraft (.acf)** brings in a whole aircraft from its `.acf` file: every object it lists, in
-place, with its textures, materials, animations, click zones and lights. It reads the text `.acf` files of X-Plane 10,
+place, with its textures, materials, animations, click zones and lights. Save the .blend file first: the aircraft is
+laid out again next to it (see [Next To The .blend File](#next-to-the-blend-file)). It reads the text `.acf` files of X-Plane 10,
 11 and 12. **File > Import > X-Plane Object (.obj)** imports single OBJ files, several at once if you like. In Blender
 4.1 and later you can also drop an `.acf` or `.obj` onto the 3D View.
 
@@ -45,6 +46,20 @@ The options are in the side panel of the file browser:
 - Header lines the add-on has settings for fill them in: rain, defrost and wipers, the night texture's brightness,
   cockpit regions. Lines it has no setting for are kept as extra OBJ lines, or reported, never silently dropped.
 
+## Next To The .blend File
+
+An aircraft is imported to be worked on and exported again, so it is laid out next to the .blend file as it is in its
+own folder:
+
+- The files its OBJs use, textures (with their other formats, such as the `.dds` of a `.png`), decals, rain and
+  particle files, are copied to the same places below the .blend's folder, for example `objects/textures/panel.png`.
+  A livery's go to `liveries/<livery>/...`. A file that is already there is kept as it is, it may have been edited.
+- Each OBJ is exported where it was, for example `objects/cockpit/panel.obj`: its **Folder** is `objects/cockpit`.
+- So the exported OBJs name their textures as the originals did, such as `TEXTURE ../textures/panel.png`, and the
+  folder of the .blend is a working aircraft folder.
+
+A file the OBJs use from outside the aircraft's folder is not copied: it is used where it is, and the import says so.
+
 ## How Lights Come In
 
 lights.txt gives a light a glow (a visible halo that lights nothing) and / or a spill (it lights its surroundings).
@@ -59,6 +74,6 @@ drawing and turns on the X-Plane **Lights** overlay, see [Lights](lights.md#seei
 - Objects attached to a wing, gear or body part are skipped unless **Part Attached Objects** is ticked; they are then
   placed at the aircraft's origin.
 - Textures in the BC6 and BC7 DDS formats cannot be read by Blender, those materials have no image.
-- Imported textures are linked by their full path: keep the aircraft where it is, or relink them in Blender. The
-  export writes each path relative to the OBJ, so export into the aircraft folder: from elsewhere the path goes
-  through the X-Plane folder, and a space in a path (such as `X-Plane 12`) cannot be written in an OBJ.
+- Single OBJs (**X-Plane Object (.obj)**) link their textures by their full path and are exported next to the .blend
+  file. The export writes each texture path relative to the OBJ, so give the file the **Folder** that puts it next to
+  its textures: a space in a texture path (such as `X-Plane 12`) cannot be written in an OBJ.

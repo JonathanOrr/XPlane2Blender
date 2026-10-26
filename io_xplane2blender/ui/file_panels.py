@@ -61,7 +61,8 @@ class XPLANE_PT_file(_FilePanel, bpy.types.Panel):
         layout = self.layout
         layer = active_file(context).xplane.layer
         col = layout.column()
-        col.prop(layer, "name", text="Saved As")
+        col.prop(layer, "export_folder")
+        col.prop(layer, "export_stem")
         row = named(col, "Type")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_AIRCRAFT, text="Aircraft Part")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_COCKPIT, text="Cockpit")

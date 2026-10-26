@@ -11,52 +11,15 @@ from io_xplane2blender import xplane_inspector as I
 from io_xplane2blender import xplane_light_tools
 from io_xplane2blender.viewport.settings import view_settings
 
+from . import file_tree
 from .common import Properties, compact_row, named, wrapped
 from .ops_file import (
     XPLANE_OT_check,
     XPLANE_OT_new_file,
-    XPLANE_OT_select_file_objects,
     XPLANE_OT_show_file,
-    XPLANE_OT_toggle_file_type,
 )
 from .ops_object import XPLANE_OT_select_object
 from .state import state
-
-
-class XPLANE_UL_files(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index=0, flt_flag=0):
-        collection = item
-        row = layout.row(align=True)
-        row.prop(collection.xplane, "is_exportable_collection", text="", icon="EXPORT", emboss=False)
-        sub = row.row(align=True)
-        sub.active = collection.xplane.is_exportable_collection
-        sub.label(text=I.file_name(collection))
-        if collection.xplane.is_exportable_collection:
-            cockpit = collection.xplane.layer.export_type == C.EXPORT_TYPE_COCKPIT
-            sub.operator(
-                XPLANE_OT_toggle_file_type.bl_idname, text="Cockpit" if cockpit else "Part", emboss=False
-            ).collection = collection.name
-            sub.operator(
-                XPLANE_OT_select_file_objects.bl_idname, text="", icon="RESTRICT_SELECT_OFF", emboss=False
-            ).collection = collection.name
-
-    def draw_filter(self, context, layout):
-        layout.prop(state(context), "show_all_collections")
-        layout.prop(self, "filter_name", text="")
-
-    def filter_items(self, context, data, propname):
-        in_scene = set(c.name for c in xplane_helpers.get_collections_in_scene(context.scene)[1:])
-        show_all = state(context).show_all_collections
-        needle = self.filter_name.lower()
-        flags = []
-        for c in getattr(data, propname):
-            # Collections with export settings, such as imported OBJs, are listed unticked: one click exports them
-            set_up = c.xplane.is_exportable_collection or bool(c.xplane.layer.name.strip())
-            shown = c.name in in_scene and (show_all or set_up)
-            if shown and needle:
-                shown = needle in c.name.lower() or needle in c.xplane.layer.name.lower()
-            flags.append(self.bitflag_filter_item if shown else 0)
-        return flags, []
 
 
 class _SceneTab(Properties):
@@ -69,8 +32,7 @@ class XPLANE_PT_export(_SceneTab, bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         files = I.export_files(context.scene)
-        rows = max(2, min(len(files), 8))
-        layout.template_list("XPLANE_UL_files", "", bpy.data, "collections", state(context), "file_index", rows=rows)
+        file_tree.draw(layout, context)
         for root in (f for f in files if isinstance(f, bpy.types.Object)):
             op = layout.operator(XPLANE_OT_show_file.bl_idname, text=f"{I.file_name(root)} (root object)", icon="OBJECT_DATA")
             op.root_object = root.name
@@ -194,7 +156,8 @@ class XPLANE_PT_collection(Properties, bpy.types.Panel):
                 return
         col = layout.column()
         col.active = collection.xplane.is_exportable_collection
-        col.prop(layer, "name", text="Saved As")
+        col.prop(layer, "export_folder")
+        col.prop(layer, "export_stem")
         row = named(col, "Type")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_AIRCRAFT, text="Aircraft Part")
         row.prop_enum(layer, "export_type", C.EXPORT_TYPE_COCKPIT, text="Cockpit")
@@ -203,7 +166,6 @@ class XPLANE_PT_collection(Properties, bpy.types.Panel):
 
 
 classes = (
-    XPLANE_UL_files,
     XPLANE_PT_export,
     XPLANE_PT_export_options,
     XPLANE_UL_check,

@@ -125,6 +125,7 @@ SHOTS: List[Shot] = [
         ("XPLANE_PT_export",),
         select="glareshield panel",
         height=1100,
+        then="in_folders",
     ),
     Shot(
         "scene_file_rain",

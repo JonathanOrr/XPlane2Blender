@@ -8,6 +8,7 @@ from io_xplane2blender.xplane_constants import *
 
 from .common import XPlaneCustomAttribute, add_props
 from .decals import decal_props
+from .file_path import props as path_props
 from .rain import XPlaneRainSettings
 
 
@@ -219,6 +220,7 @@ class XPlaneLayer(bpy.types.PropertyGroup):
 
 
 add_props(XPlaneLayer, decal_props())
+add_props(XPlaneLayer, path_props())
 
 
 class XPlaneCollectionSettings(bpy.types.PropertyGroup):

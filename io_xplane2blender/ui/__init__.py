@@ -16,6 +16,7 @@ import bpy
 from . import (
     common,
     file_panels,
+    file_tree,
     light_card,
     light_params,
     material_tab,
@@ -36,6 +37,7 @@ _classes = (
     *common.classes,
     *ops_object.classes,
     *ops_file.classes,
+    *file_tree.classes,
     *menus.classes,
     *object_tab.classes,
     *light_params.classes,

@@ -128,9 +128,121 @@
   ],
   "draw": [
    {
-    "items": 2,
-    "kind": "list",
-    "list": "XPLANE_UL_files"
+    "items": [
+     {
+      "kind": "prop",
+      "prop": "file_filter",
+      "text": "",
+      "value": ""
+     },
+     {
+      "kind": "prop",
+      "prop": "show_all_collections",
+      "text": "",
+      "value": false
+     }
+    ],
+    "kind": "row"
+   },
+   {
+    "items": [
+     {
+      "items": [
+       {
+        "items": [
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "is_exportable_collection",
+            "text": "",
+            "value": true
+           },
+           {
+            "kind": "operator",
+            "operator": "xplane.choose_file",
+            "set": {
+             "collection": "cockpit"
+            },
+            "text": "cockpit.obj"
+           }
+          ],
+          "kind": "row"
+         },
+         {
+          "items": [
+           {
+            "kind": "operator",
+            "operator": "xplane.toggle_file_type",
+            "set": {
+             "collection": "cockpit"
+            },
+            "text": "Cockpit"
+           },
+           {
+            "kind": "operator",
+            "operator": "xplane.select_file_objects",
+            "set": {
+             "collection": "cockpit"
+            },
+            "text": ""
+           }
+          ],
+          "kind": "row"
+         }
+        ],
+        "kind": "row"
+       },
+       {
+        "items": [
+         {
+          "items": [
+           {
+            "kind": "prop",
+            "prop": "is_exportable_collection",
+            "text": "",
+            "value": true
+           },
+           {
+            "kind": "operator",
+            "operator": "xplane.choose_file",
+            "set": {
+             "collection": "exterior"
+            },
+            "text": "exterior.obj"
+           }
+          ],
+          "kind": "row"
+         },
+         {
+          "items": [
+           {
+            "kind": "operator",
+            "operator": "xplane.toggle_file_type",
+            "set": {
+             "collection": "exterior"
+            },
+            "text": "Part"
+           },
+           {
+            "kind": "operator",
+            "operator": "xplane.select_file_objects",
+            "set": {
+             "collection": "exterior"
+            },
+            "text": ""
+           }
+          ],
+          "kind": "row"
+         }
+        ],
+        "kind": "row"
+       }
+      ],
+      "kind": "column"
+     }
+    ],
+    "kind": "box"
    },
    {
     "kind": "operator",
